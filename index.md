@@ -14,5 +14,5 @@ Nebula Play
 前端：
 
 - 实现多语言切换 `@/demo/vite-ts-i18next`
-- 实现丝滑的动画效果 `@/demo/vite-ts-mojs`
+- 实现主页动画效果 `@/demo/vite-ts-mojs`
   - [introduction-mo-js](https://css-tricks.com/introduction-mo-js/)

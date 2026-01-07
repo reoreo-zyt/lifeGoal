@@ -16,6 +16,15 @@ const mojsFunc = (id = 1) => {
 
     bouncyCircle.play();
   }
+  if (id === 2) {
+    new mojs.Html({
+      el: "#test",
+      opacity: { 0: 1 },
+      y: { 50: 0 },
+      duration: 1200,
+      easing: "elastic.out",
+    }).play();
+  }
 };
 
 export default mojsFunc;
