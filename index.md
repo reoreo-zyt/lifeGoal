@@ -7,6 +7,8 @@
 
 #### web 端
 
+`web-frontend`
+
 前端：
 
-- 实现多语言切换 `@/demo`
+- 实现多语言切换 `@/demo/vite-ts-i18next`
