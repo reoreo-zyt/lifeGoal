@@ -45,7 +45,7 @@ Nebula Play
 
 后端：
 
-后端用 nest prisma mysql ts 实现
+后端用 nest mysql ts 实现
 
 - 实现登录鉴权 `@/demo/nest-login`
   - [nestjs 入门实战最强篇](https://juejin.cn/post/7434059234760556594?searchId=202601081113378DCD897FC6AC690CCE22)
