@@ -2,10 +2,11 @@ Nebula Play
 
 专注像素艺术、模拟经营、角色扮演
 
-### 产品：拥有转生系统的我攻略世界
+### 产品：凡人修仙
 
 - 像素风格
-- 在番茄上连载小说
+- 在番茄上连载长篇小说和短篇小说
+  - 用 [ai 网站](https://luobi.net/)辅助编写
 - 开发 web 端
 - 用 godot 开发 steam 游戏
 
@@ -40,8 +41,10 @@ Nebula Play
 前端用 vite ts 实现
 
 - 实现多语言切换 `@/demo/vite-ts-i18next`
-- 实现主页动画效果 `@/demo/vite-ts-mojs`
+- 实现动画效果 `@/demo/vite-ts-mojs`
   - [introduction-mo-js](https://css-tricks.com/introduction-mo-js/)
+- 主页水墨画 `@/demo/AquaInkGL`
+  - [AquaInkGL](https://github.com/WishMelz/AquaInkGL)
 
 后端：
 
