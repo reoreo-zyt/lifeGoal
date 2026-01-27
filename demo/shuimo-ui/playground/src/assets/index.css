@@ -1,0 +1,30 @@
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+html[dark] {
+  color: white;
+}
+
+.full-screen-flex{
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+}
+
+#shuimo {
+  display: inline-block;
+  width: 100vw;
+  height: 100vh;
+}
+
+#headless {
+  display: inline-block;
+  width: 100vw;
+  height: 100vh;
+}
+
+iframe{
+  border:unset;
+}

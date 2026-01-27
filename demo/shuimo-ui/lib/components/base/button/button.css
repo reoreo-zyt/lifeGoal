@@ -1,0 +1,12 @@
+@import "@shuimo-design/ui-core/components/base/button/button.css";
+
+:root {
+  --m-button-line-height: calc(var(--m-button-size) * 2);
+}
+
+.m-button {
+  padding: 0 15px;
+  border: 5px double transparent;
+  border-image: url(./assets/border/base.webp) 8;
+  background-image: url(./assets/button-mask.svg);
+}

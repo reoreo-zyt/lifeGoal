@@ -1,0 +1,100 @@
+@import "rice-paper.css";
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+:root{
+  --color: #222222;
+  --text-shadow: 1px 2px 0 #ffffff;
+  --hover-color: var(--m-color-main);
+  --pre-bg-color: var(--m-color-background);
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family: PingFang SC, Microsoft YaHei;
+  color: var(--color);
+}
+
+html[dark] {
+  body {
+    --color: #eeeeee;
+    --text-shadow: 1px 2px 0 #000000;
+    --hover-color: var(--m-color-pink);
+    --pre-bg-color: rgba(203, 209, 227, 0.13);
+  }
+}
+
+a {
+  color: white;
+  text-decoration-line: unset;
+}
+
+@font-face {
+  font-family: wljh;
+  src: url(/fonts/wljh.ttf);
+}
+
+:root {
+  --wljh: wljh, PingFangSC;
+}
+
+.shuimo-ui {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+}
+
+.m-menu {
+  font-family: var(--wljh);
+  letter-spacing: 2px;
+}
+
+.layout {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.menu-right {
+  margin-right: 22px;
+  overflow-y: auto;
+}
+
+.docs {
+  overflow-y: auto;
+  margin-bottom: 30px;
+
+  & h1 {
+    margin: 20px 0 10px;
+  }
+
+  & h2, & h3 {
+    margin: 20px 0 10px;
+  }
+
+  /*  a {
+      cursor: url("/node_modules/shuimo-ui/lib/assets/cursor/pointer.png"), auto !important;
+      color: var(--m-color-green);
+
+      &:hover {
+        color: var(--m-color-error);
+      }
+    }*/
+}
+
+.m-height {
+  --m-dialog-h: 600px;
+}
+
+.m-menu-item-child {
+  .m-li-active {
+    color: var(--hover-color);
+  }
+}

@@ -1,0 +1,40 @@
+.m-menu {
+  display: flex;
+  padding-top: 124px;
+  background: url(./assets/menu_line.png) 0 0 repeat-y;
+  background-position-x: 8px;
+
+  --m-menu-line-w: 27px;
+
+}
+
+.m-menu-main {
+  display: inline-block;
+
+  & .m-menu-item {
+    margin: 2px 0;
+    font-size: 14px;
+
+    &:hover {
+
+      & > span {
+        font-weight: bold;
+      }
+    }
+  }
+
+  .m-menu-main-root-item {
+    font-size: 20px;
+    margin: 16px 0;
+  }
+
+  .m-menu-item-child {
+    margin-left: 16px;
+  }
+
+  & > .m-menu-item {
+    padding-left: 1px;
+  }
+}
+
+

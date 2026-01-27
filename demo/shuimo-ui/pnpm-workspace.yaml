@@ -1,0 +1,9 @@
+packages:
+  - 'lib/**'
+  - 'doc/**'
+  - 'playground/**'
+  - 'cli/**'
+  - 'plugins/**'
+  - 'core/**'
+  - 'headless/**'
+  - '!cli/build/config/**'

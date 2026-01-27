@@ -622,21 +622,14 @@ vue-tsc@^3.1.4:
     "@volar/typescript" "2.4.27"
     "@vue/language-core" "3.2.4"
 
-vue3-slide-verify@^1.1.8:
+vue3-slide-verify@^1.0.5:
   version "1.1.8"
   resolved "https://registry.npmmirror.com/vue3-slide-verify/-/vue3-slide-verify-1.1.8.tgz#f7e546dd5204d00c96ae6929f8bf0891f463fd0a"
   integrity sha512-qsGXM0w0pkPnI10p58neHQNAkMiGdX8ijGkvRo6eIYbFn3+6fQE05t8afdQsCY9llgG1chDrRD7H0XxV3Ts9Cw==
   dependencies:
     vue "^3.2.25"
 
-vue3-slider-verify@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.npmmirror.com/vue3-slider-verify/-/vue3-slider-verify-1.0.5.tgz#7bd44e5e5a014f37209e1796042db9a6727355dc"
-  integrity sha512-WP52qYz7IIE7saCsJpxGnDBsEtYym5q7XwVSoyIpF8z9merGdAmPqj4vPQ9K5SYiRswNeCHeGxeXjTKsmdxXAA==
-  dependencies:
-    vue "^3.3.4"
-
-vue@^3.2.25, vue@^3.3.4, vue@^3.5.24:
+vue@^3.2.25, vue@^3.5.24:
   version "3.5.27"
   resolved "https://registry.npmmirror.com/vue/-/vue-3.5.27.tgz#e55fd941b614459ab2228489bc19d1692e05876c"
   integrity sha512-aJ/UtoEyFySPBGarREmN4z6qNKpbEguYHMmXSiOGk69czc+zhs0NF6tEFrY8TZKAl8N/LYAkd4JHVd5E/AsSmw==

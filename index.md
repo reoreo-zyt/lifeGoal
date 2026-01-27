@@ -45,6 +45,9 @@ Nebula Play
   - [introduction-mo-js](https://css-tricks.com/introduction-mo-js/)
 - 主页水墨画 `@/demo/AquaInkGL`
   - [AquaInkGL](https://github.com/WishMelz/AquaInkGL)
+- 参考 `shuimo-ui` 写一个自己的组件库
+  - [《Vue3 组件库搭建指北：pnpm + monorepo + 代码提交规范+ BEM 环境配置》](https://blog.csdn.net/weixin_30980795/article/details/156947872)
+  - [15分钟学会 pnpm monorepo+vue3+vite 搭建组件库并发布到私有仓库（人人都能学会）](https://juejin.cn/post/7212538330829996092?searchId=20260127141409538ABAD580B8C2D32766)
 
 后端：
 

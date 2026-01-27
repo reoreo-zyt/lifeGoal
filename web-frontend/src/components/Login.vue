@@ -60,7 +60,7 @@ const msg = ref("");
 const block = ref<SlideVerifyInstance>();
 
 const onAgain = () => {
-  msg.value = "检测到非人为操作的哦！ try again";
+  msg.value = "检测到非人为操作的哦！再试试";
   callMessage(msg.value);
   showVerify.value = false;
 };
@@ -68,7 +68,7 @@ const onAgain = () => {
 const onSuccess = (detail: { timestamp: number; left: number }) => {
   msg.value = `登录成功, 道友耗时${(detail.timestamp / 1000).toFixed(
     1,
-  )}s, 移动距离${detail.left}px`;
+  )}s, 御剑飞行${detail.left}px`;
   callMessage(msg.value);
   showVerify.value = false;
 };

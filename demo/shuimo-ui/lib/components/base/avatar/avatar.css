@@ -1,0 +1,9 @@
+@import "@shuimo-design/ui-core/components/base/avatar/avatar.css";
+
+.m-avatar {
+  & .m-avatar-mask {
+    grid-area: avatar;
+    width: var(--m-avatar-w);
+    height: var(--m-avatar-size);
+  }
+}
