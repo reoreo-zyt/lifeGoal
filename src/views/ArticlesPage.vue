@@ -57,6 +57,15 @@ const articles = ref([
     source: "隋朝末年",
     link: "https://mp.weixin.qq.com/s/lqTqgVNWVs27Z8iW22Pv6Q",
   },
+  {
+    id: 4,
+    title: "隋末风云 | 窦建德：隋末唯一不滥杀、得民心的草根雄主",
+    date: "2026-03-25",
+    excerpt:
+      "他出身农家，起于底层，质朴宽厚、体恤百姓。乱世之中不掠民、不屠城、礼贤下士。坐拥河北千里之地，立国夏国，天下归心。一生唯败一战，却身死国灭，是隋末群雄里最可惜、最仁义的霸主。",
+    source: "隋朝末年",
+    link: "https://mp.weixin.qq.com/s/lqTqgVNWVs27Z8iW22Pv6Q",
+  },
 ]);
 
 const openArticle = (link) => {
