@@ -21,6 +21,7 @@ const closePreview = () => {
       <nav class="tab-nav">
         <RouterLink to="/" class="tab-link" active-class="active">首页</RouterLink>
         <RouterLink to="/articles" class="tab-link" active-class="active">文章</RouterLink>
+        <RouterLink to="/character-list" class="tab-link" active-class="active">人物</RouterLink>
       </nav>
       <p>探索历史的智慧，下载经典的电子书籍</p>
     </header>
