@@ -1,4 +1,0 @@
-<template>
-  <m-slider/>
-</template>
-

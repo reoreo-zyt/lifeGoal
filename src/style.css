@@ -1,0 +1,345 @@
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 历史厚重感的配色方案 */
+:root {
+  --primary-color: #2c1810; /* 深棕色 */
+  --secondary-color: #d4af37; /* 金色 */
+  --accent-color: #8b4513; /* 棕褐色 */
+  --background-color: #f5f0e6; /* 米色 */
+  --text-color: #333333; /* 深灰色 */
+  --border-color: #d4af37; /* 金色边框 */
+}
+
+body {
+  font-family: 'Noto Serif SC', serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* 标题样式 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Noto Serif SC', serif;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Noto Serif SC', serif;
+  transition: all 0.3s ease;
+}
+
+.preview-btn {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+  margin-right: 0.5rem;
+}
+
+.preview-btn:hover {
+  background-color: #b89529;
+  transform: translateY(-2px);
+}
+
+.download-btn {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.download-btn:hover {
+  background-color: #6b340f;
+  transform: translateY(-2px);
+}
+
+/* 书籍列表样式 */
+.book-list {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.book-list h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--primary-color);
+  font-size: 2rem;
+  border-bottom: 2px solid var(--secondary-color);
+  padding-bottom: 1rem;
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.book-card {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.book-cover {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.book-info {
+  padding: 1.5rem;
+}
+
+.book-info h3 {
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+.book-author {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.book-year {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.book-description {
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.book-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* 书籍预览样式 */
+.book-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+}
+
+.preview-header h2 {
+  color: var(--secondary-color);
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--secondary-color);
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.pdf-preview {
+  width: 100%;
+  max-width: 800px;
+  height: 70vh;
+  background-color: white;
+  overflow: auto;
+}
+
+.epub-preview {
+  width: 100%;
+  max-width: 800px;
+  height: 70vh;
+  background-color: white;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+.epub-viewer {
+  width: 100%;
+  height: 100%;
+}
+
+.other-preview {
+  background-color: white;
+  padding: 4rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.other-preview p {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.download-section {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+  padding: 1rem 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.download-section h4 {
+  margin-bottom: 1rem;
+  color: var(--secondary-color);
+}
+
+.format-options {
+  display: flex;
+  gap: 1rem;
+}
+
+.format-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--secondary-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.format-btn:hover {
+  background-color: rgba(212, 175, 55, 0.3);
+}
+
+.format-btn.active {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* 格式选择模态框样式 */
+.format-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+}
+
+.format-modal .modal-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.format-modal h3 {
+  color: var(--primary-color);
+  margin-bottom: 2rem;
+}
+
+.format-modal .format-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.format-modal .format-btn {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: white;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.format-modal .format-btn:hover {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.format-modal .close-btn {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.format-modal .close-btn:hover {
+  background-color: #6b340f;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .books-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .app-main {
+    padding: 1rem;
+  }
+  
+  .book-info {
+    padding: 1rem;
+  }
+  
+  .preview-content {
+    padding: 1rem;
+  }
+  
+  .pdf-preview {
+    height: 70vh;
+  }
+}

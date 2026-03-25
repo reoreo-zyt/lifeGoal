@@ -1,9 +1,0 @@
-@import "@shuimo-design/ui-core/components/other/divider/divider.css";
-
-.m-divider {
-  height: 5px;
-
-  &.m-divider-vertical {
-    width: 6px;
-  }
-}

@@ -1,3 +1,0 @@
-<template>
-  <m-divider/>
-</template>
