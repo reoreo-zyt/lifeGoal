@@ -9,7 +9,7 @@
         @input="handleSearch"
       />
     </div>
-    <BookList :books="filteredBooks" @preview-book="previewBook" />
+    <BookList :books="filteredBooks" :is-logged-in="isLoggedIn" @preview-book="previewBook" />
     <div class="support-section">
       <p class="support-text">期待您的支持</p>
       <button @click="showDonationModal = true" class="donation-btn">
@@ -48,6 +48,13 @@ import { ref, computed } from 'vue';
 import BookList from '../components/BookList.vue';
 import BookPreview from '../components/BookPreview.vue';
 import { books } from '../data/books';
+
+const props = defineProps({
+  isLoggedIn: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const searchQuery = ref('');
 const selectedBook = ref(null);
