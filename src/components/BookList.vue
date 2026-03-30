@@ -10,8 +10,10 @@
           <p class="book-year">年份：{{ book.year }}</p>
           <p class="book-description">{{ book.description }}</p>
           <div class="book-actions">
-            <button @click="previewBook(book)" class="btn preview-btn">预览</button>
-            <button @click="showFormatModal(book)" class="btn download-btn">下载</button>
+            <button @click="previewBook(book)" class="btn preview-btn" :disabled="isLoading">预览</button>
+            <button @click="showFormatModal(book)" class="btn download-btn" :disabled="isLoading">
+              {{ isLoading ? '处理中...' : '下载' }}
+            </button>
           </div>
         </div>
       </div>
@@ -49,60 +51,101 @@ const props = defineProps({
 const emit = defineEmits(['preview-book']);
 const showFormatSelect = ref(false);
 const selectedBook = ref(null);
-const downloadCount = ref(0);
-const lastDownloadDate = ref('');
+const isLoading = ref(false);
+
+// 获取token
+const getToken = () => {
+  return localStorage.getItem('token');
+};
 
 // 检查下载限制
-const checkDownloadLimit = () => {
-  const today = new Date().toDateString();
-  const storedCount = localStorage.getItem('downloadCount');
-  const storedDate = localStorage.getItem('lastDownloadDate');
-  
-  if (storedDate === today) {
-    downloadCount.value = parseInt(storedCount) || 0;
-    lastDownloadDate.value = storedDate;
-  } else {
-    // 新的一天，重置下载计数
-    downloadCount.value = 0;
-    lastDownloadDate.value = today;
-    localStorage.setItem('downloadCount', '0');
-    localStorage.setItem('lastDownloadDate', today);
+const checkDownloadLimit = async () => {
+  try {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch('http://localhost:3000/downloads/check-limit', {
+      method: 'GET',
+      headers,
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('检查下载限制失败:', error);
+    // 出错时默认允许下载
+    return { canDownload: true, downloadCount: 0, limit: 3 };
   }
 };
 
-// 增加下载计数
-const incrementDownloadCount = () => {
-  downloadCount.value++;
-  localStorage.setItem('downloadCount', downloadCount.value.toString());
-};
-
-// 检查是否可以下载
-const canDownload = computed(() => {
-  if (props.isLoggedIn) {
-    return true; // 登录用户无限制
+// 记录下载
+const recordDownload = async (bookId, bookTitle, format) => {
+  try {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch('http://localhost:3000/downloads/record', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ bookId, bookTitle, format }),
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('记录下载失败:', error);
+    return { success: false, message: '记录下载失败' };
   }
-  return downloadCount.value < 3; // 未登录用户每天最多下载3本
-});
+};
 
 const previewBook = (book) => {
   emit('preview-book', book);
 };
 
-const showFormatModal = (book) => {
-  if (!canDownload.value) {
+const showFormatModal = async (book) => {
+  // 检查下载限制
+  isLoading.value = true;
+  const limitInfo = await checkDownloadLimit();
+  isLoading.value = false;
+  
+  if (!limitInfo.canDownload) {
     alert('您今天的下载次数已达上限，请登录后继续下载');
     return;
   }
+  
   selectedBook.value = book;
   showFormatSelect.value = true;
 };
 
-const downloadWithFormat = (book, format) => {
+const downloadWithFormat = async (book, format) => {
   showFormatSelect.value = false;
   if (book.formats && book.formats[format] && book.formats[format] !== '#') {
     // 检查下载限制
-    if (!canDownload.value) {
+    isLoading.value = true;
+    const limitInfo = await checkDownloadLimit();
+    
+    if (!limitInfo.canDownload) {
+      isLoading.value = false;
       alert('您今天的下载次数已达上限，请登录后继续下载');
+      return;
+    }
+    
+    // 记录下载
+    const recordResult = await recordDownload(book.id, book.title, format);
+    isLoading.value = false;
+    
+    if (!recordResult.success) {
+      alert(recordResult.message || '下载失败，请重试');
       return;
     }
     
@@ -111,18 +154,8 @@ const downloadWithFormat = (book, format) => {
     link.href = book.formats[format];
     link.download = `${book.title}.${format}`;
     link.click();
-    
-    // 增加下载计数
-    if (!props.isLoggedIn) {
-      incrementDownloadCount();
-    }
   } else {
     alert(`《${book.title}》的${format.toUpperCase()}格式暂未提供`);
   }
 };
-
-// 初始化时检查下载限制
-onMounted(() => {
-  checkDownloadLimit();
-});
 </script>
