@@ -13,12 +13,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.4
-        with:
-          # ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ssh-private-key: 1540689086Zyt@
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no Admin@101.132.149.36 "bash -c 'cd /home/admin/lifeGoal && git pull origin main && npm install && npm run build && sudo systemctl restart nginx'"
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no Admin@101.132.149.36 "bash -c 'cd /home/admin/lifeGoal && git pull origin main && npm install && npm run build && sudo systemctl restart nginx'"
