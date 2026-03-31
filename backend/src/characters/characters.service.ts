@@ -45,7 +45,7 @@ export class CharactersService {
   }
 
   // 创建人物
-  async create(personData: { name: string; dynasty: string; birthYear: string; deathYear: string }): Promise<Person> {
+  async create(personData: { name: string; dynasty: string; birthYear?: string; deathYear?: string }): Promise<Person> {
     const person: Person = {
       id: nextPersonId++,
       name: personData.name,
@@ -187,10 +187,10 @@ export class CharactersService {
 
     // 添加初始人物数据
     const initialPersons = [
-      { name: '李密', dynasty: '隋末', birthYear: '', deathYear: '' },
-      { name: '李渊', dynasty: '隋唐', birthYear: '', deathYear: '' },
-      { name: '李世民', dynasty: '唐', birthYear: '', deathYear: '' },
-      { name: '窦建德', dynasty: '隋末', birthYear: '', deathYear: '' },
+      // { name: '李密', dynasty: '隋末', birthYear: '', deathYear: '' },
+      // { name: '李渊', dynasty: '隋唐', birthYear: '', deathYear: '' },
+      // { name: '李世民', dynasty: '唐', birthYear: '', deathYear: '' },
+      // { name: '窦建德', dynasty: '隋末', birthYear: '', deathYear: '' },
     ];
 
     for (const personData of initialPersons) {

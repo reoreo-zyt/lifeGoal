@@ -8,6 +8,7 @@ let users: Array<{
   password: string;
   name: string;
   isAdmin: boolean;
+  aiToken: string;
   createdAt: Date;
   updatedAt: Date;
 }> = [];
@@ -33,6 +34,7 @@ export class UsersService {
         password: hashedPassword,
         name: 'Admin',
         isAdmin: true,
+        aiToken: '',
         createdAt: now,
         updatedAt: now,
       };
@@ -50,6 +52,7 @@ export class UsersService {
       password: hashedPassword,
       name,
       isAdmin: false,
+      aiToken: '',
       createdAt: now,
       updatedAt: now,
     };
@@ -63,5 +66,20 @@ export class UsersService {
 
   async findOneById(id: number): Promise<any | undefined> {
     return users.find(user => user.id === id);
+  }
+
+  async updateAiToken(id: number, aiToken: string): Promise<any | undefined> {
+    const userIndex = users.findIndex(user => user.id === id);
+    if (userIndex === -1) {
+      return undefined;
+    }
+    
+    users[userIndex] = {
+      ...users[userIndex],
+      aiToken,
+      updatedAt: new Date(),
+    };
+    
+    return users[userIndex];
   }
 }

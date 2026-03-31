@@ -4,6 +4,7 @@ export interface User {
   password: string;
   name: string;
   isAdmin: boolean;
+  aiToken: string;
   createdAt: Date;
   updatedAt: Date;
 }

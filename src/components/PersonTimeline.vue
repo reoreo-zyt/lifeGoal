@@ -152,11 +152,9 @@
         </div>
         <div class="form-group">
           <label>选择模型</label>
-          <input type="text" v-model="aiForm.model" placeholder="请输入豆包模型ID" required />
-        </div>
-        <div class="form-group">
-          <label>API Token</label>
-          <input type="text" v-model="aiForm.token" placeholder="请输入豆包API Token" required />
+          <select v-model="aiForm.model" required>
+            <option value="doubao-seed-2-0-pro-260215">Doubao-Seed-2.0-pro</option>
+          </select>
         </div>
         <div class="modal-actions">
           <button type="button" @click="showAiModal = false" class="cancel-btn">
@@ -233,7 +231,7 @@ const editingPerson = ref(null);
 const editingEvent = ref(null);
 const personForm = ref({ name: '', dynasty: '', birthYear: '', deathYear: '' });
 const eventForm = ref({ year: '', age: '', reignYear: '', event: '', source: '', order: 0 });
-const aiForm = ref({ name: '', model: '', token: '' });
+const aiForm = ref({ name: '', model: 'doubao-seed-2-0-pro-260215', token: '' });
 
 // 计算用户是否为管理员
 const isAdmin = computed(() => {
@@ -543,7 +541,7 @@ const copyTable = (person) => {
   document.body.removeChild(tempElement);
 
   // 提示复制成功
-  alert("表格已复制到剪贴板，可直接粘贴到微信公众号");
+  alert("表格已复制到剪贴板，可直接粘贴。");
 };
 
 // AI 生成人物
@@ -553,8 +551,14 @@ const generatePersonWithAi = async () => {
     return;
   }
   
-  if (!aiForm.value.token) {
-    alert('请输入API Token');
+  // 检查是否有可用的 AI Token
+  let token = aiForm.value.token;
+  if (!token && props.user && props.user.aiToken) {
+    token = props.user.aiToken;
+  }
+  
+  if (!token) {
+    alert('请先在系统配置中设置 API Token');
     return;
   }
   
@@ -564,7 +568,7 @@ const generatePersonWithAi = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${aiForm.value.token}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         model: aiForm.value.model,

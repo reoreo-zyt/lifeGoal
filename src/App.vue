@@ -13,6 +13,8 @@ const password = ref('');
 const name = ref('');
 const errorMessage = ref('');
 const isLoading = ref(false);
+const showSettingsModal = ref(false);
+const aiToken = ref('');
 
 const previewBook = (book) => {
   selectedBook.value = book;
@@ -98,6 +100,54 @@ const handleLogout = () => {
   localStorage.removeItem('user');
 };
 
+const openSettingsModal = () => {
+  showSettingsModal.value = true;
+  // 从用户信息中获取AI Token
+  if (user.value && user.value.aiToken) {
+    aiToken.value = user.value.aiToken;
+  } else {
+    aiToken.value = '';
+  }
+};
+
+const closeSettingsModal = () => {
+  showSettingsModal.value = false;
+  aiToken.value = '';
+};
+
+const saveAiSettings = async () => {
+  if (!isLoggedIn.value) {
+    alert('请先登录');
+    return;
+  }
+  
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/users/ai-token', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ aiToken: aiToken.value }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('保存失败');
+    }
+    
+    const data = await response.json();
+    // 更新用户信息
+    user.value = data.user;
+    localStorage.setItem('user', JSON.stringify(data.user));
+    alert('保存成功');
+    closeSettingsModal();
+  } catch (error) {
+    console.error('保存失败:', error);
+    alert('保存失败，请重试');
+  }
+};
+
 // 检查本地存储中的登录状态
 const checkLoginStatus = () => {
   const token = localStorage.getItem('token');
@@ -130,6 +180,7 @@ checkLoginStatus();
             <button v-if="!isLoggedIn" @click="openLoginModal" class="login-btn">登录</button>
             <div v-else class="user-info">
               <span>{{ user.name }}</span>
+              <button @click="openSettingsModal" class="settings-btn">系统配置</button>
               <button @click="handleLogout" class="logout-btn">退出</button>
             </div>
           </div>
@@ -200,6 +251,33 @@ checkLoginStatus();
               :disabled="isLoading"
             >
               {{ isLoading ? '处理中...' : (activeTab === 'login' ? '登录' : '注册') }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div v-if="showSettingsModal" class="modal-overlay" @click="closeSettingsModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>系统配置</h2>
+          <button @click="closeSettingsModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <form class="auth-form" @submit.prevent="saveAiSettings">
+            <div class="form-group">
+              <label>火山引擎 API Token</label>
+              <input 
+                type="text" 
+                placeholder="请输入火山引擎 API Token" 
+                v-model="aiToken"
+                required
+              />
+            </div>
+            <button 
+              type="submit" 
+              class="auth-btn"
+            >
+              保存
             </button>
           </form>
         </div>
@@ -287,7 +365,7 @@ checkLoginStatus();
   gap: 1rem;
 }
 
-.login-btn, .logout-btn {
+.login-btn, .logout-btn, .settings-btn {
   background-color: #d4af37;
   color: #2c1810;
   border: none;
@@ -298,7 +376,7 @@ checkLoginStatus();
   transition: all 0.3s ease;
 }
 
-.login-btn:hover, .logout-btn:hover {
+.login-btn:hover, .logout-btn:hover, .settings-btn:hover {
   background-color: #e6c760;
 }
 
