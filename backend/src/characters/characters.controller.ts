@@ -9,6 +9,12 @@ export class CharactersController {
     this.charactersService.initializeData();
   }
 
+  // AI 生成人物信息 - 允许未登录用户访问
+  @Post('ai-generate')
+  async generatePersonWithAi(@Body() body: { name: string }) {
+    return await this.charactersService.generatePersonWithAi(body.name);
+  }
+
   // 获取所有人物 - 允许未登录用户访问
   @Get()
   async findAll(): Promise<Person[]> {
@@ -24,14 +30,14 @@ export class CharactersController {
   // 创建人物 - 仅允许admin用户访问
   @UseGuards(AdminAuthGuard)
   @Post()
-  async create(@Body() body: { name: string; dynasty: string }): Promise<Person> {
+  async create(@Body() body: { name: string; dynasty: string; birthYear?: string; deathYear?: string }): Promise<Person> {
     return await this.charactersService.create(body);
   }
 
   // 更新人物 - 仅允许admin用户访问
   @UseGuards(AdminAuthGuard)
   @Put(':id')
-  async update(@Param('id') id: number, @Body() body: { name?: string; dynasty?: string }): Promise<Person | null> {
+  async update(@Param('id') id: number, @Body() body: { name?: string; dynasty?: string; birthYear?: string; deathYear?: string }): Promise<Person | null> {
     return await this.charactersService.update(+id, body);
   }
 

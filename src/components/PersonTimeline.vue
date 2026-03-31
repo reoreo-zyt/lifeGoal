@@ -28,6 +28,9 @@
         <div class="person-info" @click="selectPerson(person)">
           <span class="person-name">{{ person.name }}</span>
           <span class="person-dynasty">{{ person.dynasty }}</span>
+          <span v-if="person.birthYear || person.deathYear" class="person-years">
+            {{ person.birthYear || '?' }}-{{ person.deathYear || '?' }}
+          </span>
         </div>
         <div v-if="isAdmin" class="person-actions">
           <button @click.stop="editPerson(person)" class="action-btn edit-btn">
@@ -43,7 +46,13 @@
     <!-- 人物详细信息 -->
     <div v-if="selectedPerson" class="person-details">
       <div class="detail-header">
-        <h3 class="person-name">{{ selectedPerson.name }} <span class="person-dynasty">{{ selectedPerson.dynasty }}</span></h3>
+        <h3 class="person-name">
+          {{ selectedPerson.name }} 
+          <span class="person-dynasty">{{ selectedPerson.dynasty }}</span>
+          <span v-if="selectedPerson.birthYear || selectedPerson.deathYear" class="person-years">
+            ({{ selectedPerson.birthYear || '?' }}-{{ selectedPerson.deathYear || '?' }})
+          </span>
+        </h3>
         <div class="detail-actions">
           <button class="copy-btn" @click="copyTable(selectedPerson)">
             复制表格
@@ -104,11 +113,22 @@
         <form @submit.prevent="savePerson">
           <div class="form-group">
             <label>姓名</label>
-            <input type="text" v-model="personForm.name" required />
+            <div class="input-with-button">
+              <input type="text" v-model="personForm.name" required />
+              <button type="button" @click="showAiModal = true" class="ai-btn">AI</button>
+            </div>
           </div>
           <div class="form-group">
             <label>朝代</label>
             <input type="text" v-model="personForm.dynasty" required />
+          </div>
+          <div class="form-group">
+            <label>年份</label>
+            <div class="year-inputs">
+              <input type="text" v-model="personForm.birthYear" placeholder="出生年份" />
+              <span class="year-separator">-</span>
+              <input type="text" v-model="personForm.deathYear" placeholder="死亡年份" />
+            </div>
           </div>
           <div class="modal-actions">
             <button type="button" @click="showAddPersonModal = false" class="cancel-btn">
@@ -119,6 +139,33 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- AI 弹窗 -->
+    <div v-if="showAiModal" class="modal-overlay" @click="showAiModal = false">
+      <div class="modal-content" @click.stop>
+        <h3>AI 人物生成</h3>
+        <div class="form-group">
+          <label>人物名称</label>
+          <input type="text" v-model="aiForm.name" placeholder="请输入人物名称" required />
+        </div>
+        <div class="form-group">
+          <label>选择模型</label>
+          <input type="text" v-model="aiForm.model" placeholder="请输入豆包模型ID" required />
+        </div>
+        <div class="form-group">
+          <label>API Token</label>
+          <input type="text" v-model="aiForm.token" placeholder="请输入豆包API Token" required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" @click="showAiModal = false" class="cancel-btn">
+            取消
+          </button>
+          <button type="button" @click="generatePersonWithAi" class="save-btn">
+            生成
+          </button>
+        </div>
       </div>
     </div>
 
@@ -181,10 +228,12 @@ const selectedPersonTimeline = ref([]);
 const searchQuery = ref("");
 const showAddPersonModal = ref(false);
 const showAddEventModal = ref(false);
+const showAiModal = ref(false);
 const editingPerson = ref(null);
 const editingEvent = ref(null);
-const personForm = ref({ name: '', dynasty: '' });
+const personForm = ref({ name: '', dynasty: '', birthYear: '', deathYear: '' });
 const eventForm = ref({ year: '', age: '', reignYear: '', event: '', source: '', order: 0 });
+const aiForm = ref({ name: '', model: '', token: '' });
 
 // 计算用户是否为管理员
 const isAdmin = computed(() => {
@@ -232,14 +281,19 @@ const selectPerson = async (person) => {
 // 打开添加人物弹窗
 const addPerson = () => {
   editingPerson.value = null;
-  personForm.value = { name: '', dynasty: '' };
+  personForm.value = { name: '', dynasty: '', birthYear: '', deathYear: '' };
   showAddPersonModal.value = true;
 };
 
 // 打开编辑人物弹窗
 const editPerson = (person) => {
   editingPerson.value = person;
-  personForm.value = { name: person.name, dynasty: person.dynasty };
+  personForm.value = { 
+    name: person.name, 
+    dynasty: person.dynasty, 
+    birthYear: person.birthYear || '', 
+    deathYear: person.deathYear || '' 
+  };
   showAddPersonModal.value = true;
 };
 
@@ -492,6 +546,75 @@ const copyTable = (person) => {
   alert("表格已复制到剪贴板，可直接粘贴到微信公众号");
 };
 
+// AI 生成人物
+const generatePersonWithAi = async () => {
+  if (!aiForm.value.name) {
+    alert('请输入人物名称');
+    return;
+  }
+  
+  if (!aiForm.value.token) {
+    alert('请输入API Token');
+    return;
+  }
+  
+  try {
+    // 调用豆包 API
+    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${aiForm.value.token}`
+      },
+      body: JSON.stringify({
+        model: aiForm.value.model,
+        messages: [
+          {
+            role: 'user',
+            content: `请识别历史人物 ${aiForm.value.name}，并提供以下信息：
+1. 所属朝代
+2. 出生年份（公元）
+3. 死亡年份（公元）
+
+请以JSON格式返回，例如：
+{
+  "name": "李世民",
+  "dynasty": "唐",
+  "birthYear": "598",
+  "deathYear": "649"
+}`
+          }
+        ],
+        temperature: 0.7
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('API 调用失败');
+    }
+    
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    
+    // 解析返回的 JSON
+    const personData = JSON.parse(content);
+    
+    // 填充表单
+    personForm.value = {
+      name: personData.name,
+      dynasty: personData.dynasty,
+      birthYear: personData.birthYear || '',
+      deathYear: personData.deathYear || '',
+    };
+    
+    // 关闭 AI 弹窗，返回人物添加弹窗
+    showAiModal.value = false;
+  } catch (error) {
+    console.error('AI 生成失败:', error);
+    alert('AI 生成失败，请检查 API Token 是否正确并重试');
+  }
+};
+
 // 初始化
 onMounted(async () => {
   await fetchPersons();
@@ -606,6 +729,54 @@ onMounted(async () => {
 .person-dynasty {
   font-size: 0.9rem;
   color: #666;
+}
+
+.person-years {
+  font-size: 0.85rem;
+  color: #999;
+  margin-left: 0.5rem;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-with-button input {
+  flex: 1;
+}
+
+.ai-btn {
+  padding: 0.75rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+  transition: background-color 0.3s;
+}
+
+.ai-btn:hover {
+  background-color: #357abd;
+}
+
+.year-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.year-inputs input {
+  flex: 1;
+}
+
+.year-separator {
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: bold;
+  padding: 0 0.5rem;
 }
 
 .person-actions {

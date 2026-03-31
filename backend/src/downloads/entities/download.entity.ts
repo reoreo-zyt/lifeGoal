@@ -1,22 +1,8 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
-
-@Entity()
-export class Download {
-  @PrimaryGeneratedColumn()
+export interface Download {
   id: number;
-
-  @Column()
   userId: number;
-
-  @Column()
   bookId: string;
-
-  @Column()
   bookTitle: string;
-
-  @Column()
   format: string;
-
-  @CreateDateColumn()
   createdAt: Date;
 }
