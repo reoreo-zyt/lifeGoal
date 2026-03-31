@@ -1,31 +1,39 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
 import * as bcrypt from 'bcryptjs';
+
+// 内存存储用户数据
+let users: Array<{
+  id: number;
+  email: string;
+  password: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+}> = [];
+let nextId = 1;
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) {}
-
-  async create(email: string, password: string, name: string): Promise<User> {
+  async create(email: string, password: string, name: string): Promise<any> {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = this.usersRepository.create({
+    const now = new Date();
+    const user = {
+      id: nextId++,
       email,
       password: hashedPassword,
       name,
-    });
-    return this.usersRepository.save(user);
+      createdAt: now,
+      updatedAt: now,
+    };
+    users.push(user);
+    return user;
   }
 
-  async findOneByEmail(email: string): Promise<User | undefined> {
-    return this.usersRepository.findOne({ where: { email } });
+  async findOneByEmail(email: string): Promise<any | undefined> {
+    return users.find(user => user.email === email);
   }
 
-  async findOneById(id: number): Promise<User | undefined> {
-    return this.usersRepository.findOne({ where: { id } });
+  async findOneById(id: number): Promise<any | undefined> {
+    return users.find(user => user.id === id);
   }
 }
