@@ -1,19 +1,15 @@
 import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
-
-// 内存存储下载记录
-let downloads: Array<{
-  id: number;
-  userId: number;
-  bookId: string;
-  ipAddress: string;
-  bookTitle: string;
-  format: string;
-  createdAt: Date;
-}> = [];
-let nextId = 1;
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
+import { Download } from './entities/download.entity';
 
 @Injectable()
 export class DownloadsService {
+  constructor(
+    @InjectRepository(Download)
+    private downloadRepository: Repository<Download>,
+  ) {}
+
   // 检查用户下载限制
   async checkDownloadLimit(userId: number | null, ipAddress: string): Promise<boolean> {
     console.log('Check download limit - User ID:', userId, 'IP:', ipAddress);
@@ -27,11 +23,12 @@ export class DownloadsService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const downloadCount = downloads.filter(download => 
-      download.userId === 0 && 
-      download.ipAddress === ipAddress && 
-      download.createdAt >= today
-    ).length;
+    const downloadCount = await this.downloadRepository.count({
+      where: {
+        userId: 0,
+        createdAt: MoreThanOrEqual(today),
+      },
+    });
 
     // 未登录用户每天最多下载3本
     console.log('未登录用户，下载次数:', downloadCount);
@@ -39,18 +36,14 @@ export class DownloadsService {
   }
 
   // 记录下载
-  async recordDownload(userId: number | null, bookId: string, bookTitle: string, format: string, ipAddress: string): Promise<any> {
-    const download = {
-      id: nextId++,
+  async recordDownload(userId: number | null, bookId: string, bookTitle: string, format: string, ipAddress: string): Promise<Download> {
+    const download = this.downloadRepository.create({
       userId: userId || 0,
-      bookId: bookId,
-      ipAddress: ipAddress,
+      bookId,
       bookTitle,
       format,
-      createdAt: new Date(),
-    };
-    downloads.push(download);
-    return download;
+    });
+    return await this.downloadRepository.save(download);
   }
 
   // 获取用户今日下载次数
@@ -66,11 +59,12 @@ export class DownloadsService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const count = downloads.filter(download => 
-      download.userId === 0 && 
-      download.ipAddress === ipAddress && 
-      download.createdAt >= today
-    ).length;
+    const count = await this.downloadRepository.count({
+      where: {
+        userId: 0,
+        createdAt: MoreThanOrEqual(today),
+      },
+    });
     console.log('未登录用户，下载次数:', count);
     return count;
   }

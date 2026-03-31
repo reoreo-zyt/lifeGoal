@@ -1,22 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-
-// 内存存储用户数据
-let users: Array<{
-  id: number;
-  email: string;
-  password: string;
-  name: string;
-  isAdmin: boolean;
-  aiToken: string;
-  createdAt: Date;
-  updatedAt: Date;
-}> = [];
-let nextId = 1;
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  constructor() {
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {
     // 初始化 admin 用户
     this.initializeAdminUser();
   }
@@ -27,59 +20,45 @@ export class UsersService {
     const existingAdmin = await this.findOneByEmail(adminEmail);
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('1540689086Zyt@', 10);
-      const now = new Date();
-      const adminUser = {
-        id: nextId++,
+      const adminUser = this.usersRepository.create({
         email: adminEmail,
         password: hashedPassword,
         name: 'Admin',
         isAdmin: true,
         aiToken: '',
-        createdAt: now,
-        updatedAt: now,
-      };
-      users.push(adminUser);
+      });
+      await this.usersRepository.save(adminUser);
       console.log('Admin user initialized:', adminEmail);
     }
   }
 
-  async create(email: string, password: string, name: string): Promise<any> {
+  async create(email: string, password: string, name: string): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const now = new Date();
-    const user = {
-      id: nextId++,
+    const user = this.usersRepository.create({
       email,
       password: hashedPassword,
       name,
       isAdmin: false,
       aiToken: '',
-      createdAt: now,
-      updatedAt: now,
-    };
-    users.push(user);
-    return user;
+    });
+    return await this.usersRepository.save(user);
   }
 
-  async findOneByEmail(email: string): Promise<any | undefined> {
-    return users.find(user => user.email === email);
+  async findOneByEmail(email: string): Promise<User | undefined> {
+    return await this.usersRepository.findOne({ where: { email } });
   }
 
-  async findOneById(id: number): Promise<any | undefined> {
-    return users.find(user => user.id === id);
+  async findOneById(id: number): Promise<User | undefined> {
+    return await this.usersRepository.findOne({ where: { id } });
   }
 
-  async updateAiToken(id: number, aiToken: string): Promise<any | undefined> {
-    const userIndex = users.findIndex(user => user.id === id);
-    if (userIndex === -1) {
+  async updateAiToken(id: number, aiToken: string): Promise<User | undefined> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
       return undefined;
     }
     
-    users[userIndex] = {
-      ...users[userIndex],
-      aiToken,
-      updatedAt: new Date(),
-    };
-    
-    return users[userIndex];
+    user.aiToken = aiToken;
+    return await this.usersRepository.save(user);
   }
 }
