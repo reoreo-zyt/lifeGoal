@@ -13,7 +13,7 @@
           class="search-input"
         />
       </div>
-      <button @click="showAddPersonModal = true" class="add-person-btn">
+      <button v-if="isAdmin" @click="showAddPersonModal = true" class="add-person-btn">
         添加人物
       </button>
     </div>
@@ -29,7 +29,7 @@
           <span class="person-name">{{ person.name }}</span>
           <span class="person-dynasty">{{ person.dynasty }}</span>
         </div>
-        <div class="person-actions">
+        <div v-if="isAdmin" class="person-actions">
           <button @click.stop="editPerson(person)" class="action-btn edit-btn">
             编辑
           </button>
@@ -48,7 +48,7 @@
           <button class="copy-btn" @click="copyTable(selectedPerson)">
             复制表格
           </button>
-          <button class="add-event-btn" @click="showAddEventModal = true">
+          <button v-if="isAdmin" class="add-event-btn" @click="showAddEventModal = true">
             添加事件
           </button>
         </div>
@@ -63,12 +63,12 @@
               <th>所用年号</th>
               <th>正史关键事迹</th>
               <th>正史原文摘要（出处）</th>
-              <th>操作</th>
+              <th v-if="isAdmin">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="event in selectedPersonTimeline" :key="event.id">
-              <td>
+              <td v-if="isAdmin">
                 <input 
                   type="number" 
                   v-model.number="event.order" 
@@ -76,12 +76,13 @@
                   class="order-input"
                 />
               </td>
+              <td v-else>{{ event.order }}</td>
               <td>{{ event.year }}</td>
               <td>{{ event.age }}</td>
               <td>{{ event.reignYear }}</td>
               <td>{{ event.event }}</td>
               <td>{{ event.source }}</td>
-              <td class="event-actions">
+              <td v-if="isAdmin" class="event-actions">
                 <button @click="editEvent(event)" class="action-btn edit-btn">
                   编辑
                 </button>
@@ -167,6 +168,13 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
+const props = defineProps({
+  user: {
+    type: Object,
+    default: null
+  }
+});
+
 const persons = ref([]);
 const selectedPerson = ref(null);
 const selectedPersonTimeline = ref([]);
@@ -177,6 +185,11 @@ const editingPerson = ref(null);
 const editingEvent = ref(null);
 const personForm = ref({ name: '', dynasty: '' });
 const eventForm = ref({ year: '', age: '', reignYear: '', event: '', source: '', order: 0 });
+
+// 计算用户是否为管理员
+const isAdmin = computed(() => {
+  return props.user && props.user.isAdmin;
+});
 
 // 过滤人物列表
 const filteredPersons = computed(() => {
@@ -230,21 +243,39 @@ const editPerson = (person) => {
   showAddPersonModal.value = true;
 };
 
+// 获取token
+const getToken = () => {
+  return localStorage.getItem('token');
+};
+
 // 保存人物
 const savePerson = async () => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
   try {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     if (editingPerson.value) {
       // 更新人物
       await fetch(`http://localhost:3000/characters/${editingPerson.value.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(personForm.value),
       });
     } else {
       // 添加人物
       await fetch('http://localhost:3000/characters', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(personForm.value),
       });
     }
@@ -252,15 +283,28 @@ const savePerson = async () => {
     showAddPersonModal.value = false;
   } catch (error) {
     console.error('保存人物失败:', error);
+    alert('保存失败，请确保您有管理员权限');
   }
 };
 
 // 删除人物
 const deletePerson = async (personId) => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
   if (confirm('确定要删除这个人物吗？')) {
     try {
+      const token = getToken();
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       await fetch(`http://localhost:3000/characters/${personId}`, {
         method: 'DELETE',
+        headers,
       });
       await fetchPersons();
       if (selectedPerson.value && selectedPerson.value.id === personId) {
@@ -269,12 +313,18 @@ const deletePerson = async (personId) => {
       }
     } catch (error) {
       console.error('删除人物失败:', error);
+      alert('删除失败，请确保您有管理员权限');
     }
   }
 };
 
 // 打开添加事件弹窗
 const addEvent = () => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
   editingEvent.value = null;
   eventForm.value = { year: '', age: '', reignYear: '', event: '', source: '', order: selectedPersonTimeline.value.length };
   showAddEventModal.value = true;
@@ -282,6 +332,11 @@ const addEvent = () => {
 
 // 打开编辑事件弹窗
 const editEvent = (event) => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
   editingEvent.value = event;
   eventForm.value = { ...event };
   showAddEventModal.value = true;
@@ -289,19 +344,32 @@ const editEvent = (event) => {
 
 // 保存事件
 const saveEvent = async () => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
   try {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     if (editingEvent.value) {
       // 更新事件
       await fetch(`http://localhost:3000/characters/timeline/${editingEvent.value.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(eventForm.value),
       });
     } else {
       // 添加事件
       await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(eventForm.value),
       });
     }
@@ -309,34 +377,62 @@ const saveEvent = async () => {
     showAddEventModal.value = false;
   } catch (error) {
     console.error('保存事件失败:', error);
+    alert('保存失败，请确保您有管理员权限');
   }
 };
 
 // 删除事件
 const deleteEvent = async (eventId) => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
   if (confirm('确定要删除这个事件吗？')) {
     try {
+      const token = getToken();
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       await fetch(`http://localhost:3000/characters/timeline/${eventId}`, {
         method: 'DELETE',
+        headers,
       });
       await fetchPersonTimeline(selectedPerson.value.id);
     } catch (error) {
       console.error('删除事件失败:', error);
+      alert('删除失败，请确保您有管理员权限');
     }
   }
 };
 
 // 更新事件顺序
 const updateEventOrder = async (event) => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
   try {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     await fetch(`http://localhost:3000/characters/timeline/${event.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ order: event.order }),
     });
     await fetchPersonTimeline(selectedPerson.value.id);
   } catch (error) {
     console.error('更新事件顺序失败:', error);
+    alert('更新失败，请确保您有管理员权限');
   }
 };
 
