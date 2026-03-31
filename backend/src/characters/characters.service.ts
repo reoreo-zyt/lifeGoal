@@ -178,6 +178,54 @@ export class CharactersService {
     });
   }
 
+  // 批量添加时间线事件
+  async batchAddTimelineEvents(personId: number, eventsData: Array<{
+    year: string;
+    age: string;
+    reignYear: string;
+    event: string;
+    source: string;
+    order?: number;
+  }>): Promise<number> {
+    // 检查人物是否存在
+    const person = await this.findOne(personId);
+    if (!person) {
+      throw new Error('人物不存在');
+    }
+
+    // 计算默认顺序的起始值
+    const maxOrder = Math.max(
+      ...timelineEvents
+        .filter(event => event.personId === personId)
+        .map(event => event.order),
+      -1
+    );
+
+    let currentOrder = maxOrder + 1;
+    const createdEvents: TimelineEvent[] = [];
+
+    for (const eventData of eventsData) {
+      const timelineEvent: TimelineEvent = {
+        id: nextEventId++,
+        personId,
+        year: eventData.year,
+        age: eventData.age,
+        reignYear: eventData.reignYear,
+        event: eventData.event,
+        source: eventData.source,
+        order: eventData.order || currentOrder++,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      createdEvents.push(timelineEvent);
+    }
+
+    // 批量添加到存储
+    timelineEvents.push(...createdEvents);
+    return createdEvents.length;
+  }
+
   // 初始化人物数据
   async initializeData() {
     // 检查是否已有数据
@@ -199,106 +247,11 @@ export class CharactersService {
   }
 
   // AI 生成人物信息
-  async generatePersonWithAi(name: string): Promise<{ name: string; dynasty: string; birthYear: string; deathYear: string }> {
+  async generatePersonWithAi(name: string, aiToken: string, model: string): Promise<{ name: string; dynasty: string; birthYear: string; deathYear: string }> {
     try {
-      // 这里使用模拟数据，实际项目中需要替换为真实的豆包API调用
-      // const response = await axios.post('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
-      //   model: 'ep-20250721184613-99r2n',
-      //   messages: [
-      //     {
-      //       role: 'user',
-      //       content: `请识别历史人物 ${name}，并提供以下信息：
-      //       1. 所属朝代
-      //       2. 出生年份（公元）
-      //       3. 死亡年份（公元）
-      //       
-      //       请以JSON格式返回，例如：
-      //       {
-      //         "name": "李世民",
-      //         "dynasty": "唐",
-      //         "birthYear": "598",
-      //         "deathYear": "649"
-      //       }`
-      //     }
-      //   ],
-      //   temperature: 0.7
-      // }, {
-      //   headers: {
-      //     'Authorization': 'Bearer YOUR_API_KEY',
-      //     'Content-Type': 'application/json'
-      //   }
-      // });
-      // 
-      // const data = response.data.choices[0].message.content;
-      // return JSON.parse(data);
-
-      // 模拟数据
-      const mockData: Record<string, { dynasty: string; birthYear: string; deathYear: string }> = {
-        '杨坚': { dynasty: '隋', birthYear: '541', deathYear: '604' },
-        '杨广': { dynasty: '隋', birthYear: '569', deathYear: '618' },
-        '李渊': { dynasty: '隋唐', birthYear: '566', deathYear: '635' },
-        '李世民': { dynasty: '唐', birthYear: '598', deathYear: '649' },
-        '李治': { dynasty: '唐', birthYear: '628', deathYear: '683' },
-        '武则天': { dynasty: '唐', birthYear: '624', deathYear: '705' },
-        '李隆基': { dynasty: '唐', birthYear: '685', deathYear: '762' },
-        '安禄山': { dynasty: '唐', birthYear: '703', deathYear: '757' },
-        '史思明': { dynasty: '唐', birthYear: '703', deathYear: '761' },
-        '李密': { dynasty: '隋末', birthYear: '582', deathYear: '619' },
-        '窦建德': { dynasty: '隋末', birthYear: '573', deathYear: '621' },
-        '王世充': { dynasty: '隋末', birthYear: '？', deathYear: '621' },
-        '杜伏威': { dynasty: '隋末', birthYear: '598', deathYear: '624' },
-        '辅公祏': { dynasty: '隋末', birthYear: '？', deathYear: '624' },
-        '薛举': { dynasty: '隋末', birthYear: '？', deathYear: '618' },
-        '李轨': { dynasty: '隋末', birthYear: '？', deathYear: '619' },
-        '刘武周': { dynasty: '隋末', birthYear: '？', deathYear: '620' },
-        '梁师都': { dynasty: '隋末', birthYear: '？', deathYear: '628' },
-        '萧铣': { dynasty: '隋末', birthYear: '583', deathYear: '621' },
-        '沈法兴': { dynasty: '隋末', birthYear: '？', deathYear: '621' },
-        '李子通': { dynasty: '隋末', birthYear: '？', deathYear: '622' },
-        '林士弘': { dynasty: '隋末', birthYear: '？', deathYear: '622' },
-        '宇文化及': { dynasty: '隋末', birthYear: '？', deathYear: '619' },
-        '魏征': { dynasty: '唐', birthYear: '580', deathYear: '643' },
-        '房玄龄': { dynasty: '唐', birthYear: '579', deathYear: '648' },
-        '杜如晦': { dynasty: '唐', birthYear: '585', deathYear: '630' },
-        '长孙无忌': { dynasty: '唐', birthYear: '594', deathYear: '659' },
-        '尉迟恭': { dynasty: '唐', birthYear: '585', deathYear: '658' },
-        '秦琼': { dynasty: '唐', birthYear: '？', deathYear: '638' },
-        '程咬金': { dynasty: '唐', birthYear: '589', deathYear: '665' },
-        '李靖': { dynasty: '唐', birthYear: '571', deathYear: '649' },
-        '李勣': { dynasty: '唐', birthYear: '594', deathYear: '669' },
-        '苏定方': { dynasty: '唐', birthYear: '592', deathYear: '667' },
-        '薛仁贵': { dynasty: '唐', birthYear: '614', deathYear: '683' },
-        '高仙芝': { dynasty: '唐', birthYear: '？', deathYear: '756' },
-        '封常清': { dynasty: '唐', birthYear: '？', deathYear: '756' },
-        '郭子仪': { dynasty: '唐', birthYear: '697', deathYear: '781' },
-        '李光弼': { dynasty: '唐', birthYear: '708', deathYear: '764' },
-        '颜真卿': { dynasty: '唐', birthYear: '709', deathYear: '784' },
-        '柳公权': { dynasty: '唐', birthYear: '778', deathYear: '865' },
-        '白居易': { dynasty: '唐', birthYear: '772', deathYear: '846' },
-        '李白': { dynasty: '唐', birthYear: '701', deathYear: '762' },
-        '杜甫': { dynasty: '唐', birthYear: '712', deathYear: '770' },
-        '王维': { dynasty: '唐', birthYear: '701', deathYear: '761' },
-        '孟浩然': { dynasty: '唐', birthYear: '689', deathYear: '740' },
-        '王昌龄': { dynasty: '唐', birthYear: '698', deathYear: '757' },
-        '高适': { dynasty: '唐', birthYear: '704', deathYear: '765' },
-        '岑参': { dynasty: '唐', birthYear: '715', deathYear: '770' },
-        '韩愈': { dynasty: '唐', birthYear: '768', deathYear: '824' },
-        '柳宗元': { dynasty: '唐', birthYear: '773', deathYear: '819' },
-        '刘禹锡': { dynasty: '唐', birthYear: '772', deathYear: '842' },
-        '李贺': { dynasty: '唐', birthYear: '790', deathYear: '816' },
-        '杜牧': { dynasty: '唐', birthYear: '803', deathYear: '852' },
-        '李商隐': { dynasty: '唐', birthYear: '813', deathYear: '858' }
-      };
-
-      if (mockData[name]) {
-        return {
-          name,
-          dynasty: mockData[name].dynasty,
-          birthYear: mockData[name].birthYear,
-          deathYear: mockData[name].deathYear
-        };
-      } else {
-        // 如果没有匹配的模拟数据，返回默认值
+      // 检查 aiToken 是否为空
+      if (!aiToken) {
+        console.error('AI 生成失败: 未设置 API Token');
         return {
           name,
           dynasty: '未知',
@@ -306,6 +259,37 @@ export class CharactersService {
           deathYear: '？'
         };
       }
+      
+      // 调用真实的豆包API
+      const response = await axios.post('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: `请识别历史人物 ${name}，并提供以下信息：
+1. 所属朝代
+2. 出生年份（公元）
+3. 死亡年份（公元）
+
+请以JSON格式返回，例如：
+{
+  "name": "李世民",
+  "dynasty": "唐",
+  "birthYear": "598",
+  "deathYear": "649"
+}`
+          }
+        ],
+        temperature: 0.7
+      }, {
+        headers: {
+          'Authorization': `Bearer ${aiToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = response.data.choices[0].message.content;
+      return JSON.parse(data);
     } catch (error) {
       console.error('AI 生成失败:', error);
       // 如果API调用失败，返回默认值
@@ -315,6 +299,63 @@ export class CharactersService {
         birthYear: '？',
         deathYear: '？'
       };
+    }
+  }
+
+  // AI 生成事件
+  async generateEventsWithAi(name: string, dynasty: string, model: string, aiToken: string): Promise<Array<{
+    year: string;
+    age: string;
+    reignYear: string;
+    event: string;
+    source: string;
+  }>> {
+    try {
+      // 检查 aiToken 是否为空
+      if (!aiToken) {
+        console.error('AI 生成失败: 未设置 API Token');
+        return [];
+      }
+      
+      // 调用真实的豆包API
+      const response = await axios.post('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+        model: model,
+        messages: [
+          {
+            role: 'user',
+            content: `请为历史人物 ${name}（${dynasty}）生成详细的生平事件时间线，按照时间顺序排列。每个事件需要包含以下信息：
+1. 公元年份（如：580、隋末、贞观初年等）
+2. 虚岁（如：1、青年、中年等）
+3. 所用年号（如：北周大象二年、大业年间、贞观年间等）
+4. 核心正史事迹（简要描述该事件）
+5. 正史原文摘录（包含出处，如：《旧唐书》：xxx）
+
+请以JSON数组格式返回，数组中每个元素包含year、age、reignYear、event、source字段。例如：
+[
+  {
+    "year": "580",
+    "age": "1",
+    "reignYear": "北周大象二年",
+    "event": "生于巨鹿魏氏，年少孤贫，胸怀大志，专心读书不喜谋生",
+    "source": "《旧唐书》：征少孤贫，落拓有大志，不营生业。"
+  }
+]`
+          }
+        ],
+        temperature: 0.7
+      }, {
+        headers: {
+          'Authorization': `Bearer ${aiToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = response.data.choices[0].message.content;
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('AI 生成失败:', error);
+      // 如果API调用失败，返回空数组
+      return [];
     }
   }
 }

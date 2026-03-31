@@ -57,8 +57,11 @@
           <button class="copy-btn" @click="copyTable(selectedPerson)">
             复制表格
           </button>
-          <button v-if="isAdmin" class="add-event-btn" @click="showAddEventModal = true">
+          <button v-if="isAdmin" class="add-event-btn" @click="resetNewEvent()">
             添加事件
+          </button>
+          <button v-if="isAdmin" class="ai-btn" @click="showEventAiModal = true">
+            AI生成事件
           </button>
         </div>
       </div>
@@ -76,7 +79,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="event in selectedPersonTimeline" :key="event.id">
+            <!-- 现有事件 -->
+            <tr v-for="event in selectedPersonTimeline" :key="event.id" :class="{ 'editing': editingEvent && editingEvent.id === event.id }">
               <td v-if="isAdmin">
                 <input 
                   type="number" 
@@ -86,17 +90,97 @@
                 />
               </td>
               <td v-else>{{ event.order }}</td>
-              <td>{{ event.year }}</td>
-              <td>{{ event.age }}</td>
-              <td>{{ event.reignYear }}</td>
-              <td>{{ event.event }}</td>
-              <td>{{ event.source }}</td>
+              <td>
+                <template v-if="editingEvent && editingEvent.id === event.id">
+                  <input type="text" v-model="editingEvent.year" class="inline-input" />
+                </template>
+                <template v-else>
+                  {{ event.year }}
+                </template>
+              </td>
+              <td>
+                <template v-if="editingEvent && editingEvent.id === event.id">
+                  <input type="text" v-model="editingEvent.age" class="inline-input" />
+                </template>
+                <template v-else>
+                  {{ event.age }}
+                </template>
+              </td>
+              <td>
+                <template v-if="editingEvent && editingEvent.id === event.id">
+                  <input type="text" v-model="editingEvent.reignYear" class="inline-input" />
+                </template>
+                <template v-else>
+                  {{ event.reignYear }}
+                </template>
+              </td>
+              <td>
+                <template v-if="editingEvent && editingEvent.id === event.id">
+                  <textarea v-model="editingEvent.event" class="inline-textarea"></textarea>
+                </template>
+                <template v-else>
+                  {{ event.event }}
+                </template>
+              </td>
+              <td>
+                <template v-if="editingEvent && editingEvent.id === event.id">
+                  <textarea v-model="editingEvent.source" class="inline-textarea"></textarea>
+                </template>
+                <template v-else>
+                  {{ event.source }}
+                </template>
+              </td>
               <td v-if="isAdmin" class="event-actions">
-                <button @click="editEvent(event)" class="action-btn edit-btn">
-                  编辑
+                <template v-if="editingEvent && editingEvent.id === event.id">
+                  <button @click="saveInlineEvent()" class="action-btn save-btn">
+                    保存
+                  </button>
+                  <button @click="cancelEditEvent()" class="action-btn cancel-btn">
+                    取消
+                  </button>
+                </template>
+                <template v-else>
+                  <button @click="startEditEvent(event)" class="action-btn edit-btn">
+                    编辑
+                  </button>
+                  <button @click="deleteEvent(event.id)" class="action-btn delete-btn">
+                    删除
+                  </button>
+                  <button @click="moveEventUp(event)" class="action-btn move-btn">
+                    ↑
+                  </button>
+                  <button @click="moveEventDown(event)" class="action-btn move-btn">
+                    ↓
+                  </button>
+                </template>
+              </td>
+            </tr>
+            <!-- 新增事件行 -->
+            <tr v-if="isAdmin" class="new-event-row">
+              <td>
+                <input type="number" v-model.number="newEvent.order" class="order-input" />
+              </td>
+              <td>
+                <input type="text" v-model="newEvent.year" class="inline-input" placeholder="公元年份" />
+              </td>
+              <td>
+                <input type="text" v-model="newEvent.age" class="inline-input" placeholder="虚岁" />
+              </td>
+              <td>
+                <input type="text" v-model="newEvent.reignYear" class="inline-input" placeholder="所用年号" />
+              </td>
+              <td>
+                <textarea v-model="newEvent.event" class="inline-textarea" placeholder="正史关键事迹"></textarea>
+              </td>
+              <td>
+                <textarea v-model="newEvent.source" class="inline-textarea" placeholder="正史原文摘要（出处）"></textarea>
+              </td>
+              <td class="event-actions">
+                <button @click="saveNewEvent()" class="action-btn save-btn">
+                  保存
                 </button>
-                <button @click="deleteEvent(event.id)" class="action-btn delete-btn">
-                  删除
+                <button @click="resetNewEvent()" class="action-btn cancel-btn">
+                  取消
                 </button>
               </td>
             </tr>
@@ -152,8 +236,13 @@
         </div>
         <div class="form-group">
           <label>选择模型</label>
-          <select v-model="aiForm.model" required>
+          <select v-model="aiForm.model" required class="model-select">
             <option value="doubao-seed-2-0-pro-260215">Doubao-Seed-2.0-pro</option>
+            <option value="ep-20250721184613-99r2n">Doubao-1.5-pro</option>
+            <option value="ep-20250721184613-99r2n">Doubao-1.5-flash</option>
+            <option value="ep-20250721184613-99r2n">Doubao-2.0-pro</option>
+            <option value="ep-20250721184613-99r2n">Doubao-2.0-flash</option>
+            <option value="ep-20250721184613-99r2n">Doubao-3.0-pro</option>
           </select>
         </div>
         <div class="modal-actions">
@@ -167,44 +256,33 @@
       </div>
     </div>
 
-    <!-- 添加/编辑事件弹窗 -->
-    <div v-if="showAddEventModal" class="modal-overlay" @click="showAddEventModal = false">
+    <!-- AI 事件生成弹窗 -->
+    <div v-if="showEventAiModal" class="modal-overlay" @click="showEventAiModal = false">
       <div class="modal-content" @click.stop>
-        <h3>{{ editingEvent ? '编辑事件' : '添加事件' }}</h3>
-        <form @submit.prevent="saveEvent">
-          <div class="form-group">
-            <label>公元年份</label>
-            <input type="text" v-model="eventForm.year" required />
-          </div>
-          <div class="form-group">
-            <label>虚岁</label>
-            <input type="text" v-model="eventForm.age" required />
-          </div>
-          <div class="form-group">
-            <label>所用年号</label>
-            <input type="text" v-model="eventForm.reignYear" required />
-          </div>
-          <div class="form-group">
-            <label>正史关键事迹</label>
-            <textarea v-model="eventForm.event" required></textarea>
-          </div>
-          <div class="form-group">
-            <label>正史原文摘要（出处）</label>
-            <textarea v-model="eventForm.source" required></textarea>
-          </div>
-          <div class="form-group">
-            <label>顺序</label>
-            <input type="number" v-model.number="eventForm.order" />
-          </div>
-          <div class="modal-actions">
-            <button type="button" @click="showAddEventModal = false" class="cancel-btn">
-              取消
-            </button>
-            <button type="submit" class="save-btn">
-              保存
-            </button>
-          </div>
-        </form>
+        <h3>AI 事件生成</h3>
+        <div class="form-group">
+          <label>人物名称</label>
+          <input type="text" :value="selectedPerson ? selectedPerson.name : ''" disabled />
+        </div>
+        <div class="form-group">
+          <label>选择模型</label>
+          <select v-model="eventAiForm.model" required class="model-select">
+            <option value="doubao-seed-2-0-pro-260215">Doubao-Seed-2.0-pro</option>
+            <option value="ep-20250721184613-99r2n">Doubao-1.5-pro</option>
+            <option value="ep-20250721184613-99r2n">Doubao-1.5-flash</option>
+            <option value="ep-20250721184613-99r2n">Doubao-2.0-pro</option>
+            <option value="ep-20250721184613-99r2n">Doubao-2.0-flash</option>
+            <option value="ep-20250721184613-99r2n">Doubao-3.0-pro</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" @click="showEventAiModal = false" class="cancel-btn">
+            取消
+          </button>
+          <button type="button" @click="generateEventsWithAi" class="save-btn">
+            生成
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -225,13 +303,14 @@ const selectedPerson = ref(null);
 const selectedPersonTimeline = ref([]);
 const searchQuery = ref("");
 const showAddPersonModal = ref(false);
-const showAddEventModal = ref(false);
 const showAiModal = ref(false);
+const showEventAiModal = ref(false);
 const editingPerson = ref(null);
 const editingEvent = ref(null);
+const newEvent = ref({ year: '', age: '', reignYear: '', event: '', source: '', order: 0 });
 const personForm = ref({ name: '', dynasty: '', birthYear: '', deathYear: '' });
-const eventForm = ref({ year: '', age: '', reignYear: '', event: '', source: '', order: 0 });
 const aiForm = ref({ name: '', model: 'doubao-seed-2-0-pro-260215', token: '' });
+const eventAiForm = ref({ model: 'doubao-seed-2-0-pro-260215' });
 
 // 计算用户是否为管理员
 const isAdmin = computed(() => {
@@ -370,33 +449,20 @@ const deletePerson = async (personId) => {
   }
 };
 
-// 打开添加事件弹窗
-const addEvent = () => {
+// 开始编辑事件
+const startEditEvent = (event) => {
   if (!isAdmin.value) {
     alert('您没有权限执行此操作');
     return;
   }
   
-  editingEvent.value = null;
-  eventForm.value = { year: '', age: '', reignYear: '', event: '', source: '', order: selectedPersonTimeline.value.length };
-  showAddEventModal.value = true;
+  // 创建事件的深拷贝，用于编辑
+  editingEvent.value = JSON.parse(JSON.stringify(event));
 };
 
-// 打开编辑事件弹窗
-const editEvent = (event) => {
-  if (!isAdmin.value) {
-    alert('您没有权限执行此操作');
-    return;
-  }
-  
-  editingEvent.value = event;
-  eventForm.value = { ...event };
-  showAddEventModal.value = true;
-};
-
-// 保存事件
-const saveEvent = async () => {
-  if (!isAdmin.value) {
+// 保存内联编辑的事件
+const saveInlineEvent = async () => {
+  if (!isAdmin.value || !editingEvent.value) {
     alert('您没有权限执行此操作');
     return;
   }
@@ -410,26 +476,151 @@ const saveEvent = async () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    if (editingEvent.value) {
-      // 更新事件
-      await fetch(`http://localhost:3000/characters/timeline/${editingEvent.value.id}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(eventForm.value),
-      });
-    } else {
-      // 添加事件
-      await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(eventForm.value),
-      });
-    }
+    // 更新事件
+    await fetch(`http://localhost:3000/characters/timeline/${editingEvent.value.id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(editingEvent.value),
+    });
+    
     await fetchPersonTimeline(selectedPerson.value.id);
-    showAddEventModal.value = false;
+    editingEvent.value = null;
   } catch (error) {
     console.error('保存事件失败:', error);
     alert('保存失败，请确保您有管理员权限');
+  }
+};
+
+// 取消编辑事件
+const cancelEditEvent = () => {
+  editingEvent.value = null;
+};
+
+// 保存新事件
+const saveNewEvent = async () => {
+  if (!isAdmin.value || !selectedPerson.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
+  try {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // 添加事件
+    await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(newEvent.value),
+    });
+    
+    await fetchPersonTimeline(selectedPerson.value.id);
+    resetNewEvent();
+  } catch (error) {
+    console.error('保存事件失败:', error);
+    alert('保存失败，请确保您有管理员权限');
+  }
+};
+
+// 重置新事件表单
+const resetNewEvent = () => {
+  newEvent.value = { year: '', age: '', reignYear: '', event: '', source: '', order: selectedPersonTimeline.value.length };
+};
+
+// 向上移动事件
+const moveEventUp = async (event) => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
+  try {
+    const index = selectedPersonTimeline.value.findIndex(e => e.id === event.id);
+    if (index > 0) {
+      const prevEvent = selectedPersonTimeline.value[index - 1];
+      // 交换顺序
+      const tempOrder = event.order;
+      event.order = prevEvent.order;
+      prevEvent.order = tempOrder;
+      
+      // 更新两个事件的顺序
+      const token = getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      await Promise.all([
+        fetch(`http://localhost:3000/characters/timeline/${event.id}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ order: event.order }),
+        }),
+        fetch(`http://localhost:3000/characters/timeline/${prevEvent.id}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ order: prevEvent.order }),
+        })
+      ]);
+      
+      await fetchPersonTimeline(selectedPerson.value.id);
+    }
+  } catch (error) {
+    console.error('移动事件失败:', error);
+    alert('移动失败，请确保您有管理员权限');
+  }
+};
+
+// 向下移动事件
+const moveEventDown = async (event) => {
+  if (!isAdmin.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
+  try {
+    const index = selectedPersonTimeline.value.findIndex(e => e.id === event.id);
+    if (index < selectedPersonTimeline.value.length - 1) {
+      const nextEvent = selectedPersonTimeline.value[index + 1];
+      // 交换顺序
+      const tempOrder = event.order;
+      event.order = nextEvent.order;
+      nextEvent.order = tempOrder;
+      
+      // 更新两个事件的顺序
+      const token = getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      await Promise.all([
+        fetch(`http://localhost:3000/characters/timeline/${event.id}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ order: event.order }),
+        }),
+        fetch(`http://localhost:3000/characters/timeline/${nextEvent.id}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ order: nextEvent.order }),
+        })
+      ]);
+      
+      await fetchPersonTimeline(selectedPerson.value.id);
+    }
+  } catch (error) {
+    console.error('移动事件失败:', error);
+    alert('移动失败，请确保您有管理员权限');
   }
 };
 
@@ -551,45 +742,24 @@ const generatePersonWithAi = async () => {
     return;
   }
   
-  // 检查是否有可用的 AI Token
-  let token = aiForm.value.token;
-  if (!token && props.user && props.user.aiToken) {
-    token = props.user.aiToken;
-  }
-  
+  // 获取用户 token
+  const token = getToken();
   if (!token) {
-    alert('请先在系统配置中设置 API Token');
+    alert('请先登录');
     return;
   }
   
   try {
-    // 调用豆包 API
-    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+    // 调用后端的 AI 生成人物信息接口
+    const response = await fetch('http://localhost:3000/characters/ai-generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        model: aiForm.value.model,
-        messages: [
-          {
-            role: 'user',
-            content: `请识别历史人物 ${aiForm.value.name}，并提供以下信息：
-1. 所属朝代
-2. 出生年份（公元）
-3. 死亡年份（公元）
-
-请以JSON格式返回，例如：
-{
-  "name": "李世民",
-  "dynasty": "唐",
-  "birthYear": "598",
-  "deathYear": "649"
-}`
-          }
-        ],
-        temperature: 0.7
+        name: aiForm.value.name,
+        model: eventAiForm.value.model
       })
     });
     
@@ -597,11 +767,8 @@ const generatePersonWithAi = async () => {
       throw new Error('API 调用失败');
     }
     
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    
-    // 解析返回的 JSON
-    const personData = JSON.parse(content);
+    // 获取生成的人物信息
+    const personData = await response.json();
     
     // 填充表单
     personForm.value = {
@@ -615,7 +782,59 @@ const generatePersonWithAi = async () => {
     showAiModal.value = false;
   } catch (error) {
     console.error('AI 生成失败:', error);
-    alert('AI 生成失败，请检查 API Token 是否正确并重试');
+    alert('AI 生成失败，请检查您的权限并重试');
+  }
+};
+
+// 生成事件
+const generateEventsWithAi = async () => {
+  if (!isAdmin.value || !selectedPerson.value) {
+    alert('您没有权限执行此操作');
+    return;
+  }
+  
+  try {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // 调用后端的AI生成事件接口
+    const response = await fetch('http://localhost:3000/characters/ai/generate-events', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        name: selectedPerson.value.name,
+        dynasty: selectedPerson.value.dynasty,
+        model: eventAiForm.value.model
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('API 调用失败');
+    }
+    
+    // 获取生成的事件
+    const events = await response.json();
+    
+    // 批量保存事件
+    if (events.length > 0) {
+      await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline/batch`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ events }),
+      });
+    }
+    
+    await fetchPersonTimeline(selectedPerson.value.id);
+    showEventAiModal.value = false;
+    alert('事件生成成功！');
+  } catch (error) {
+    console.error('生成失败:', error);
+    alert('生成失败，请确保您有管理员权限');
   }
 };
 
@@ -837,7 +1056,7 @@ onMounted(async () => {
   gap: 1rem;
 }
 
-.copy-btn, .add-event-btn {
+.copy-btn, .add-event-btn, .ai-btn {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
@@ -862,6 +1081,15 @@ onMounted(async () => {
 
 .add-event-btn:hover {
   background-color: #218838;
+}
+
+.ai-btn {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.ai-btn:hover {
+  background-color: #c82333;
 }
 
 .timeline-table {
@@ -968,7 +1196,9 @@ onMounted(async () => {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select,
+.model-select {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid rgba(212, 175, 55, 0.3);
@@ -977,6 +1207,25 @@ onMounted(async () => {
   color: #d4af37;
   font-size: 1rem;
   font-family: "Noto Serif SC", serif;
+}
+
+.model-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37' viewBox='0 0 16 16'%3E%3Cpath d='M8 11l-5-5 1.41-1.41L8 8.17l3.59-3.58L13 6l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+
+.model-select:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.model-select:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
 }
 
 .form-group textarea {
@@ -1024,6 +1273,87 @@ onMounted(async () => {
 
 .save-btn:hover {
   background-color: #e6c760;
+}
+
+/* 内联编辑样式 */
+.inline-input {
+  width: 100%;
+  padding: 0.25rem;
+  border: 1px solid #d4af37;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  background-color: #fff;
+  color: #2c1810;
+}
+
+.inline-textarea {
+  width: 100%;
+  padding: 0.25rem;
+  border: 1px solid #d4af37;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 60px;
+  background-color: #fff;
+  color: #2c1810;
+}
+
+.new-event-row {
+  background-color: #f9f5f0;
+}
+
+.new-event-row input,
+.new-event-row textarea {
+  background-color: #fff;
+}
+
+/* 编辑状态样式 */
+tr.editing {
+  background-color: #fff9e6;
+}
+
+/* 操作按钮样式 */
+.event-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.event-actions .action-btn {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.event-actions .save-btn {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.event-actions .save-btn:hover {
+  background-color: #218838;
+}
+
+.event-actions .cancel-btn {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.event-actions .cancel-btn:hover {
+  background-color: #5a6268;
+}
+
+.event-actions .move-btn {
+  background-color: #ffc107;
+  color: #212529;
+  font-weight: bold;
+}
+
+.event-actions .move-btn:hover {
+  background-color: #e0a800;
 }
 
 @media (max-width: 768px) {

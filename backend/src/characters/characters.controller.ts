@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Request, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
 import { CharactersService, Person, TimelineEvent } from './characters.service';
 
@@ -9,10 +10,12 @@ export class CharactersController {
     this.charactersService.initializeData();
   }
 
-  // AI 生成人物信息 - 允许未登录用户访问
+  // AI 生成人物信息 - 需要登录用户
+  @UseGuards(AuthGuard('jwt'))
   @Post('ai-generate')
-  async generatePersonWithAi(@Body() body: { name: string }) {
-    return await this.charactersService.generatePersonWithAi(body.name);
+  async generatePersonWithAi(@Body() body: { name: string, model: string }, @Request() req) {
+    const user = req.user;
+    return await this.charactersService.generatePersonWithAi(body.name, user.aiToken, body.model);
   }
 
   // 获取所有人物 - 允许未登录用户访问
@@ -104,5 +107,40 @@ export class CharactersController {
   ): Promise<{ success: boolean }> {
     await this.charactersService.reorderTimelineEvents(+id, body.eventOrders);
     return { success: true };
+  }
+
+  // 批量添加时间线事件 - 仅允许admin用户访问
+  @UseGuards(AdminAuthGuard)
+  @Post(':id/timeline/batch')
+  async batchAddTimelineEvents(
+    @Param('id') id: number,
+    @Body() body: { events: Array<{
+      year: string;
+      age: string;
+      reignYear: string;
+      event: string;
+      source: string;
+      order?: number;
+    }> }
+  ): Promise<{ success: boolean; count: number }> {
+    const count = await this.charactersService.batchAddTimelineEvents(+id, body.events);
+    return { success: true, count };
+  }
+
+  // AI 生成事件 - 仅允许admin用户访问
+  @UseGuards(AdminAuthGuard)
+  @Post('ai/generate-events')
+  async generateEventsWithAi(
+    @Body() body: { name: string; dynasty: string; model: string },
+    @Request() req
+  ): Promise<Array<{
+    year: string;
+    age: string;
+    reignYear: string;
+    event: string;
+    source: string;
+  }>> {
+    const user = req.user;
+    return await this.charactersService.generateEventsWithAi(body.name, body.dynasty, body.model, user.aiToken);
   }
 }
