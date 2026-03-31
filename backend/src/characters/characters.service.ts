@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 // 人物数据结构
-interface Person {
+export interface Person {
   id: number;
   name: string;
   dynasty: string;
@@ -10,7 +10,7 @@ interface Person {
 }
 
 // 人物时间线数据结构
-interface TimelineEvent {
+export interface TimelineEvent {
   id: number;
   personId: number;
   year: string;
