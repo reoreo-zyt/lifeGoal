@@ -57,9 +57,6 @@
           <button class="copy-btn" @click="copyTable(selectedPerson)">
             复制表格
           </button>
-          <button v-if="isAdmin" class="add-event-btn" @click="resetNewEvent()">
-            添加事件
-          </button>
           <button v-if="isAdmin" class="ai-btn" @click="showEventAiModal = true">
             AI生成事件
           </button>
@@ -203,6 +200,22 @@
             </div>
           </div>
           <div class="form-group">
+            <label>背景</label>
+            <input type="text" v-model="personForm.background" required />
+          </div>
+          <div class="form-group">
+            <label>出生地</label>
+            <input type="text" v-model="personForm.birthPlace" required />
+          </div>
+          <div class="form-group">
+            <label>性别</label>
+            <input type="text" v-model="personForm.gender" required />
+          </div>
+          <div class="form-group">
+            <label>性格</label>
+            <input type="text" v-model="personForm.personality" required />
+          </div>
+          <div class="form-group">
             <label>朝代</label>
             <input type="text" v-model="personForm.dynasty" required />
           </div>
@@ -251,6 +264,36 @@
           </button>
           <button type="button" @click="generatePersonWithAi" class="save-btn">
             生成
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 思考内容弹窗 -->
+    <div v-if="showAiThinkingModal" class="modal-overlay" @click="closeAiThinkingModal">
+      <div class="modal-content" @click.stop>
+        <h3>AI 正在思考...</h3>
+        <div class="ai-thinking-content">
+          <p v-for="(chunk, index) in aiThinkingContent" :key="index">{{ chunk }}</p>
+        </div>
+        <div class="modal-actions">
+          <button type="button" @click="closeAiThinkingModal" class="cancel-btn">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 事件生成思考内容弹窗 -->
+    <div v-if="showAiEventThinkingModal" class="modal-overlay" @click="closeAiEventThinkingModal">
+      <div class="modal-content" @click.stop>
+        <h3>AI 正在生成事件...</h3>
+        <div class="ai-thinking-content">
+          <p v-for="(chunk, index) in aiEventThinkingContent" :key="index">{{ chunk }}</p>
+        </div>
+        <div class="modal-actions">
+          <button type="button" @click="closeAiEventThinkingModal" class="cancel-btn">
+            取消
           </button>
         </div>
       </div>
@@ -305,10 +348,14 @@ const searchQuery = ref("");
 const showAddPersonModal = ref(false);
 const showAiModal = ref(false);
 const showEventAiModal = ref(false);
+const showAiThinkingModal = ref(false);
+const showAiEventThinkingModal = ref(false);
+const aiThinkingContent = ref([]);
+const aiEventThinkingContent = ref([]);
 const editingPerson = ref(null);
 const editingEvent = ref(null);
 const newEvent = ref({ year: '', age: '', reignYear: '', event: '', source: '', order: 0 });
-const personForm = ref({ name: '', dynasty: '', birthYear: '', deathYear: '' });
+const personForm = ref({ name: '', background: '', birthPlace: '', gender: '', personality: '', dynasty: '', birthYear: '', deathYear: '' });
 const aiForm = ref({ name: '', model: 'doubao-seed-2-0-pro-260215', token: '' });
 const eventAiForm = ref({ model: 'doubao-seed-2-0-pro-260215' });
 
@@ -358,7 +405,7 @@ const selectPerson = async (person) => {
 // 打开添加人物弹窗
 const addPerson = () => {
   editingPerson.value = null;
-  personForm.value = { name: '', dynasty: '', birthYear: '', deathYear: '' };
+  personForm.value = { name: '', background: '', birthPlace: '', gender: '', personality: '', dynasty: '', birthYear: '', deathYear: '' };
   showAddPersonModal.value = true;
 };
 
@@ -367,6 +414,10 @@ const editPerson = (person) => {
   editingPerson.value = person;
   personForm.value = { 
     name: person.name, 
+    background: person.background || '', 
+    birthPlace: person.birthPlace || '', 
+    gender: person.gender || '', 
+    personality: person.personality || '', 
     dynasty: person.dynasty, 
     birthYear: person.birthYear || '', 
     deathYear: person.deathYear || '' 
@@ -395,19 +446,27 @@ const savePerson = async () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
+    // 准备数据，确保包含所有必要字段
+    const personData = {
+      ...personForm.value,
+      userId: 1, // 假设当前用户ID为1，实际应该从登录用户信息中获取
+      birthYear: personForm.value.birthYear ? parseInt(personForm.value.birthYear) : 0,
+      deathYear: personForm.value.deathYear ? parseInt(personForm.value.deathYear) : null
+    };
+    
     if (editingPerson.value) {
       // 更新人物
       await fetch(`http://localhost:3000/characters/${editingPerson.value.id}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify(personForm.value),
+        body: JSON.stringify(personData),
       });
     } else {
       // 添加人物
       await fetch('http://localhost:3000/characters', {
         method: 'POST',
         headers,
-        body: JSON.stringify(personForm.value),
+        body: JSON.stringify(personData),
       });
     }
     await fetchPersons();
@@ -735,6 +794,18 @@ const copyTable = (person) => {
   alert("表格已复制到剪贴板，可直接粘贴。");
 };
 
+// 关闭 AI 思考内容弹窗
+const closeAiThinkingModal = () => {
+  showAiThinkingModal.value = false;
+  aiThinkingContent.value = [];
+};
+
+// 关闭 AI 事件生成思考内容弹窗
+const closeAiEventThinkingModal = () => {
+  showAiEventThinkingModal.value = false;
+  aiEventThinkingContent.value = [];
+};
+
 // AI 生成人物
 const generatePersonWithAi = async () => {
   if (!aiForm.value.name) {
@@ -750,6 +821,10 @@ const generatePersonWithAi = async () => {
   }
   
   try {
+    // 打开 AI 思考内容弹窗
+    showAiThinkingModal.value = true;
+    aiThinkingContent.value = [];
+    
     // 调用后端的 AI 生成人物信息接口
     const response = await fetch('http://localhost:3000/characters/ai-generate', {
       method: 'POST',
@@ -759,7 +834,7 @@ const generatePersonWithAi = async () => {
       },
       body: JSON.stringify({
         name: aiForm.value.name,
-        model: eventAiForm.value.model
+        model: aiForm.value.model
       })
     });
     
@@ -767,21 +842,79 @@ const generatePersonWithAi = async () => {
       throw new Error('API 调用失败');
     }
     
-    // 获取生成的人物信息
-    const personData = await response.json();
+    // 处理流式响应
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let personData = null;
     
-    // 填充表单
-    personForm.value = {
-      name: personData.name,
-      dynasty: personData.dynasty,
-      birthYear: personData.birthYear || '',
-      deathYear: personData.deathYear || '',
-    };
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      
+      // 解码响应数据
+      const chunk = decoder.decode(value, { stream: true });
+      console.log(chunk, '==chunk==')
+      
+      // 处理 SSE 格式的数据
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.substring(6);
+          if (data) {
+            try {
+              const parsed = JSON.parse(data);
+              console.log(parsed, '==parsed==')
+              if (parsed.content) {
+                // 添加 AI 思考内容
+                aiThinkingContent.value.push(parsed.content);
+              }
+              if (parsed.complete) {
+                // 生成完成，获取完整数据
+                personData = parsed.data;
+              }
+              if (parsed.error) {
+                // 处理错误
+                throw new Error(parsed.error);
+              }
+            } catch (e) {
+              console.error('解析数据失败:', e);
+            }
+          }
+        }
+      }
+    }
     
-    // 关闭 AI 弹窗，返回人物添加弹窗
-    showAiModal.value = false;
+    // 关闭 AI 思考内容弹窗
+    showAiThinkingModal.value = false;
+    aiThinkingContent.value = [];
+    
+    console.log(personData, '==personData==')
+
+    if (personData) {
+      // 填充表单
+      personForm.value = {
+        name: personData.name,
+        background: personData.background || '',
+        birthPlace: personData.birthPlace || '',
+        gender: personData.gender || '',
+        personality: personData.personality || '',
+        dynasty: personData.dynasty,
+        birthYear: personData.birthYear || '',
+        deathYear: personData.deathYear || '',
+      };
+      
+      // 关闭 AI 弹窗，返回人物添加弹窗
+      showAiModal.value = false;
+    } else {
+      throw new Error('未获取到完整的人物数据');
+    }
   } catch (error) {
     console.error('AI 生成失败:', error);
+    // 关闭 AI 思考内容弹窗
+    showAiThinkingModal.value = false;
+    aiThinkingContent.value = [];
     alert('AI 生成失败，请检查您的权限并重试');
   }
 };
@@ -794,6 +927,10 @@ const generateEventsWithAi = async () => {
   }
   
   try {
+    // 打开 AI 事件生成思考内容弹窗
+    showAiEventThinkingModal.value = true;
+    aiEventThinkingContent.value = [];
+    
     const token = getToken();
     const headers = {
       'Content-Type': 'application/json',
@@ -808,7 +945,6 @@ const generateEventsWithAi = async () => {
       headers,
       body: JSON.stringify({
         name: selectedPerson.value.name,
-        dynasty: selectedPerson.value.dynasty,
         model: eventAiForm.value.model
       })
     });
@@ -817,16 +953,69 @@ const generateEventsWithAi = async () => {
       throw new Error('API 调用失败');
     }
     
-    // 获取生成的事件
-    const events = await response.json();
+    // 处理流式响应
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let events = null;
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      
+      // 解码响应数据
+      const chunk = decoder.decode(value, { stream: true });
+      console.log('收到流式数据:', chunk);
+      
+      // 处理 SSE 格式的数据
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.substring(6);
+          if (data) {
+            try {
+              const parsed = JSON.parse(data);
+              console.log('解析后的数据:', parsed);
+              if (parsed.content) {
+                // 添加 AI 思考内容
+                aiEventThinkingContent.value.push(parsed.content);
+              }
+              if (parsed.complete) {
+                // 生成完成，获取完整数据
+                events = parsed.data;
+                console.log('获取到的事件数据:', events);
+              }
+              if (parsed.error) {
+                // 处理错误
+                throw new Error(parsed.error);
+              }
+            } catch (e) {
+              console.error('解析数据失败:', e);
+            }
+          }
+        }
+      }
+    }
+    
+    // 关闭 AI 事件生成思考内容弹窗
+    showAiEventThinkingModal.value = false;
+    aiEventThinkingContent.value = [];
     
     // 批量保存事件
-    if (events.length > 0) {
-      await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline/batch`, {
+    if (events && events.length > 0) {
+      const batchResponse = await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline/batch`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ events }),
       });
+      
+      if (!batchResponse.ok) {
+        throw new Error('批量保存事件失败');
+      }
+      
+      const batchResult = await batchResponse.json();
+      console.log('批量保存事件成功:', batchResult);
     }
     
     await fetchPersonTimeline(selectedPerson.value.id);
@@ -834,6 +1023,9 @@ const generateEventsWithAi = async () => {
     alert('事件生成成功！');
   } catch (error) {
     console.error('生成失败:', error);
+    // 关闭 AI 事件生成思考内容弹窗
+    showAiEventThinkingModal.value = false;
+    aiEventThinkingContent.value = [];
     alert('生成失败，请确保您有管理员权限');
   }
 };
@@ -1326,6 +1518,41 @@ tr.editing {
   cursor: pointer;
   font-size: 0.8rem;
   transition: all 0.3s ease;
+}
+
+/* AI 思考内容样式 */
+.ai-thinking-content {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-family: "Noto Serif SC", serif;
+  line-height: 1.6;
+}
+
+.ai-thinking-content p {
+  margin: 0.5rem 0;
+  color: #d4af37;
+}
+
+.ai-thinking-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ai-thinking-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.ai-thinking-content::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.5);
+  border-radius: 4px;
+}
+
+.ai-thinking-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.8);
 }
 
 .event-actions .save-btn {

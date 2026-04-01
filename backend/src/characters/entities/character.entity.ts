@@ -15,6 +15,9 @@ export class Character {
   @Column()
   birthYear: number;
 
+  @Column({ nullable: true })
+  deathYear: number;
+
   @Column()
   birthPlace: string;
 
@@ -23,6 +26,9 @@ export class Character {
 
   @Column()
   personality: string;
+
+  @Column()
+  dynasty: string;
 
   @Column()
   userId: number;

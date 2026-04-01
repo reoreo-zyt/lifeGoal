@@ -10,7 +10,10 @@ export class CharacterEvent {
   characterId: number;
 
   @Column()
-  year: number;
+  year: string;
+
+  @Column()
+  age: string;
 
   @Column()
   title: string;
@@ -20,6 +23,9 @@ export class CharacterEvent {
 
   @Column()
   impact: string;
+
+  @Column({ default: 0 })
+  order: number;
 
   @CreateDateColumn()
   createdAt: Date;

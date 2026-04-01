@@ -1,29 +1,21 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Request, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { CharactersService } from './characters.service';
 import { Character } from './entities/character.entity';
 import { CharacterEvent } from './entities/character-event.entity';
+import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
 
 @Controller('characters')
 export class CharactersController {
   constructor(private readonly charactersService: CharactersService) {}
 
-  // AI 生成人物信息 - 需要登录用户
-  @UseGuards(AuthGuard('jwt'))
-  @Post('ai-generate')
-  async generatePersonWithAi(@Body() body: { name: string, model: string }, @Request() req) {
-    const user = req.user;
-    return await this.charactersService.generatePersonWithAi(body.name, user.aiToken, body.model);
-  }
-
-  // 获取所有人物 - 允许未登录用户访问
+  // 获取所有人物
   @Get()
   async findAll(): Promise<Character[]> {
     return await this.charactersService.findAll();
   }
 
-  // 根据ID获取人物 - 允许未登录用户访问
+  // 获取单个人物
   @Get(':id')
   async findOne(@Param('id') id: number): Promise<Character | null> {
     return await this.charactersService.findOne(+id);
@@ -32,14 +24,14 @@ export class CharactersController {
   // 创建人物 - 仅允许admin用户访问
   @UseGuards(AdminAuthGuard)
   @Post()
-  async create(@Body() body: { name: string; gender: string; birthYear: number; birthPlace: string; background: string; personality: string; userId: number }): Promise<Character> {
+  async create(@Body() body: { name: string; gender: string; birthYear: number; deathYear?: number; birthPlace: string; background: string; personality: string; dynasty: string; userId: number }): Promise<Character> {
     return await this.charactersService.create(body);
   }
 
   // 更新人物 - 仅允许admin用户访问
   @UseGuards(AdminAuthGuard)
   @Put(':id')
-  async update(@Param('id') id: number, @Body() body: { name?: string; gender?: string; birthYear?: number; birthPlace?: string; background?: string; personality?: string }): Promise<Character | null> {
+  async update(@Param('id') id: number, @Body() body: { name?: string; gender?: string; birthYear?: number; deathYear?: number; birthPlace?: string; background?: string; personality?: string; dynasty?: string }): Promise<Character | null> {
     return await this.charactersService.update(+id, body);
   }
 
@@ -50,9 +42,9 @@ export class CharactersController {
     return { success: await this.charactersService.remove(+id) };
   }
 
-  // 获取人物的时间线 - 允许未登录用户访问
+  // 获取人物的时间线
   @Get(':id/timeline')
-  async getTimeline(@Param('id') id: number): Promise<CharacterEvent[]> {
+  async getTimeline(@Param('id') id: number): Promise<Array<{ id: number; year: string; age: string; reignYear: string; event: string; source: string; order: number }>> {
     return await this.charactersService.getTimeline(+id);
   }
 
@@ -62,10 +54,12 @@ export class CharactersController {
   async addTimelineEvent(
     @Param('id') id: number,
     @Body() body: {
-      year: number;
-      title: string;
-      description: string;
-      impact: string;
+      year: string;
+      age: string;
+      reignYear: string;
+      event: string;
+      source: string;
+      order: number;
     }
   ): Promise<CharacterEvent> {
     return await this.charactersService.addTimelineEvent(+id, body);
@@ -77,10 +71,12 @@ export class CharactersController {
   async updateTimelineEvent(
     @Param('eventId') eventId: number,
     @Body() body: {
-      year?: number;
-      title?: string;
-      description?: string;
-      impact?: string;
+      year?: string;
+      age?: string;
+      reignYear?: string;
+      event?: string;
+      source?: string;
+      order?: number;
     }
   ): Promise<CharacterEvent | null> {
     return await this.charactersService.updateTimelineEvent(+eventId, body);
@@ -99,29 +95,90 @@ export class CharactersController {
   async batchAddTimelineEvents(
     @Param('id') id: number,
     @Body() body: { events: Array<{
-      year: number;
-      title: string;
-      description: string;
-      impact: string;
+      year: string;
+      age: string;
+      reignYear: string;
+      event: string;
+      source: string;
     }> }
   ): Promise<{ success: boolean; count: number }> {
     const count = await this.charactersService.batchAddTimelineEvents(+id, body.events);
     return { success: true, count };
   }
 
-  // AI 生成事件 - 仅允许admin用户访问
+  // AI 生成人物信息 - 仅允许admin用户访问（流式）
+  @UseGuards(AdminAuthGuard)
+  @Post('ai-generate')
+  async generatePersonWithAi(
+    @Body() body: { name: string; model: string },
+    @Request() req,
+    @Res() res: Response
+  ) {
+    const user = req.user;
+    
+    // 设置响应头为流式
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // 回调函数，用于实时发送 AI 思考的内容
+    const callback = (chunk: string) => {
+      res.write(`data: ${JSON.stringify({ content: chunk })}
+
+`);
+    };
+    
+    try {
+      const result = await this.charactersService.generatePersonWithAi(body.name, user.aiToken, body.model, callback);
+      // 发送完成信号
+      res.write(`data: ${JSON.stringify({ complete: true, data: result })}
+
+`);
+      res.end();
+    } catch (error) {
+      console.error('AI 生成失败:', error);
+      res.write(`data: ${JSON.stringify({ error: 'AI 生成失败' })}
+
+`);
+      res.end();
+    }
+  }
+
+  // AI 生成事件 - 仅允许admin用户访问（流式）
   @UseGuards(AdminAuthGuard)
   @Post('ai/generate-events')
   async generateEventsWithAi(
     @Body() body: { name: string; model: string },
-    @Request() req
-  ): Promise<Array<{
-    year: number;
-    title: string;
-    description: string;
-    impact: string;
-  }>> {
+    @Request() req,
+    @Res() res: Response
+  ) {
     const user = req.user;
-    return await this.charactersService.generateEventsWithAi(body.name, body.model, user.aiToken);
+    
+    // 设置响应头为流式
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // 回调函数，用于实时发送 AI 思考的内容
+    const callback = (chunk: string) => {
+      res.write(`data: ${JSON.stringify({ content: chunk })}
+
+`);
+    };
+    
+    try {
+      const result = await this.charactersService.generateEventsWithAi(body.name, body.model, user.aiToken, callback);
+      // 发送完成信号
+      res.write(`data: ${JSON.stringify({ complete: true, data: result })}
+
+`);
+      res.end();
+    } catch (error) {
+      console.error('AI 生成失败:', error);
+      res.write(`data: ${JSON.stringify({ error: 'AI 生成失败' })}
+
+`);
+      res.end();
+    }
   }
 }
