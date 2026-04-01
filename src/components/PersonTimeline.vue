@@ -828,7 +828,7 @@ const generatePersonWithAi = async () => {
     aiThinkingContent.value = [];
     
     // 调用后端的 AI 生成人物信息接口
-    const response = await fetch('${baseURL}/characters/ai-generate', {
+    const response = await fetch(`${baseURL}/characters/ai-generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

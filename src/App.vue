@@ -58,7 +58,7 @@ const handleSubmit = async () => {
   try {
     let response;
     if (activeTab.value === 'login') {
-      response = await fetch('baseURL/auth/login', {
+      response = await fetch(`${baseURL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ const handleSubmit = async () => {
         body: JSON.stringify({ email: email.value, password: password.value }),
       });
     } else {
-      response = await fetch('baseURL/auth/register', {
+      response = await fetch(`${baseURL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ const saveAiSettings = async () => {
   
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('baseURL/users/ai-token', {
+    const response = await fetch(`${baseURL}/users/ai-token`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
