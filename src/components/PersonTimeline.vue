@@ -24,8 +24,9 @@
         v-for="person in filteredPersons"
         :key="person.id"
         class="person-item"
+        @click="selectPerson(person)"
       >
-        <div class="person-info" @click="selectPerson(person)">
+        <div class="person-info">
           <span class="person-name">{{ person.name }}</span>
           <span class="person-dynasty">{{ person.dynasty }}</span>
           <span v-if="person.birthYear || person.deathYear" class="person-years">
@@ -43,148 +44,137 @@
       </div>
     </div>
 
-    <!-- 人物详细信息 -->
-    <div v-if="selectedPerson" class="person-details">
-      <div class="detail-header">
-        <h3 class="person-name">
-          {{ selectedPerson.name }} 
-          <span class="person-dynasty">{{ selectedPerson.dynasty }}</span>
-          <span v-if="selectedPerson.birthYear || selectedPerson.deathYear" class="person-years">
-            ({{ selectedPerson.birthYear || '?' }}-{{ selectedPerson.deathYear || '?' }})
-          </span>
-        </h3>
-        <div class="detail-actions">
-          <button class="copy-btn" @click="copyTable(selectedPerson)">
-            复制表格
-          </button>
-          <button v-if="isAdmin" class="ai-btn" @click="showEventAiModal = true">
-            AI生成事件
-          </button>
+    <!-- 人物详细信息弹窗（从底部弹出） -->
+    <div v-if="showPersonModal && selectedPerson" class="modal-overlay bottom-modal" @click="closePersonModal">
+      <div class="modal-content bottom-modal-content" @click.stop>
+        <div class="detail-header">
+          <h3 class="person-name">
+            {{ selectedPerson.name }} 
+            <span class="person-dynasty">{{ selectedPerson.dynasty }}</span>
+            <span v-if="selectedPerson.birthYear || selectedPerson.deathYear" class="person-years">
+              ({{ selectedPerson.birthYear || '?' }}-{{ selectedPerson.deathYear || '?' }})
+            </span>
+          </h3>
+          <div class="detail-actions">
+            <button class="copy-btn" @click="copyTable(selectedPerson)">
+              复制表格
+            </button>
+            <button v-if="isAdmin" class="ai-btn" @click="showEventAiModal = true">
+              AI生成事件
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="timeline-table">
-        <table :id="`timeline-${selectedPerson.id}`">
-          <thead>
-            <tr>
-              <th>顺序</th>
-              <th>公元年份</th>
-              <th>{{ selectedPerson.name }}虚岁</th>
-              <th>所用年号</th>
-              <th>正史关键事迹</th>
-              <th>正史原文摘要（出处）</th>
-              <th v-if="isAdmin">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- 现有事件 -->
-            <tr v-for="event in selectedPersonTimeline" :key="event.id" :class="{ 'editing': editingEvent && editingEvent.id === event.id }">
-              <td v-if="isAdmin">
-                <input 
-                  type="number" 
-                  v-model.number="event.order" 
-                  @change="updateEventOrder(event)"
-                  class="order-input"
-                />
-              </td>
-              <td v-else>{{ event.order }}</td>
-              <td>
-                <template v-if="editingEvent && editingEvent.id === event.id">
-                  <input type="text" v-model="editingEvent.year" class="inline-input" />
-                </template>
-                <template v-else>
-                  {{ event.year }}
-                </template>
-              </td>
-              <td>
-                <template v-if="editingEvent && editingEvent.id === event.id">
-                  <input type="text" v-model="editingEvent.age" class="inline-input" />
-                </template>
-                <template v-else>
-                  {{ event.age }}
-                </template>
-              </td>
-              <td>
-                <template v-if="editingEvent && editingEvent.id === event.id">
-                  <input type="text" v-model="editingEvent.reignYear" class="inline-input" />
-                </template>
-                <template v-else>
-                  {{ event.reignYear }}
-                </template>
-              </td>
-              <td>
-                <template v-if="editingEvent && editingEvent.id === event.id">
-                  <textarea v-model="editingEvent.event" class="inline-textarea"></textarea>
-                </template>
-                <template v-else>
-                  {{ event.event }}
-                </template>
-              </td>
-              <td>
-                <template v-if="editingEvent && editingEvent.id === event.id">
-                  <textarea v-model="editingEvent.source" class="inline-textarea"></textarea>
-                </template>
-                <template v-else>
-                  {{ event.source }}
-                </template>
-              </td>
-              <td v-if="isAdmin" class="event-actions">
-                <template v-if="editingEvent && editingEvent.id === event.id">
-                  <button @click="saveInlineEvent()" class="action-btn save-btn">
+        <div class="timeline-table">
+          <table :id="`timeline-${selectedPerson.id}`">
+            <thead>
+              <tr>
+                <th>公元年份</th>
+                <th>{{ selectedPerson.name }}虚岁</th>
+                <th>所用年号</th>
+                <th>正史关键事迹</th>
+                <th>正史原文摘要（出处）</th>
+                <th v-if="isAdmin">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- 现有事件 -->
+              <tr v-for="event in selectedPersonTimeline" :key="event.id" :class="{ 'editing': editingEvent && editingEvent.id === event.id }">
+                <td>
+                  <template v-if="editingEvent && editingEvent.id === event.id">
+                    <input type="text" v-model="editingEvent.year" class="inline-input" />
+                  </template>
+                  <template v-else>
+                    {{ event.year }}
+                  </template>
+                </td>
+                <td>
+                  <template v-if="editingEvent && editingEvent.id === event.id">
+                    <input type="text" v-model="editingEvent.age" class="inline-input" />
+                  </template>
+                  <template v-else>
+                    {{ event.age }}
+                  </template>
+                </td>
+                <td>
+                  <template v-if="editingEvent && editingEvent.id === event.id">
+                    <input type="text" v-model="editingEvent.reignYear" class="inline-input" />
+                  </template>
+                  <template v-else>
+                    {{ event.reignYear }}
+                  </template>
+                </td>
+                <td>
+                  <template v-if="editingEvent && editingEvent.id === event.id">
+                    <textarea v-model="editingEvent.event" class="inline-textarea"></textarea>
+                  </template>
+                  <template v-else>
+                    {{ event.event }}
+                  </template>
+                </td>
+                <td>
+                  <template v-if="editingEvent && editingEvent.id === event.id">
+                    <textarea v-model="editingEvent.source" class="inline-textarea"></textarea>
+                  </template>
+                  <template v-else>
+                    {{ event.source }}
+                  </template>
+                </td>
+                <td v-if="isAdmin" class="event-actions">
+                  <template v-if="editingEvent && editingEvent.id === event.id">
+                    <button @click="saveInlineEvent()" class="action-btn save-btn">
+                      保存
+                    </button>
+                    <button @click="cancelEditEvent()" class="action-btn cancel-btn">
+                      取消
+                    </button>
+                  </template>
+                  <template v-else>
+                    <button @click="startEditEvent(event)" class="action-btn edit-btn">
+                      编辑
+                    </button>
+                    <button @click="deleteEvent(event.id)" class="action-btn delete-btn">
+                      删除
+                    </button>
+                    <button @click="moveEventUp(event)" class="action-btn move-btn">
+                      ↑
+                    </button>
+                    <button @click="moveEventDown(event)" class="action-btn move-btn">
+                      ↓
+                    </button>
+                  </template>
+                </td>
+              </tr>
+              <!-- 新增事件行 -->
+              <tr v-if="isAdmin" class="new-event-row">
+                <td>
+                  <input type="text" v-model="newEvent.year" class="inline-input" placeholder="公元年份" />
+                </td>
+                <td>
+                  <input type="text" v-model="newEvent.age" class="inline-input" placeholder="虚岁" />
+                </td>
+                <td>
+                  <input type="text" v-model="newEvent.reignYear" class="inline-input" placeholder="所用年号" />
+                </td>
+                <td>
+                  <textarea v-model="newEvent.event" class="inline-textarea" placeholder="正史关键事迹"></textarea>
+                </td>
+                <td>
+                  <textarea v-model="newEvent.source" class="inline-textarea" placeholder="正史原文摘要（出处）"></textarea>
+                </td>
+                <td class="event-actions">
+                  <button @click="saveNewEvent()" class="action-btn save-btn">
                     保存
                   </button>
-                  <button @click="cancelEditEvent()" class="action-btn cancel-btn">
+                  <button @click="resetNewEvent()" class="action-btn cancel-btn">
                     取消
                   </button>
-                </template>
-                <template v-else>
-                  <button @click="startEditEvent(event)" class="action-btn edit-btn">
-                    编辑
-                  </button>
-                  <button @click="deleteEvent(event.id)" class="action-btn delete-btn">
-                    删除
-                  </button>
-                  <button @click="moveEventUp(event)" class="action-btn move-btn">
-                    ↑
-                  </button>
-                  <button @click="moveEventDown(event)" class="action-btn move-btn">
-                    ↓
-                  </button>
-                </template>
-              </td>
-            </tr>
-            <!-- 新增事件行 -->
-            <tr v-if="isAdmin" class="new-event-row">
-              <td>
-                <input type="number" v-model.number="newEvent.order" class="order-input" />
-              </td>
-              <td>
-                <input type="text" v-model="newEvent.year" class="inline-input" placeholder="公元年份" />
-              </td>
-              <td>
-                <input type="text" v-model="newEvent.age" class="inline-input" placeholder="虚岁" />
-              </td>
-              <td>
-                <input type="text" v-model="newEvent.reignYear" class="inline-input" placeholder="所用年号" />
-              </td>
-              <td>
-                <textarea v-model="newEvent.event" class="inline-textarea" placeholder="正史关键事迹"></textarea>
-              </td>
-              <td>
-                <textarea v-model="newEvent.source" class="inline-textarea" placeholder="正史原文摘要（出处）"></textarea>
-              </td>
-              <td class="event-actions">
-                <button @click="saveNewEvent()" class="action-btn save-btn">
-                  保存
-                </button>
-                <button @click="resetNewEvent()" class="action-btn cancel-btn">
-                  取消
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="close-btn" @click="closePersonModal">关闭</button>
       </div>
-      <button class="close-btn" @click="selectedPerson = null">关闭</button>
     </div>
 
     <!-- 添加人物弹窗 -->
@@ -354,6 +344,7 @@ const aiThinkingContent = ref([]);
 const aiEventThinkingContent = ref([]);
 const editingPerson = ref(null);
 const editingEvent = ref(null);
+const showPersonModal = ref(false);
 const newEvent = ref({ year: '', age: '', reignYear: '', event: '', source: '', order: 0 });
 const personForm = ref({ name: '', background: '', birthPlace: '', gender: '', personality: '', dynasty: '', birthYear: '', deathYear: '' });
 const aiForm = ref({ name: '', model: 'doubao-seed-2-0-pro-260215', token: '' });
@@ -400,6 +391,14 @@ const fetchPersonTimeline = async (personId) => {
 const selectPerson = async (person) => {
   selectedPerson.value = person;
   await fetchPersonTimeline(person.id);
+  showPersonModal.value = true;
+};
+
+// 关闭人物弹窗
+const closePersonModal = () => {
+  showPersonModal.value = false;
+  selectedPerson.value = null;
+  selectedPersonTimeline.value = [];
 };
 
 // 打开添加人物弹窗
@@ -1123,6 +1122,7 @@ onMounted(async () => {
   transition: all 0.3s ease;
   font-family: "Noto Serif SC", serif;
   color: #2c1810;
+  cursor: pointer;
 }
 
 .person-item:hover {
@@ -1366,6 +1366,22 @@ onMounted(async () => {
   width: 90%;
   max-width: 500px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* 底部弹窗样式 */
+.bottom-modal {
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bottom-modal-content {
+  width: 100%;
+  max-width: none;
+  border-radius: 8px 8px 0 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 2rem;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
 }
 
 .modal-content h3 {
