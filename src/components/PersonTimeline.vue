@@ -324,6 +324,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
+// API基础URL
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'baseURL';
+
 const props = defineProps({
   user: {
     type: Object,
@@ -368,7 +371,7 @@ const filteredPersons = computed(() => {
 // 获取所有人物
 const fetchPersons = async () => {
   try {
-    const response = await fetch('http://localhost:3000/characters');
+    const response = await fetch(`${baseURL}/characters`);
     const data = await response.json();
     persons.value = data;
   } catch (error) {
@@ -379,7 +382,7 @@ const fetchPersons = async () => {
 // 获取人物时间线
 const fetchPersonTimeline = async (personId) => {
   try {
-    const response = await fetch(`http://localhost:3000/characters/${personId}/timeline`);
+    const response = await fetch(`${baseURL}/characters/${personId}/timeline`);
     const data = await response.json();
     selectedPersonTimeline.value = data;
   } catch (error) {
@@ -455,14 +458,14 @@ const savePerson = async () => {
     
     if (editingPerson.value) {
       // 更新人物
-      await fetch(`http://localhost:3000/characters/${editingPerson.value.id}`, {
+      await fetch(`${baseURL}/characters/${editingPerson.value.id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(personData),
       });
     } else {
       // 添加人物
-      await fetch('http://localhost:3000/characters', {
+      await fetch(`${baseURL}/characters`, {
         method: 'POST',
         headers,
         body: JSON.stringify(personData),
@@ -491,7 +494,7 @@ const deletePerson = async (personId) => {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      await fetch(`http://localhost:3000/characters/${personId}`, {
+      await fetch(`${baseURL}/characters/${personId}`, {
         method: 'DELETE',
         headers,
       });
@@ -535,7 +538,7 @@ const saveInlineEvent = async () => {
     }
     
     // 更新事件
-    await fetch(`http://localhost:3000/characters/timeline/${editingEvent.value.id}`, {
+    await fetch(`${baseURL}/characters/timeline/${editingEvent.value.id}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(editingEvent.value),
@@ -571,7 +574,7 @@ const saveNewEvent = async () => {
     }
     
     // 添加事件
-    await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline`, {
+    await fetch(`${baseURL}/characters/${selectedPerson.value.id}/timeline`, {
       method: 'POST',
       headers,
       body: JSON.stringify(newEvent.value),
@@ -616,12 +619,12 @@ const moveEventUp = async (event) => {
       }
       
       await Promise.all([
-        fetch(`http://localhost:3000/characters/timeline/${event.id}`, {
+        fetch(`${baseURL}/characters/timeline/${event.id}`, {
           method: 'PUT',
           headers,
           body: JSON.stringify({ order: event.order }),
         }),
-        fetch(`http://localhost:3000/characters/timeline/${prevEvent.id}`, {
+        fetch(`${baseURL}/characters/timeline/${prevEvent.id}`, {
           method: 'PUT',
           headers,
           body: JSON.stringify({ order: prevEvent.order }),
@@ -662,12 +665,12 @@ const moveEventDown = async (event) => {
       }
       
       await Promise.all([
-        fetch(`http://localhost:3000/characters/timeline/${event.id}`, {
+        fetch(`${baseURL}/characters/timeline/${event.id}`, {
           method: 'PUT',
           headers,
           body: JSON.stringify({ order: event.order }),
         }),
-        fetch(`http://localhost:3000/characters/timeline/${nextEvent.id}`, {
+        fetch(`${baseURL}/characters/timeline/${nextEvent.id}`, {
           method: 'PUT',
           headers,
           body: JSON.stringify({ order: nextEvent.order }),
@@ -697,7 +700,7 @@ const deleteEvent = async (eventId) => {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      await fetch(`http://localhost:3000/characters/timeline/${eventId}`, {
+      await fetch(`${baseURL}/characters/timeline/${eventId}`, {
         method: 'DELETE',
         headers,
       });
@@ -725,7 +728,7 @@ const updateEventOrder = async (event) => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    await fetch(`http://localhost:3000/characters/timeline/${event.id}`, {
+    await fetch(`${baseURL}/characters/timeline/${event.id}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify({ order: event.order }),
@@ -825,7 +828,7 @@ const generatePersonWithAi = async () => {
     aiThinkingContent.value = [];
     
     // 调用后端的 AI 生成人物信息接口
-    const response = await fetch('http://localhost:3000/characters/ai-generate', {
+    const response = await fetch('${baseURL}/characters/ai-generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -939,7 +942,7 @@ const generateEventsWithAi = async () => {
     }
     
     // 调用后端的AI生成事件接口
-    const response = await fetch('http://localhost:3000/characters/ai/generate-events', {
+    const response = await fetch(`${baseURL}/characters/ai/generate-events`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -1003,7 +1006,7 @@ const generateEventsWithAi = async () => {
     
     // 批量保存事件
     if (events && events.length > 0) {
-      const batchResponse = await fetch(`http://localhost:3000/characters/${selectedPerson.value.id}/timeline/batch`, {
+      const batchResponse = await fetch(`${baseURL}/characters/${selectedPerson.value.id}/timeline/batch`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ events }),

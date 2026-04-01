@@ -3,6 +3,9 @@ import { ref, computed } from 'vue';
 import { RouterView, RouterLink } from 'vue-router';
 import BookPreview from './components/BookPreview.vue';
 
+// API基础URL
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'baseURL';
+
 const selectedBook = ref(null);
 const showLoginModal = ref(false);
 const isLoggedIn = ref(false);
@@ -55,7 +58,7 @@ const handleSubmit = async () => {
   try {
     let response;
     if (activeTab.value === 'login') {
-      response = await fetch('http://localhost:3000/auth/login', {
+      response = await fetch('baseURL/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +66,7 @@ const handleSubmit = async () => {
         body: JSON.stringify({ email: email.value, password: password.value }),
       });
     } else {
-      response = await fetch('http://localhost:3000/auth/register', {
+      response = await fetch('baseURL/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +126,7 @@ const saveAiSettings = async () => {
   
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:3000/users/ai-token', {
+    const response = await fetch('baseURL/users/ai-token', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

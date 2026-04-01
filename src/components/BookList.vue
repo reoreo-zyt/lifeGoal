@@ -37,6 +37,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
+// API基础URL
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'baseURL';
+
 const props = defineProps({
   books: {
     type: Array,
@@ -69,7 +72,7 @@ const checkDownloadLimit = async () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch('http://localhost:3000/downloads/check-limit', {
+    const response = await fetch(`${baseURL}/downloads/check-limit`, {
       method: 'GET',
       headers,
     });
@@ -94,7 +97,7 @@ const recordDownload = async (bookId, bookTitle, format) => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch('http://localhost:3000/downloads/record', {
+    const response = await fetch(`${baseURL}/downloads/record`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ bookId, bookTitle, format }),
