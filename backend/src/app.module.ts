@@ -4,6 +4,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { DownloadsModule } from './downloads/downloads.module';
 import { CharactersModule } from './characters/characters.module';
+import { ArticlesModule } from './articles/articles.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { CharactersModule } from './characters/characters.module';
     UsersModule,
     DownloadsModule,
     CharactersModule,
+    ArticlesModule,
+    ScheduleModule.forRoot()
   ],
   controllers: [],
   providers: [],

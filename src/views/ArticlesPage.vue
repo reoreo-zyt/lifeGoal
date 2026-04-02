@@ -1,189 +1,374 @@
 <template>
   <div class="articles-page">
-    <div class="container">
-      <h2 class="page-title">公众号文章</h2>
-      <p class="page-description">戚景山</p>
-
-      <div class="articles-list">
-        <div
-          v-for="article in articles"
-          :key="article.id"
-          class="article-card"
-          @click="openArticle(article.link)"
-        >
-          <div class="article-header">
-            <h3 class="article-title">{{ article.title }}</h3>
-            <span class="article-date">{{ article.date }}</span>
-          </div>
-          <p class="article-excerpt">{{ article.excerpt }}</p>
-          <div class="article-footer">
-            <span class="article-source">{{ article.source }}</span>
-            <span class="article-read-more">阅读更多 →</span>
-          </div>
+    <h1 class="page-title">今日头条热门文章</h1>
+    
+    <!-- 爬取按钮 -->
+    <div class="crawl-controls">
+      <button 
+        class="crawl-btn" 
+        @click="showCrawlDialog = true"
+        v-if="isAdmin"
+      >
+        爬取文章
+      </button>
+    </div>
+    
+    <!-- 爬取设置对话框 -->
+    <div v-if="showCrawlDialog" class="dialog-overlay">
+      <div class="dialog-content">
+        <h3>爬取设置</h3>
+        <div class="time-range-selector">
+          <label>
+            <input type="radio" v-model="selectedTimeRange" value="3days">
+            3天内
+          </label>
+          <label>
+            <input type="radio" v-model="selectedTimeRange" value="7days">
+            7天内
+          </label>
+          <label>
+            <input type="radio" v-model="selectedTimeRange" value="30days">
+            30天内
+          </label>
+        </div>
+        <div class="dialog-buttons">
+          <button @click="showCrawlDialog = false">取消</button>
+          <button @click="crawlArticles" :disabled="isCrawling">
+            {{ isCrawling ? '爬取中...' : '开始爬取' }}
+          </button>
         </div>
       </div>
+    </div>
+    
+    <!-- 加载状态 -->
+    <div v-if="isLoading" class="loading">
+      <div class="loading-spinner"></div>
+      <p>加载中...</p>
+    </div>
+    
+    <!-- 错误提示 -->
+    <div v-if="error" class="error-message">
+      {{ error }}
+    </div>
+    
+    <!-- 文章列表 -->
+    <div v-else-if="articles.length > 0" class="articles-list">
+      <div v-for="article in articles" :key="article.id" class="article-item">
+        <a :href="article.url" target="_blank" class="article-link">
+          <h3 class="article-title">{{ article.title }}</h3>
+          <div class="article-meta">
+            <span class="author">{{ article.author }}</span>
+            <span class="dot">·</span>
+            <span class="publish-time">{{ formatDate(article.publishTime) }}</span>
+            <span class="dot">·</span>
+            <span class="read-count">阅读量: {{ formatReadCount(article.readCount) }}</span>
+          </div>
+        </a>
+      </div>
+    </div>
+    
+    <!-- 空状态 -->
+    <div v-else class="empty-state">
+      <p>暂无文章数据</p>
+      <p v-if="isAdmin" class="hint">请点击"爬取文章"按钮获取最新文章</p>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from "vue";
+<script>
+import axios from 'axios';
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'baseURL';
 
-const articles = ref([
-  {
-    id: 1,
-    title: "隋末风云 | 李密：半生王侯梦，一朝落尘埃",
-    date: "2026-03-24",
-    excerpt:
-      "他出身名门望族，智冠当世、胸藏天下。献策倾覆大隋，号令百万瓦岗，雄踞中原，威慑两京。离江山只差一步，却骤兴骤亡、身死荒野。他是隋末乱世最耀眼、也最悲情的枭雄。",
-    source: "隋朝末年",
-    link: "https://mp.weixin.qq.com/s/cGX3j5A5LwQnY0ZKjLplEw",
+export default {
+  name: 'ArticlesPage',
+  data() {
+    return {
+      articles: [],
+      isLoading: false,
+      error: '',
+      isAdmin: false,
+      showCrawlDialog: false,
+      selectedTimeRange: '7days',
+      isCrawling: false
+    };
   },
-  {
-    id: 2,
-    title: "隋末风云 | 李渊：隐忍半生，一朝定天下",
-    date: "2026-03-24",
-    excerpt:
-      "他出身顶级关陇门阀，历周、隋两朝。半生低调蛰伏，躲过炀帝猜忌；一朝太原起兵，百日入主长安，代隋立唐，开启近三百年大唐盛世。他是被低估的开国帝王。",
-    source: "隋朝末年",
-    link: "https://mp.weixin.qq.com/s/IHssJJSrQEip_OI5UtxwoQ",
+  mounted() {
+    this.checkAdminStatus();
+    this.fetchArticles();
   },
-  {
-    id: 3,
-    title: "隋末风云 | 李世民：从太原公子到千古一帝",
-    date: "2026-03-25",
-    excerpt:
-      "他出身关陇贵胄，少年从军，百战百胜。十八岁起兵，二十岁扫平群雄，二十九岁登基，开创贞观之治。他不仅是战无不胜的军事天才，更是开创盛世的千古一帝。",
-    source: "隋朝末年",
-    link: "https://mp.weixin.qq.com/s/lqTqgVNWVs27Z8iW22Pv6Q",
-  },
-  {
-    id: 4,
-    title: "隋末风云 | 窦建德：隋末唯一不滥杀、得民心的草根雄主",
-    date: "2026-03-25",
-    excerpt:
-      "他出身农家，起于底层，质朴宽厚、体恤百姓。乱世之中不掠民、不屠城、礼贤下士。坐拥河北千里之地，立国夏国，天下归心。一生唯败一战，却身死国灭，是隋末群雄里最可惜、最仁义的霸主。",
-    source: "隋朝末年",
-    link: "https://mp.weixin.qq.com/s/lqTqgVNWVs27Z8iW22Pv6Q",
-  },
-]);
-
-const openArticle = (link) => {
-  if (link && link !== "#") {
-    window.open(link, "_blank");
-  } else {
-    alert("文章链接暂未提供");
+  methods: {
+    async checkAdminStatus() {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          // const response = await axios.get(`${baseURL}/auth/me`, {
+          //   headers: {
+          //     Authorization: `Bearer ${token}`
+          //   }
+          // });
+          this.isAdmin = true;
+        }
+      } catch (error) {
+        console.error('检查管理员状态失败:', error);
+      }
+    },
+    async fetchArticles() {
+      this.isLoading = true;
+      this.error = '';
+      
+      try {
+        const response = await axios.get(`${baseURL}/articles`);
+        this.articles = response.data;
+      } catch (error) {
+        this.error = '获取文章列表失败';
+        console.error('获取文章失败:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async crawlArticles() {
+      this.isCrawling = true;
+      this.error = '';
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post(
+          `${baseURL}/articles/crawl-toutiao`,
+          { timeRange: this.selectedTimeRange },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        this.showCrawlDialog = false;
+        alert(response.data.message);
+        this.fetchArticles();
+      } catch (error) {
+        this.error = '爬取文章失败';
+        console.error('爬取文章失败:', error);
+      } finally {
+        this.isCrawling = false;
+      }
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleString('zh-CN');
+    },
+    formatReadCount(count) {
+      if (count >= 10000) {
+        return (count / 10000).toFixed(1) + '万';
+      }
+      return count;
+    }
   }
 };
 </script>
 
 <style scoped>
 .articles-page {
-  padding: 2rem 0;
-  background-color: #f5f0e6;
-}
-
-.container {
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
 }
 
 .page-title {
-  text-align: center;
-  margin-bottom: 0.5rem;
-  color: #2c1810;
-  font-family: "Noto Serif SC", serif;
-  font-size: 2rem;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
 }
 
-.page-description {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #666;
-  font-size: 1.1rem;
+.crawl-controls {
+  margin-bottom: 20px;
 }
 
-.articles-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-.article-card {
-  background-color: white;
-  border: 1px solid #d4af37;
-  border-radius: 8px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
+.crawl-btn {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  transition: background-color 0.3s;
 }
 
-.article-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.crawl-btn:hover {
+  background-color: #40a9ff;
 }
 
-.article-header {
-  margin-bottom: 1rem;
+/* 对话框样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.dialog-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.time-range-selector {
+  margin-bottom: 20px;
+}
+
+.time-range-selector label {
+  display: block;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dialog-buttons button {
+  padding: 8px 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dialog-buttons button:last-child {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+}
+
+.dialog-buttons button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1890ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 错误提示 */
+.error-message {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #f5222d;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* 文章列表 */
+.articles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.article-item {
+  background-color: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 15px;
+  transition: box-shadow 0.3s;
+}
+
+.article-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.article-link {
+  text-decoration: none;
+  color: #333;
+  display: block;
 }
 
 .article-title {
-  margin: 0 0 0.5rem 0;
-  color: #2c1810;
-  font-family: "Noto Serif SC", serif;
-  font-size: 1.2rem;
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 10px 0;
   line-height: 1.4;
 }
 
-.article-date {
-  font-size: 0.9rem;
+.article-meta {
+  font-size: 14px;
   color: #999;
-}
-
-.article-excerpt {
-  margin-bottom: 1rem;
-  color: #666;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.article-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.9rem;
+  gap: 8px;
+}
+
+.dot {
+  margin: 0 4px;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
   color: #999;
 }
 
-.article-source {
-  font-weight: 500;
+.hint {
+  margin-top: 10px;
+  font-size: 14px;
 }
 
-.article-read-more {
-  color: #d4af37;
-  transition: color 0.3s ease;
-}
-
-.article-card:hover .article-read-more {
-  color: #b89220;
-}
-
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .articles-list {
-    grid-template-columns: 1fr;
+  .articles-page {
+    padding: 10px;
   }
-
+  
   .page-title {
-    font-size: 1.5rem;
+    font-size: 20px;
   }
-
-  .article-card {
-    padding: 1.2rem;
+  
+  .article-title {
+    font-size: 16px;
+  }
+  
+  .article-meta {
+    font-size: 12px;
   }
 }
 </style>

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "axios": "^1.14.0",
     "epubjs": "^0.3.93",
     "pdfjs-dist": "^5.5.207",
     "vue": "^3.5.30",
