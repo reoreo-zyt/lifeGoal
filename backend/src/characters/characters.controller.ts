@@ -161,23 +161,49 @@ export class CharactersController {
     
     // 回调函数，用于实时发送 AI 思考的内容
     const callback = (chunk: string) => {
-      res.write(`data: ${JSON.stringify({ content: chunk })}
-
-`);
+      res.write(`data: ${JSON.stringify({ content: chunk })}`);
     };
     
     try {
       const result = await this.charactersService.generateEventsWithAi(body.name, body.model, user.aiToken, callback);
       // 发送完成信号
-      res.write(`data: ${JSON.stringify({ complete: true, data: result })}
-
-`);
+      res.write(`data: ${JSON.stringify({ complete: true, data: result })}`);
       res.end();
     } catch (error) {
       console.error('AI 生成失败:', error);
-      res.write(`data: ${JSON.stringify({ error: 'AI 生成失败' })}
+      res.write(`data: ${JSON.stringify({ error: 'AI 生成失败' })}`);
+      res.end();
+    }
+  }
 
-`);
+  // AI 生成人物和事件 - 仅允许admin用户访问（流式）
+  @UseGuards(AdminAuthGuard)
+  @Post('ai-generate-with-events')
+  async generateCharacterWithEvents(
+    @Body() body: { name: string; model: string },
+    @Request() req,
+    @Res() res: Response
+  ) {
+    const user = req.user;
+    
+    // 设置响应头为流式
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // 回调函数，用于实时发送 AI 思考的内容
+    const callback = (chunk: string) => {
+      res.write(`data: ${JSON.stringify({ content: chunk })}`);
+    };
+    
+    try {
+      const result = await this.charactersService.generateCharacterWithEvents(body.name, body.model, user.aiToken, user.id, callback);
+      // 发送完成信号
+      res.write(`data: ${JSON.stringify({ complete: true, data: result })}`);
+      res.end();
+    } catch (error) {
+      console.error('AI 生成失败:', error);
+      res.write(`data: ${JSON.stringify({ error: 'AI 生成失败' })}`);
       res.end();
     }
   }

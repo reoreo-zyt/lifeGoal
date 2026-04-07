@@ -271,10 +271,11 @@ export class CharactersService {
 
   // AI 生成事件（流式）
   async generateEventsWithAi(name: string, model: string, aiToken: string, callback: (chunk: string) => void): Promise<Array<{
-    year: number;
-    title: string;
-    description: string;
-    impact: string;
+    year: string;
+    age: string;
+    reignYear: string;
+    event: string;
+    source: string;
   }>> {
     try {
       // 检查 aiToken 是否为空
@@ -365,6 +366,47 @@ export class CharactersService {
       // 如果API调用失败，返回空数组
       callback('[]');
       return [];
+    }
+  }
+
+  // 整合AI生成人物和事件的功能
+  async generateCharacterWithEvents(name: string, model: string, aiToken: string, userId: number, callback: (chunk: string) => void): Promise<{
+    character: Character;
+    events: Array<CharacterEvent>;
+  }> {
+    try {
+      // 1. 生成人物信息
+      callback('正在生成人物基本信息...\n');
+      const personData = await this.generatePersonWithAi(name, aiToken, model, callback);
+      
+      // 2. 保存人物信息到数据库
+      callback('正在保存人物信息到数据库...\n');
+      const character = await this.create({
+        ...personData,
+        userId
+      });
+      
+      // 3. 生成事件信息
+      callback('正在生成人物生平事件...\n');
+      const eventsData = await this.generateEventsWithAi(name, model, aiToken, callback);
+      
+      // 4. 保存事件信息到数据库
+      callback('正在保存事件信息到数据库...\n');
+      const events = await Promise.all(
+        eventsData.map((eventData, index) => 
+          this.addTimelineEvent(character.id, {
+            ...eventData,
+            order: index
+          })
+        )
+      );
+      
+      callback('生成完成！\n');
+      return { character, events };
+    } catch (error) {
+      console.error('AI 生成人物和事件失败:', error);
+      callback('生成失败: ' + (error instanceof Error ? error.message : '未知错误') + '\n');
+      throw error;
     }
   }
 }
