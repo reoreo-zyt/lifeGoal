@@ -33,6 +33,9 @@ export class Character {
   @Column()
   userId: number;
 
+  @Column()
+  avatar: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

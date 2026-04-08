@@ -25,13 +25,19 @@ export class CharactersService {
   }
 
   // 创建人物
-  async create(characterData: { name: string; gender: string; birthYear: number; deathYear?: number; birthPlace: string; background: string; personality: string; dynasty: string; userId: number }): Promise<Character> {
-    const character = this.characterRepository.create(characterData);
+  async create(characterData: { name: string; gender: string; birthYear: number; deathYear?: number; birthPlace: string; background: string; personality: string; dynasty: string; userId: number; avatar?: string }): Promise<Character> {
+    // 根据性别设置默认头像路径
+    const avatar = characterData.avatar || (characterData.gender === '女' ? '/images/ancient_character_women.webp' : '/images/ancient_character_men.webp');
+    
+    const character = this.characterRepository.create({
+      ...characterData,
+      avatar
+    });
     return await this.characterRepository.save(character);
   }
 
   // 更新人物
-  async update(id: number, characterData: { name?: string; gender?: string; birthYear?: number; deathYear?: number; birthPlace?: string; background?: string; personality?: string; dynasty?: string }): Promise<Character | null> {
+  async update(id: number, characterData: { name?: string; gender?: string; birthYear?: number; deathYear?: number; birthPlace?: string; background?: string; personality?: string; dynasty?: string; avatar?: string }): Promise<Character | null> {
     const character = await this.characterRepository.findOne({ where: { id } });
     if (!character) {
       return null;

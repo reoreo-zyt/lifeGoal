@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <h1>历史人物</h1>
-    <p>探索正史记载的重要历史人物</p>
+    <p>共收录 {{ characters.length }} 位正史记载人物</p>
     
     <!-- 搜索框 -->
     <div class="search-container">
@@ -44,7 +44,7 @@
         @click="showCharacterInfo(character)"
       >
         <div class="character-image">
-          <img :src="'/images/ancient_character_men.webp'" :alt="character.name" />
+          <img :src="character.avatar ? `${character.avatar}` : (character.gender === '女' ? '/images/ancient_character_women.webp' : '/images/ancient_character_men.webp')" :alt="character.name" />
         </div>
         <div v-if="hoveredCharacter === character.id" class="character-tooltip">
           {{ character.name }}
@@ -60,12 +60,45 @@
           <button class="close-button" @click="closeModal">×</button>
         </div>
         <div class="modal-body">
-          <div class="character-basic-info">
-            <p><strong>生卒年份:</strong> {{ selectedCharacter.birthYear }}年 - {{ selectedCharacter.deathYear || '不详' }}年</p>
-            <p><strong>所处朝代:</strong> {{ selectedCharacter.dynasty }}</p>
-            <p><strong>性别:</strong> {{ selectedCharacter.gender }}</p>
-            <p><strong>出生地:</strong> {{ selectedCharacter.birthPlace }}</p>
+          <div class="character-info-container">
+            <!-- 左侧基本信息 -->
+            <div class="character-basic-info">
+              <p><strong>生卒年份:</strong> {{ selectedCharacter.birthYear }}年 - {{ selectedCharacter.deathYear || '不详' }}年</p>
+              <p><strong>所处朝代:</strong> {{ selectedCharacter.dynasty }}</p>
+              <p><strong>性别:</strong> {{ selectedCharacter.gender }}</p>
+              <p><strong>出生地:</strong> {{ selectedCharacter.birthPlace }}</p>
+              <p><strong>背景:</strong> {{ selectedCharacter.background }}</p>
+              <p><strong>性格:</strong> {{ selectedCharacter.personality }}</p>
+            </div>
+            
+            <!-- 右侧头像 -->
+            <div class="character-avatar">
+              <div class="avatar-container">
+                <img 
+                  :src="selectedCharacter.avatar ? `${selectedCharacter.avatar}` : (selectedCharacter.gender === '女' ? '/images/ancient_character_women.webp' : '/images/ancient_character_men.webp')" 
+                  :alt="selectedCharacter.name" 
+                  class="avatar-image"
+                />
+                <input 
+                  type="file" 
+                  id="avatar-upload" 
+                  class="avatar-upload-input"
+                  @change="handleAvatarUpload"
+                  accept="image/*"
+                />
+                <label for="avatar-upload" class="avatar-upload-label">
+                  更换头像
+                </label>
+              </div>
+              <div v-if="uploading" class="uploading-indicator">
+                上传中...
+              </div>
+              <div v-if="uploadMessage" class="upload-message" :class="uploadMessageType">
+                {{ uploadMessage }}
+              </div>
+            </div>
           </div>
+          
           <div class="character-records">
             <h3>正史事迹记载</h3>
             <div class="table-container">
@@ -114,6 +147,9 @@ const searchQuery = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
 const showAIGenerateModal = ref(false)
+const uploading = ref(false)
+const uploadMessage = ref<string | null>(null)
+const uploadMessageType = ref<'success' | 'error'>('success')
 
 interface CharacterRecord {
   id: number
@@ -136,6 +172,7 @@ interface Character {
   personality: string
   dynasty: string
   userId: number
+  avatar: string;
   createdAt: string
   updatedAt: string
   records?: CharacterRecord[]
@@ -167,6 +204,7 @@ const fetchCharacters = async () => {
     }
     const data = await response.json()
     characters.value = data
+    console.log(characters.value, '==人物列表==')
   } catch (err) {
     error.value = err instanceof Error ? err.message : '获取数据失败'
     console.error('获取人物列表失败:', err)
@@ -228,6 +266,73 @@ const openAIGenerateModal = () => {
 
 const closeAIGenerateModal = () => {
   showAIGenerateModal.value = false
+}
+
+const handleAvatarUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  
+  if (!file || !selectedCharacter.value) {
+    return
+  }
+  
+  try {
+    uploading.value = true
+    uploadMessage.value = null
+    
+    const formData = new FormData()
+    formData.append('avatar', file)
+    
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('请先登录')
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/characters/${selectedCharacter.value.id}/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    })
+    
+    if (!response.ok) {
+      throw new Error('上传失败')
+    }
+    
+    const data = await response.json()
+    if (data.success) {
+      // 更新人物的头像路径
+      if (selectedCharacter.value) {
+        selectedCharacter.value.avatar = data.avatar
+      }
+      
+      // 更新人物列表中的头像
+      const index = characters.value.findIndex(c => c.id === selectedCharacter.value?.id)
+      if (index !== -1) {
+        characters.value[index].avatar = data.avatar
+      }
+      
+      uploadMessage.value = '头像上传成功'
+      uploadMessageType.value = 'success'
+      setTimeout(() => {
+        uploadMessage.value = null
+      }, 3000)
+    } else {
+      throw new Error(data.message || '上传失败')
+    }
+  } catch (err) {
+    uploadMessage.value = err instanceof Error ? err.message : '上传失败'
+    uploadMessageType.value = 'error'
+    setTimeout(() => {
+      uploadMessage.value = null
+    }, 3000)
+  } finally {
+    uploading.value = false
+    // 重置文件输入
+    const target = event.target as HTMLInputElement
+    target.value = ''
+  }
 }
 
 const handleCharacterGenerated = async (character: any) => {
@@ -554,8 +659,16 @@ onMounted(() => {
   padding: 24px;
 }
 
-.character-basic-info {
+.character-info-container {
+  display: flex;
+  gap: 30px;
   margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.character-basic-info {
+  flex: 1;
+  min-width: 300px;
   padding: 20px;
   background: #f8f9fa;
   border-radius: 8px;
@@ -565,6 +678,87 @@ onMounted(() => {
   margin: 8px 0;
   text-align: left;
   font-size: 16px;
+}
+
+.character-avatar {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 15px;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.avatar-upload-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.avatar-upload-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  z-index: 1;
+}
+
+.avatar-upload-label:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.uploading-indicator {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #667eea;
+}
+
+.upload-message {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  text-align: center;
+}
+
+.upload-message.success {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.upload-message.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
 }
 
 .character-records h3 {

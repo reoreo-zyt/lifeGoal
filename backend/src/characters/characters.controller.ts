@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, Res } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CharactersService } from './characters.service';
 import { Character } from './entities/character.entity';
 import { CharacterEvent } from './entities/character-event.entity';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Controller('characters')
 export class CharactersController {
@@ -206,5 +209,41 @@ export class CharactersController {
       res.write(`data: ${JSON.stringify({ error: 'AI 生成失败' })}`);
       res.end();
     }
+  }
+
+  // 上传头像 - 仅允许admin用户访问
+  @UseGuards(AdminAuthGuard)
+  @Post(':id/avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  async uploadAvatar(
+    @Param('id') id: number,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    if (!file) {
+      return { success: false, message: '请选择要上传的文件' };
+    }
+
+    // 确保 public/images 目录存在
+    const imagesDir = path.join(process.cwd(), 'public', 'images');
+    if (!fs.existsSync(imagesDir)) {
+      fs.mkdirSync(imagesDir, { recursive: true });
+    }
+
+    // 生成唯一的文件名
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const filePath = path.join(imagesDir, fileName);
+
+    // 保存文件
+    fs.writeFileSync(filePath, file.buffer);
+
+    // 更新人物的头像路径
+    const avatarPath = `/images/${fileName}`;
+    const updatedCharacter = await this.charactersService.update(+id, { avatar: avatarPath });
+
+    if (!updatedCharacter) {
+      return { success: false, message: '人物不存在' };
+    }
+
+    return { success: true, avatar: avatarPath };
   }
 }
