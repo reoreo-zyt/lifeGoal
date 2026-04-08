@@ -60,8 +60,8 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const result = ref<any | null>(null)
 
-// 从配置接口获取默认模型
-const getDefaultModel = async () => {
+// 从配置接口获取配置信息
+const getConfig = async () => {
   try {
     const token = localStorage.getItem('token')
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
@@ -74,12 +74,18 @@ const getDefaultModel = async () => {
     
     if (response.ok) {
       const config = await response.json()
-      return config.defaultModel || 'doubao-seed-2-0-pro-260215'
+      return {
+        defaultModel: config.defaultModel || 'doubao-seed-2-0-pro-260215',
+        volcengineToken: config.volcengineToken || ''
+      }
     }
   } catch (err) {
-    console.error('获取默认模型失败:', err)
+    console.error('获取配置失败:', err)
   }
-  return 'doubao-seed-2-0-pro-260215'
+  return {
+    defaultModel: 'doubao-seed-2-0-pro-260215',
+    volcengineToken: ''
+  }
 }
 
 const closeModal = () => {
@@ -99,7 +105,9 @@ const generateCharacter = async () => {
       throw new Error('请先登录')
     }
     
-    const defaultModel = await getDefaultModel()
+    const config = await getConfig()
+
+    console.log(config, '==config==')
     
     const response = await fetch(`${API_BASE_URL}/characters/ai-generate-with-events`, {
       method: 'POST',
@@ -107,7 +115,11 @@ const generateCharacter = async () => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ name: characterName.value, model: defaultModel })
+      body: JSON.stringify({ 
+        name: characterName.value, 
+        model: config.defaultModel,
+        volcengineToken: config.volcengineToken
+      })
     })
     
     if (!response.ok) {

@@ -167,6 +167,7 @@ export class CharactersService {
 
   // AI 生成人物信息（流式）
   async generatePersonWithAi(name: string, aiToken: string, model: string, callback: (chunk: string) => void): Promise<{ name: string; gender: string; birthYear: number; deathYear?: number; birthPlace: string; background: string; personality: string; dynasty: string }> {
+    console.log(name, aiToken, model)
     try {
       // 检查 aiToken 是否为空
       if (!aiToken) {
@@ -250,7 +251,34 @@ export class CharactersService {
         }
       }
       
-      return JSON.parse(fullContent);
+      try {
+        // 清理 fullContent，移除可能的前缀或后缀文本
+        // 查找 JSON 的开始和结束位置
+        const jsonStart = fullContent.indexOf('{');
+        const jsonEnd = fullContent.lastIndexOf('}');
+        
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          const jsonString = fullContent.substring(jsonStart, jsonEnd + 1);
+          return JSON.parse(jsonString);
+        } else {
+          // 如果没有找到有效的 JSON，返回默认值
+          throw new Error('无效的 JSON 格式');
+        }
+      } catch (parseError) {
+        console.error('解析 JSON 失败:', parseError);
+        const defaultResult = {
+          name,
+          gender: '未知',
+          birthYear: 0,
+          deathYear: null,
+          birthPlace: '未知',
+          background: '未知',
+          personality: '未知',
+          dynasty: '未知'
+        };
+        callback(JSON.stringify(defaultResult));
+        return defaultResult;
+      }
     } catch (error) {
       console.error('AI 生成失败:', error);
       // 如果API调用失败，返回默认值
@@ -277,6 +305,7 @@ export class CharactersService {
     event: string;
     source: string;
   }>> {
+    console.log(name, model, aiToken)
     try {
       // 检查 aiToken 是否为空
       if (!aiToken) {
@@ -370,14 +399,14 @@ export class CharactersService {
   }
 
   // 整合AI生成人物和事件的功能
-  async generateCharacterWithEvents(name: string, model: string, aiToken: string, userId: number, callback: (chunk: string) => void): Promise<{
+  async generateCharacterWithEvents(name: string, model: string, volcengineToken: string, userId: number, callback: (chunk: string) => void): Promise<{
     character: Character;
     events: Array<CharacterEvent>;
   }> {
     try {
       // 1. 生成人物信息
       callback('正在生成人物基本信息...\n');
-      const personData = await this.generatePersonWithAi(name, aiToken, model, callback);
+      const personData = await this.generatePersonWithAi(name, volcengineToken, model, callback);
       
       // 2. 保存人物信息到数据库
       callback('正在保存人物信息到数据库...\n');
@@ -388,7 +417,7 @@ export class CharactersService {
       
       // 3. 生成事件信息
       callback('正在生成人物生平事件...\n');
-      const eventsData = await this.generateEventsWithAi(name, model, aiToken, callback);
+      const eventsData = await this.generateEventsWithAi(name, model, volcengineToken, callback);
       
       // 4. 保存事件信息到数据库
       callback('正在保存事件信息到数据库...\n');

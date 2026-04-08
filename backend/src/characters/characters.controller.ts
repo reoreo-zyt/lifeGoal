@@ -180,7 +180,7 @@ export class CharactersController {
   @UseGuards(AdminAuthGuard)
   @Post('ai-generate-with-events')
   async generateCharacterWithEvents(
-    @Body() body: { name: string; model: string },
+    @Body() body: { name: string; model: string, volcengineToken: string },
     @Request() req,
     @Res() res: Response
   ) {
@@ -197,7 +197,7 @@ export class CharactersController {
     };
     
     try {
-      const result = await this.charactersService.generateCharacterWithEvents(body.name, body.model, user.aiToken, user.id, callback);
+      const result = await this.charactersService.generateCharacterWithEvents(body.name, body.model, body.volcengineToken, user.id, callback);
       // 发送完成信号
       res.write(`data: ${JSON.stringify({ complete: true, data: result })}`);
       res.end();
