@@ -207,7 +207,7 @@ export class CharactersService {
 6. 性格
 7. 所属朝代
 
-请以JSON格式返回，例如：
+请以JSON格式返回，例如：（请注意birthYear和deathYear的格式，如果没有具体的就用 3000 表示，公元前则用负数表示）
 {
   "name": "李世民",
   "gender": "男",
