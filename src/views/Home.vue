@@ -133,6 +133,7 @@
       v-if="showAIGenerateModal" 
       @close="closeAIGenerateModal"
       @generated="handleCharacterGenerated"
+      @refresh="fetchCharacters"
     />
   </div>
 </template>

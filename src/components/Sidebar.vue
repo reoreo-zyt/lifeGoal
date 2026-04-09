@@ -5,53 +5,26 @@
     </div>
     <nav class="nav">
       <router-link to="/" class="nav-item" active-class="active">
-        <span class="icon"><Home /></span>
-        <span class="text">首页</span>
+        <span class="icon" title="首页"><Home /></span>
       </router-link>
       <router-link to="/ask" class="nav-item" active-class="active">
-        <span class="icon"><HelpCircle /></span>
-        <span class="text">AI</span>
+        <span class="icon" title="AI"><HelpCircle /></span>
       </router-link>
       <div class="nav-item auth-item" @click="openAuthModal">
-        <span class="icon"><Account /></span>
-        <span class="text">{{ user ? '个人' : '登录' }}</span>
+        <span class="icon" :title="user ? '个人' : '登录'"><Account /></span>
       </div>
     </nav>
-    
+  
     <!-- 登录后显示的功能 -->
-    <div v-if="user" class="user-section">
-      <div class="user-info">
-        <span class="user-name">{{ user.name || '用户' }}</span>
-      </div>
-      <div class="user-actions">
-        <div class="nav-item" @click="openAIGenerateModal">
-          <span class="icon"><Brain /></span>
-          <span class="text">AI 生成</span>
-        </div>
-        <router-link v-if="user.isAdmin" to="/admin" class="nav-item">
-          <span class="icon"><Cog /></span>
-          <span class="text">配置</span>
-        </router-link>
-        <div class="nav-item" @click="logout">
-          <span class="icon"><Logout /></span>
-          <span class="text">退出</span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 移动端登录后显示的功能 -->
     <div v-if="user" class="mobile-auth-actions">
       <div class="nav-item" @click="openAIGenerateModal">
-        <span class="icon"><Brain /></span>
-        <span class="text">AI 生成</span>
+        <span class="icon" title="AI 生成"><Brain /></span>
       </div>
       <router-link v-if="user.isAdmin" to="/admin" class="nav-item">
-        <span class="icon"><Cog /></span>
-        <span class="text">配置</span>
+        <span class="icon" title="配置"><Cog /></span>
       </router-link>
       <div class="nav-item" @click="logout">
-        <span class="icon"><Logout /></span>
-        <span class="text">退出</span>
+        <span class="icon" title="退出"><Logout /></span>
       </div>
     </div>
     
@@ -127,7 +100,7 @@ const logout = () => {
 
 <style scoped>
 .sidebar {
-  width: 100px;
+  width: 65px;
   background: #ffffff;
   color: white;
   padding: 20px 0;
