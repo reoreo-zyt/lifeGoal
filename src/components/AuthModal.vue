@@ -67,7 +67,7 @@ const emit = defineEmits<{
   (e: 'login', user: any): void
 }>()
 
-const isLogin = ref(props.isLogin || true)
+const isLogin = ref<any>(props.isLogin || true)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
