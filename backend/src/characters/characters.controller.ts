@@ -19,9 +19,15 @@ export class CharactersController {
     @Body() body,
     @Request() req
   ) {
-    const { name, dynasty, gender, yearStart, yearEnd, page = 1, pageSize = 20 } = req.query;
+    const { search, name, gender, yearStart, yearEnd, page = 1, pageSize = 20 } = req.query;
+    // 处理可能的多个dynasty参数
+    let dynasty = req.query.dynasty;
+    if (Array.isArray(dynasty)) {
+      dynasty = dynasty[0];
+    }
     
     const result = await this.charactersService.findAll({
+      search: search as string,
       name: name as string,
       dynasty: dynasty as string,
       gender: gender as string,

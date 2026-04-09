@@ -189,7 +189,12 @@ const checkCharacterExists = async (name: string): Promise<boolean> => {
       headers['Authorization'] = `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_BASE_URL}/characters`, {
+    // 构建查询参数，只搜索指定姓名的人物
+    const params = new URLSearchParams()
+    params.append('name', name)
+    params.append('pageSize', '100') // 确保获取足够多的结果
+    
+    const response = await fetch(`${API_BASE_URL}/characters?${params.toString()}`, {
       headers
     })
     
@@ -197,8 +202,9 @@ const checkCharacterExists = async (name: string): Promise<boolean> => {
       throw new Error('查询人物失败')
     }
     
-    const characters = await response.json()
-    return characters.some((character: any) => character.name === name)
+    const data = await response.json()
+    // 检查 data.data 数组中是否存在同名人物
+    return data.data.some((character: any) => character.name === name)
   } catch (err) {
     console.error('查询人物失败:', err)
     return false

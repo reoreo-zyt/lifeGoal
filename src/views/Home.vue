@@ -58,9 +58,19 @@
     </div>
     
     <!-- 分页控件 -->
-    <div v-if="totalPages > 1" class="pagination">
+    <div 
+      v-if="totalPages > 1" 
+      class="pagination"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+      @mousedown="handleMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+      @mouseleave="handleMouseUp"
+    >
       <button 
-        class="pagination-button" 
+        class="pagination-button"
         :disabled="currentPage === 1"
         @click="changePage(currentPage - 1)"
       >
@@ -70,7 +80,7 @@
         第 {{ currentPage }} 页，共 {{ totalPages }} 页
       </span>
       <button 
-        class="pagination-button" 
+        class="pagination-button"
         :disabled="currentPage === totalPages"
         @click="changePage(currentPage + 1)"
       >
@@ -277,9 +287,15 @@ const uploadMessageType = ref<'success' | 'error'>('success')
 
 // 分页相关
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(100)
 const totalPages = ref(1)
 const totalCharacters = ref(0)
+
+// 滑动相关变量
+const touchStartX = ref(0)
+const touchEndX = ref(0)
+const mouseStartX = ref(0)
+const mouseEndX = ref(0)
 
 // 朝代标记数据
 const dynastyMarkers = [
@@ -451,9 +467,10 @@ const fetchCharacters = async () => {
     // 构建查询参数
     const params = new URLSearchParams()
     if (searchQuery.value) {
-      params.append('name', searchQuery.value)
+      // 只传递一个search参数，让后端处理搜索逻辑
+      params.append('search', searchQuery.value)
     }
-    if (searchDynasty.value) {
+    if (searchDynasty.value && !searchQuery.value) {
       params.append('dynasty', searchDynasty.value)
     }
     if (searchGender.value) {
@@ -478,7 +495,9 @@ const fetchCharacters = async () => {
     characters.value = data.data || []
     totalCharacters.value = data.total || 0
     totalPages.value = Math.ceil(totalCharacters.value / pageSize.value)
-    console.log(characters.value, '==人物列表==')
+    console.log('搜索参数:', params.toString())
+    console.log('人物列表:', characters.value)
+    console.log('总人数:', totalCharacters.value)
   } catch (err) {
     error.value = err instanceof Error ? err.message : '获取数据失败'
     console.error('获取人物列表失败:', err)
@@ -498,6 +517,70 @@ const changePage = (page: number) => {
     currentPage.value = page
     fetchCharacters()
   }
+}
+
+// 触摸事件处理
+const handleTouchStart = (e: TouchEvent) => {
+  touchStartX.value = e.changedTouches[0].screenX
+}
+
+const handleTouchMove = (e: TouchEvent) => {
+  touchEndX.value = e.changedTouches[0].screenX
+}
+
+const handleTouchEnd = () => {
+  const swipeThreshold = 50
+  const diff = touchStartX.value - touchEndX.value
+  
+  if (Math.abs(diff) > swipeThreshold) {
+    if (diff > 0) {
+      // 向左滑动，下一页
+      if (currentPage.value < totalPages.value) {
+        changePage(currentPage.value + 1)
+      }
+    } else {
+      // 向右滑动，上一页
+      if (currentPage.value > 1) {
+        changePage(currentPage.value - 1)
+      }
+    }
+  }
+  
+  // 重置触摸值
+  touchStartX.value = 0
+  touchEndX.value = 0
+}
+
+// 鼠标事件处理
+const handleMouseDown = (e: MouseEvent) => {
+  mouseStartX.value = e.screenX
+}
+
+const handleMouseMove = (e: MouseEvent) => {
+  mouseEndX.value = e.screenX
+}
+
+const handleMouseUp = () => {
+  const swipeThreshold = 50
+  const diff = mouseStartX.value - mouseEndX.value
+  
+  if (Math.abs(diff) > swipeThreshold) {
+    if (diff > 0) {
+      // 向左滑动，下一页
+      if (currentPage.value < totalPages.value) {
+        changePage(currentPage.value + 1)
+      }
+    } else {
+      // 向右滑动，上一页
+      if (currentPage.value > 1) {
+        changePage(currentPage.value - 1)
+      }
+    }
+  }
+  
+  // 重置鼠标值
+  mouseStartX.value = 0
+  mouseEndX.value = 0
 }
 
 const fetchCharacterDetail = async (id: number) => {
@@ -662,30 +745,46 @@ onMounted(() => {
 </script>
 
 <style>
-/* 全局样式，防止滚动条 */
+/* 全局样式 */
 * {
   box-sizing: border-box;
 }
 
 body {
-  overflow: hidden;
+  overflow-x: hidden;
   margin: 0;
   padding: 0;
+  background: #f8f9fa;
 }
 
 html {
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-/* 隐藏滚动条但保留滚动功能 */
+/* 隐藏横向滚动条但保留垂直滚动条 */
 ::-webkit-scrollbar {
-  display: none;
+  width: 8px;
+  height: 0;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* 兼容Firefox */
 * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+  -ms-overflow-style: auto;
 }
 </style>
 
@@ -729,12 +828,13 @@ html {
 .search-select,
 .year-input {
   padding: 12px 15px;
-  border: 2px solid #333;
-  border-radius: 0;
+  border: 2px solid #666;
+  border-radius: 8px;
   font-size: 16px;
-  background: rgba(255, 255, 255, 0.9);
+  background: white;
   transition: all 0.3s ease;
   font-family: 'SimSun', serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .search-input {
@@ -751,27 +851,31 @@ html {
 
 .search-input:focus, .search-select:focus, .year-input:focus {
   outline: none;
-  border-color: #000;
+  border-color: #6e6b6b;
   background: white;
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
 
 .advanced-search-button {
   padding: 12px 20px;
-  border: 2px solid #333;
-  border-radius: 0;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
+  border: 2px solid #6e6b6b;
+  border-radius: 8px;
+  background: white;
+  color: #6e6b6b;
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-family: 'SimSun', serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .advanced-search-button:hover {
   border-color: #000;
-  background: white;
-  box-shadow: 2px 2px 0 #000;
+  background: #6e6b6b;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
 
 .year-range-search {
@@ -790,7 +894,7 @@ html {
 .year-input {
   width: 120px;
   padding: 12px 15px;
-  border: 2px solid #333;
+  border: 2px solid #6e6b6b;
   border-radius: 0;
   font-size: 16px;
   background: rgba(255, 255, 255, 0.9);
@@ -807,13 +911,13 @@ html {
 
 .year-separator {
   font-size: 16px;
-  color: #333;
+  color: #6e6b6b;
   font-family: 'SimSun', serif;
 }
 
 .dynasty-toggle {
   padding: 12px 15px;
-  border: 2px solid #333;
+  border: 2px solid #6e6b6b;
   border-radius: 0;
   background: rgba(255, 255, 255, 0.9);
   cursor: pointer;
@@ -837,7 +941,7 @@ html {
 
 .dynasty-timeline h4 {
   font-size: 16px;
-  color: #333;
+  color: #6e6b6b;
   font-family: 'SimSun', serif;
   margin-bottom: 10px;
   text-align: center;
@@ -846,7 +950,7 @@ html {
 .timeline-container {
   position: relative;
   padding-left: 20px;
-  border-left: 2px solid #333;
+  border-left: 2px solid #6e6b6b;
   max-height: 300px;
   overflow-y: auto;
 }
@@ -874,10 +978,10 @@ html {
   top: 15px;
   width: 10px;
   height: 10px;
-  background: #333;
+  background: #6e6b6b;
   border: 2px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px #333;
+  box-shadow: 0 0 0 2px #6e6b6b;
 }
 
 .dynasty-info {
@@ -887,7 +991,7 @@ html {
 .dynasty-name {
   font-size: 14px;
   font-weight: bold;
-  color: #333;
+  color: #6e6b6b;
   margin-bottom: 2px;
 }
 
@@ -920,44 +1024,56 @@ html {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 15px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  padding: 10px;
+  gap: 20px;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  padding: 15px 20px;
   background: white;
-  border: 2px solid #333;
+  border: 2px solid #6e6b6b;
   border-radius: 0;
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: 3px 3px 0 #555454;
   position: relative;
   z-index: 10;
-}
-
-.pagination-button {
-  padding: 8px 16px;
-  border: 2px solid #333;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
   font-family: 'SimSun', serif;
 }
 
+.pagination-button {
+  padding: 10px 20px;
+  border: 2px solid #6e6b6b;
+  background: white;
+  color: #6e6b6b;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'SimSun', serif;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .pagination-button:hover:not(:disabled) {
-  background: #333;
+  background: #6e6b6b;
   color: white;
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
 
 .pagination-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: #f0f0f0;
+  color: #999;
+  border-color: #ccc;
+  box-shadow: none;
 }
 
 .pagination-info {
-  font-size: 14px;
-  color: #333;
+  font-size: 16px;
+  color: #6e6b6b;
   font-family: 'SimSun', serif;
+  font-weight: bold;
+  padding: 0 10px;
 }
 
 /* AI 生成按钮 */
@@ -968,21 +1084,23 @@ html {
 }
 
 .generate-button {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  border: 2px solid #333;
+  background: white;
+  color: #6e6b6b;
+  border: 2px solid #6e6b6b;
   padding: 12px 24px;
-  border-radius: 0;
+  border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-family: 'SimSun', serif;
+  box-shadow: 0 2px 4px rgba(105, 104, 104, 0.1);
 }
 
 .generate-button:hover {
-  background: #333;
+  background: #6e6b6b;
   color: white;
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: 0 4px 8px rgba(110, 108, 108, 0.2);
+  transform: translateY(-2px);
 }
 
 /* 加载状态 */
@@ -1543,9 +1661,9 @@ html {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #333;
+  border-bottom: 2px solid #6e6b6b;
   background: none;
-  color: #333;
+  color: #6e6b6b;
   border-radius: 0;
   padding: 0 0 10px 0;
 }
@@ -1553,28 +1671,32 @@ html {
 .advanced-search-modal .modal-header h2 {
   margin: 0;
   font-size: 20px;
-  color: #333;
+  color: #6e6b6b;
   font-family: 'SimSun', serif;
 }
 
 .advanced-search-modal .close-button {
-  background: none;
-  border: 2px solid #333;
+  background: white;
+  border: 2px solid #666;
   font-size: 24px;
   cursor: pointer;
-  color: #333;
-  width: 30px;
-  height: 30px;
+  color: #6e6b6b;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  border-radius: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .advanced-search-modal .close-button:hover {
-  background: #333;
+  background: #6e6b6b;
   color: white;
+  border-color: #6e6b6b;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
 
 .search-form {
@@ -1592,13 +1714,13 @@ html {
 .form-group label {
   font-size: 14px;
   font-weight: bold;
-  color: #333;
+  color: #6e6b6b;
   font-family: 'SimSun', serif;
 }
 
 /* 水墨风格 */
 .ink-style {
-  border: 2px solid #333;
+  border: 2px solid #6e6b6b;
   border-radius: 0;
   background: rgba(255, 255, 255, 0.9);
   transition: all 0.3s ease;
@@ -1636,19 +1758,22 @@ html {
 
 .action-button.ink-style {
   padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
+  background: white;
+  color: #6e6b6b;
   cursor: pointer;
   font-size: 16px;
   transition: all 0.3s ease;
-  border: 2px solid #333;
-  border-radius: 0;
+  border: 2px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .action-button.ink-style:hover {
-  border-color: #000;
-  background: white;
-  box-shadow: 2px 2px 0 #000;
+  border-color: #6e6b6b;
+  background: #6e6b6b;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
 
 .form-actions {

@@ -16,6 +16,7 @@ export class CharactersService {
 
   // 获取所有人物（支持搜索和分页）
   async findAll(params: {
+    search?: string;
     name?: string;
     dynasty?: string;
     gender?: string;
@@ -24,18 +25,22 @@ export class CharactersService {
     page: number;
     pageSize: number;
   }): Promise<{ data: Character[]; total: number }> {
-    const { name, dynasty, gender, yearStart, yearEnd, page, pageSize } = params;
+    const { search, name, dynasty, gender, yearStart, yearEnd, page, pageSize } = params;
     
     // 创建查询构建器
     const queryBuilder = this.characterRepository.createQueryBuilder('character');
     
     // 添加搜索条件
-    if (name) {
-      queryBuilder.andWhere('character.name LIKE :name', { name: `%${name}%` });
-    }
-    
-    if (dynasty) {
-      queryBuilder.andWhere('character.dynasty = :dynasty', { dynasty });
+    if (search) {
+      queryBuilder.andWhere('(character.name LIKE :search OR character.dynasty LIKE :search)', { search: `%${search}%` });
+    } else {
+      if (name) {
+        queryBuilder.andWhere('character.name LIKE :name', { name: `%${name}%` });
+      }
+      
+      if (dynasty) {
+        queryBuilder.andWhere('character.dynasty LIKE :dynasty', { dynasty: `%${dynasty}%` });
+      }
     }
     
     if (gender) {
