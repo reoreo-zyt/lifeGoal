@@ -14,9 +14,52 @@ export class CharactersService {
     private characterEventRepository: Repository<CharacterEvent>,
   ) {}
 
-  // 获取所有人物
-  async findAll(): Promise<Character[]> {
-    return await this.characterRepository.find();
+  // 获取所有人物（支持搜索和分页）
+  async findAll(params: {
+    name?: string;
+    dynasty?: string;
+    gender?: string;
+    yearStart?: number;
+    yearEnd?: number;
+    page: number;
+    pageSize: number;
+  }): Promise<{ data: Character[]; total: number }> {
+    const { name, dynasty, gender, yearStart, yearEnd, page, pageSize } = params;
+    
+    // 创建查询构建器
+    const queryBuilder = this.characterRepository.createQueryBuilder('character');
+    
+    // 添加搜索条件
+    if (name) {
+      queryBuilder.andWhere('character.name LIKE :name', { name: `%${name}%` });
+    }
+    
+    if (dynasty) {
+      queryBuilder.andWhere('character.dynasty = :dynasty', { dynasty });
+    }
+    
+    if (gender) {
+      queryBuilder.andWhere('character.gender = :gender', { gender });
+    }
+    
+    if (yearStart) {
+      queryBuilder.andWhere('character.deathYear >= :yearStart OR character.deathYear IS NULL', { yearStart });
+    }
+    
+    if (yearEnd) {
+      queryBuilder.andWhere('character.birthYear <= :yearEnd', { yearEnd });
+    }
+    
+    // 计算总数
+    const total = await queryBuilder.getCount();
+    
+    // 添加分页
+    const data = await queryBuilder
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getMany();
+    
+    return { data, total };
   }
 
   // 根据ID获取人物

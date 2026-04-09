@@ -12,10 +12,26 @@ import * as path from 'path';
 export class CharactersController {
   constructor(private readonly charactersService: CharactersService) {}
 
-  // 获取所有人物
+  // 获取所有人物（支持搜索和分页）
   @Get()
-  async findAll(): Promise<Character[]> {
-    return await this.charactersService.findAll();
+  async findAll(
+    @Param() params,
+    @Body() body,
+    @Request() req
+  ) {
+    const { name, dynasty, gender, yearStart, yearEnd, page = 1, pageSize = 20 } = req.query;
+    
+    const result = await this.charactersService.findAll({
+      name: name as string,
+      dynasty: dynasty as string,
+      gender: gender as string,
+      yearStart: yearStart ? parseInt(yearStart as string) : undefined,
+      yearEnd: yearEnd ? parseInt(yearEnd as string) : undefined,
+      page: parseInt(page as string),
+      pageSize: parseInt(pageSize as string)
+    });
+    
+    return result;
   }
 
   // 获取单个人物

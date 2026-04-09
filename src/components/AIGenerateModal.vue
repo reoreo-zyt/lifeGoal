@@ -176,10 +176,40 @@ const generateSingleCharacter = async (name: string) => {
   }
 }
 
+const checkCharacterExists = async (name: string): Promise<boolean> => {
+  try {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+    const token = localStorage.getItem('token')
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    }
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/characters`, {
+      headers
+    })
+    
+    if (!response.ok) {
+      throw new Error('查询人物失败')
+    }
+    
+    const characters = await response.json()
+    return characters.some((character: any) => character.name === name)
+  } catch (err) {
+    console.error('查询人物失败:', err)
+    return false
+  }
+}
+
 const generateCharacter = async () => {
   try {
     // 解析输入的人物姓名，支持逗号分隔
     const characterNames = characterName.value
+      .replace(/，/g, ',')
       .split(',')
       .map(name => name.trim())
       .filter(name => name)
@@ -196,12 +226,21 @@ const generateCharacter = async () => {
     
     // 批量生成人物
     let successCount = 0
+    let skippedCount = 0
     for (const name of characterNames) {
       try {
-        streamingContent.value = `正在生成 ${name}...`
-        const result = await generateSingleCharacter(name)
-        if (result) {
-          successCount++
+        // 检查人物是否已存在
+        const exists = await checkCharacterExists(name)
+        if (exists) {
+          console.log(`人物 ${name} 已存在，跳过生成`)
+          streamingContent.value = `人物 ${name} 已存在，跳过生成`
+          skippedCount++
+        } else {
+          streamingContent.value = `正在生成 ${name}...`
+          const result = await generateSingleCharacter(name)
+          if (result) {
+            successCount++
+          }
         }
         // 从剩余列表中移除当前生成的人物
         remainingCharacters.value = remainingCharacters.value.filter(n => n !== name)
@@ -216,8 +255,11 @@ const generateCharacter = async () => {
     emit('refresh')
     
     // 只有当所有人物都生成失败时才提示错误
-    if (successCount === 0) {
+    if (successCount === 0 && skippedCount === 0) {
       error.value = '所有人物生成失败'
+    } else if (skippedCount > 0) {
+      // 显示跳过的人物数量
+      streamingContent.value = `跳过了 ${skippedCount} 个已存在的人物，成功生成了 ${successCount} 个人物`
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : '生成失败'
