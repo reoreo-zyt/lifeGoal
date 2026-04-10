@@ -58,8 +58,10 @@ export class CharactersService {
     // 计算总数
     const total = await queryBuilder.getCount();
     
-    // 添加分页
+    // 添加排序：按出生年份升序排列，'?' 排到最后
     const data = await queryBuilder
+      .orderBy('CASE WHEN character.birthYear = \'?\' THEN 1 ELSE 0 END', 'ASC')
+      .orderBy('character.birthYear', 'ASC')
       .skip((page - 1) * pageSize)
       .take(pageSize)
       .getMany();

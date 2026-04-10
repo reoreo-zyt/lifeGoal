@@ -838,7 +838,7 @@ html {
 }
 
 .search-input {
-  width: 200px;
+  width: 400px;
 }
 
 .search-select {

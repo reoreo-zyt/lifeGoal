@@ -13,10 +13,10 @@ export class Character {
   gender: string;
 
   @Column()
-  birthYear: number;
+  birthYear: string;
 
   @Column({ nullable: true })
-  deathYear: number;
+  deathYear: string;
 
   @Column()
   birthPlace: string;
