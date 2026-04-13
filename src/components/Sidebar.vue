@@ -1,7 +1,7 @@
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ 'sidebar-open': isSidebarOpen }">
     <div class="logo">
-      <h1>春秋</h1>
+      <h1></h1>
     </div>
     <nav class="nav">
       <router-link to="/" class="nav-item" active-class="active">
@@ -26,6 +26,14 @@
       <div class="nav-item" @click="logout">
         <span class="icon" title="退出"><Logout /></span>
       </div>
+    </div>
+    
+    <!-- 移动端顶部导航栏 -->
+    <div class="mobile-header">
+      <div class="logo-text">HistoryEcho <span class="beta-tag">Beta</span></div>
+      <button class="menu-button" @click="toggleSidebar">
+        <div class="menu-icon"></div>
+      </button>
     </div>
     
     <!-- 认证弹窗 -->
@@ -60,6 +68,7 @@ const user = ref<any | null>(null);
 const showAuthModal = ref(false);
 const showAIGenerateModal = ref(false);
 const isLogin = ref(true);
+const isSidebarOpen = ref(false);
 
 // 检查本地存储中的用户信息
 onMounted(() => {
@@ -96,6 +105,10 @@ const logout = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
 };
+
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value;
+};
 </script>
 
 <style scoped>
@@ -111,6 +124,70 @@ const logout = () => {
   top: 0;
   height: 100vh;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+/* 移动端顶部导航栏 */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  padding: 10px 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'SimSun', serif;
+}
+
+.beta-tag {
+  font-size: 12px;
+  color: #999;
+  margin-left: 5px;
+}
+
+.menu-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.menu-icon {
+  width: 24px;
+  height: 2px;
+  background: #333;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.menu-icon::before,
+.menu-icon::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background: #333;
+  transition: all 0.3s ease;
+}
+
+.menu-icon::before {
+  top: -8px;
+}
+
+.menu-icon::after {
+  bottom: -8px;
 }
 
 .logo {
@@ -199,104 +276,87 @@ const logout = () => {
 }
 
 @media (max-width: 894px) {
+  /* 显示移动端顶部导航栏 */
+  .mobile-header {
+    display: flex;
+  }
+  
+  /* 隐藏默认侧边栏 */
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: fixed;
+    width: 70px;
+    left: -250px;
     top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    padding: 0;
-    flex-direction: row;
-    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    padding: 20px 0;
     background: #ffffff;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   }
-
+  
+  /* 侧边栏打开状态 */
+  .sidebar.sidebar-open {
+    left: 0;
+  }
+  
   .logo {
-    padding: 10px 15px;
-    border-bottom: none;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0 20px 30px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   }
-
+  
   .logo h1 {
-    font-size: 18px;
+    font-size: 24px;
   }
-
+  
   .nav {
     display: flex;
-    padding: 0;
-    flex: 1;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .nav-item {
     flex-direction: column;
-    padding: 10px;
-    border-left: none;
-    border-bottom: 3px solid transparent;
-    min-width: 60px;
-    text-align: center;
+    padding: 20px 0;
+    flex: 1;
   }
-
+  
+  .nav-item {
+    flex-direction: row;
+    padding: 15px 20px;
+    border-left: 3px solid transparent;
+    min-width: auto;
+    text-align: left;
+  }
+  
   .nav-item.active {
-    border-left: none;
-    border-bottom-color: #667eea;
+    border-left-color: #667eea;
+    border-bottom-color: transparent;
   }
-
+  
   .nav-item .icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 0;
-    margin-bottom: 4px;
-    width: 28px;
-    height: 28px;
+    margin-right: 12px;
+    margin-bottom: 0;
+    width: 24px;
+    height: 24px;
   }
-
+  
   .nav-item .icon svg {
-    width: 28px;
-    height: 28px;
-    fill: currentColor;
+    width: 24px;
+    height: 24px;
   }
-
+  
   .nav-item .text {
-    font-size: 12px;
+    font-size: 16px;
   }
   
   .user-section {
     display: none;
   }
   
-  /* 移动端登录后显示AI生成按钮 */
+  /* 移动端登录后显示的功能 */
   .mobile-auth-actions {
     display: flex;
-    padding: 10px 0;
+    flex-direction: column;
+    padding: 20px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
   }
   
   .mobile-auth-actions .nav-item {
-    min-width: 80px;
-  }
-}
-
-/* 移动端登录后显示的功能 */
-@media (max-width: 894px) {
-  .sidebar {
-    flex-wrap: wrap;
-    padding-bottom: 10px;
-  }
-  
-  .mobile-auth-actions {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 0;
-  }
-  
-  .mobile-auth-actions .nav-item {
-    min-width: 80px;
+    min-width: auto;
   }
 }
 </style>

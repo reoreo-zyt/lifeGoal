@@ -10,7 +10,7 @@
         type="text" 
         placeholder="搜索人物姓名..." 
         class="search-input"
-        @input="handleSearch"
+        @keyup.enter="handleSearch"
       />
       <button @click="openAdvancedSearchModal()" class="advanced-search-button">
         高级搜索
@@ -1025,16 +1025,21 @@ html {
   justify-content: center;
   align-items: center;
   gap: 20px;
-  margin-top: 30px;
-  margin-bottom: 30px;
   padding: 15px 20px;
   background: white;
   border: 2px solid #6e6b6b;
   border-radius: 0;
   box-shadow: 3px 3px 0 #555454;
-  position: relative;
-  z-index: 10;
+  position: sticky;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90%;
+  z-index: 100;
   font-family: 'SimSun', serif;
+  margin: 0 auto;
+  margin-top: 30px;
+  margin-bottom: 30px;
 }
 
 .pagination-button {
