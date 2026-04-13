@@ -49,14 +49,14 @@ export class CharactersController {
   // 创建人物 - 仅允许admin用户访问
   @UseGuards(AdminAuthGuard)
   @Post()
-  async create(@Body() body: { name: string; gender: string; birthYear: number; deathYear?: number; birthPlace: string; background: string; personality: string; dynasty: string; userId: number }): Promise<Character> {
+  async create(@Body() body: { name: string; gender: string; birthYear: string; deathYear?: string; birthPlace: string; background: string; personality: string; dynasty: string; userId: number }): Promise<Character> {
     return await this.charactersService.create(body);
   }
 
   // 更新人物 - 仅允许admin用户访问
   @UseGuards(AdminAuthGuard)
   @Put(':id')
-  async update(@Param('id') id: number, @Body() body: { name?: string; gender?: string; birthYear?: number; deathYear?: number; birthPlace?: string; background?: string; personality?: string; dynasty?: string }): Promise<Character | null> {
+  async update(@Param('id') id: number, @Body() body: { name?: string; gender?: string; birthYear?: string; deathYear?: string; birthPlace?: string; background?: string; personality?: string; dynasty?: string }): Promise<Character | null> {
     return await this.charactersService.update(+id, body);
   }
 

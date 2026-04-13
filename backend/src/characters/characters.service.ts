@@ -75,7 +75,7 @@ export class CharactersService {
   }
 
   // 创建人物
-  async create(characterData: { name: string; gender: string; birthYear: number; deathYear?: number; birthPlace: string; background: string; personality: string; dynasty: string; userId: number; avatar?: string }): Promise<Character> {
+  async create(characterData: { name: string; gender: string; birthYear: string; deathYear?: string; birthPlace: string; background: string; personality: string; dynasty: string; userId: number; avatar?: string }): Promise<Character> {
     // 根据性别设置默认头像路径
     const avatar = characterData.avatar || (characterData.gender === '女' ? '/images/ancient_character_women.webp' : '/images/ancient_character_men.webp');
     
@@ -87,7 +87,7 @@ export class CharactersService {
   }
 
   // 更新人物
-  async update(id: number, characterData: { name?: string; gender?: string; birthYear?: number; deathYear?: number; birthPlace?: string; background?: string; personality?: string; dynasty?: string; avatar?: string }): Promise<Character | null> {
+  async update(id: number, characterData: { name?: string; gender?: string; birthYear?: string; deathYear?: string; birthPlace?: string; background?: string; personality?: string; dynasty?: string; avatar?: string }): Promise<Character | null> {
     const character = await this.characterRepository.findOne({ where: { id } });
     if (!character) {
       return null;
@@ -222,7 +222,7 @@ export class CharactersService {
   }
 
   // AI 生成人物信息（流式）
-  async generatePersonWithAi(name: string, aiToken: string, model: string, callback: (chunk: string) => void): Promise<{ name: string; gender: string; birthYear: number; deathYear?: number; birthPlace: string; background: string; personality: string; dynasty: string }> {
+  async generatePersonWithAi(name: string, aiToken: string, model: string, callback: (chunk: string) => void): Promise<{ name: string; gender: string; birthYear: string; deathYear?: string; birthPlace: string; background: string; personality: string; dynasty: string }> {
     console.log(name, aiToken, model)
     try {
       // 检查 aiToken 是否为空
@@ -231,7 +231,7 @@ export class CharactersService {
         const defaultResult = {
           name,
           gender: '未知',
-          birthYear: 0,
+          birthYear: '?',
           deathYear: null,
           birthPlace: '未知',
           background: '未知',
@@ -257,12 +257,12 @@ export class CharactersService {
 6. 性格
 7. 所属朝代
 
-请以JSON格式返回，例如：（请注意birthYear和deathYear的格式，如果没有具体的就用 3000 表示，公元前则用负数表示）
+请以JSON格式返回，例如：（请注意birthYear和deathYear的格式，如果没有具体的就用 ? 表示）
 {
   "name": "李世民",
   "gender": "男",
-  "birthYear": 598,
-  "deathYear": 649,
+  "birthYear": '598',
+  "deathYear": '649',
   "birthPlace": "陇西成纪",
   "background": "唐高祖李渊次子",
   "personality": "英明果断，雄才大略",
@@ -325,7 +325,7 @@ export class CharactersService {
         const defaultResult = {
           name,
           gender: '未知',
-          birthYear: 0,
+          birthYear: '?',
           deathYear: null,
           birthPlace: '未知',
           background: '未知',
@@ -341,7 +341,7 @@ export class CharactersService {
       const defaultResult = {
         name,
         gender: '未知',
-        birthYear: 0,
+        birthYear: '?',
         deathYear: null,
         birthPlace: '未知',
         background: '未知',

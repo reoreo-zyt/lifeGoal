@@ -2,7 +2,7 @@ import { createConnection, ConnectionOptions } from 'typeorm';
 import { Character } from '../characters/entities/character.entity';
 import { CharacterEvent } from '../characters/entities/character-event.entity';
 
-async function updateYearValues() {
+async function checkDatabase() {
   try {
     // 数据库连接配置
     const connectionOptions: ConnectionOptions = {
@@ -20,31 +20,33 @@ async function updateYearValues() {
     const connection = await createConnection(connectionOptions);
     console.log('数据库连接成功');
 
-    // 直接执行 SQL 语句更新数据
-    await connection.query("UPDATE `character` SET birthYear = '?' WHERE birthYear = '0' OR birthYear = '3000' OR birthYear = ''");
-    await connection.query("UPDATE `character` SET deathYear = '?' WHERE deathYear = '0' OR deathYear = '3000' OR deathYear = ''");
-
-    console.log('更新年份值成功');
-
-    // 验证更新结果
-    const birthYearCount = await connection.query("SELECT COUNT(*) AS count FROM `character` WHERE birthYear = '?'");
-    const deathYearCount = await connection.query("SELECT COUNT(*) AS count FROM `character` WHERE deathYear = '?'");
-
-    console.log(`更新后的 birthYear 为 '?' 的记录数: ${birthYearCount[0].count}`);
-    console.log(`更新后的 deathYear 为 '?' 的记录数: ${deathYearCount[0].count}`);
+    // 查看 character 表的结构
+    const tableStructure = await connection.query('DESCRIBE `character`');
+    console.log('Character 表结构:');
+    console.table(tableStructure);
 
     // 查看前 10 条数据
     const characters = await connection.query('SELECT id, name, birthYear, deathYear FROM `character` LIMIT 10');
     console.log('\n前 10 条数据:');
     console.table(characters);
 
+    // 统计不同 birthYear 值的数量
+    const birthYearStats = await connection.query('SELECT birthYear, COUNT(*) as count FROM `character` GROUP BY birthYear ORDER BY birthYear');
+    console.log('\nbirthYear 统计:');
+    console.table(birthYearStats);
+
+    // 统计不同 deathYear 值的数量
+    const deathYearStats = await connection.query('SELECT deathYear, COUNT(*) as count FROM `character` GROUP BY deathYear ORDER BY deathYear');
+    console.log('\ndeathYear 统计:');
+    console.table(deathYearStats);
+
     // 关闭连接
     await connection.close();
-    console.log('数据库连接已关闭');
+    console.log('\n数据库连接已关闭');
   } catch (error) {
-    console.error('更新年份值时出错:', error);
+    console.error('检查数据库时出错:', error);
   }
 }
 
 // 运行脚本
-updateYearValues();
+checkDatabase();
