@@ -18,7 +18,7 @@
     </div>
     
     <!-- AI 生成人物按钮 -->
-    <div class="generate-container">
+    <div v-if="user && user.isAdmin" class="generate-container">
       <button @click="openAIGenerateModal" class="generate-button">
         AI 生成人物
       </button>
@@ -61,13 +61,6 @@
     <div 
       v-if="totalPages > 1" 
       class="pagination"
-      @touchstart="handleTouchStart"
-      @touchmove="handleTouchMove"
-      @touchend="handleTouchEnd"
-      @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
-      @mouseleave="handleMouseUp"
     >
       <button 
         class="pagination-button"
@@ -128,7 +121,7 @@
                 <option value="现代">现代</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" v-if="0">
               <label>年份范围</label>
               <div class="year-inputs">
                 <input 
@@ -186,7 +179,7 @@
           <div class="character-info-container">
             <!-- 左侧基本信息 -->
             <div class="character-basic-info">
-              <p><strong>生卒年份:</strong> {{ selectedCharacter.birthYear === 3000 ? '?' : selectedCharacter.birthYear }}年 - {{ selectedCharacter.deathYear === 3000 || !selectedCharacter.deathYear ? '?' : selectedCharacter.deathYear }}年</p>
+              <p><strong>生卒年份:</strong> {{ selectedCharacter.birthYear === '3000' ? '?' : selectedCharacter.birthYear }}年 - {{ selectedCharacter.deathYear === '3000' || !selectedCharacter.deathYear ? '?' : selectedCharacter.deathYear }}年</p>
               <p><strong>所处朝代:</strong> {{ selectedCharacter.dynasty }}</p>
               <p><strong>性别:</strong> {{ selectedCharacter.gender }}</p>
               <p><strong>出生地:</strong> {{ selectedCharacter.birthPlace }}</p>
@@ -264,6 +257,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import AIGenerateModal from '../components/AIGenerateModal.vue'
+
+const user = ref<any | null>(null)
 
 const hoveredCharacter = ref<number | null>(null)
 const selectedCharacter = ref<Character | null>(null)
@@ -433,8 +428,8 @@ interface Character {
   id: number
   name: string
   gender: string
-  birthYear: number
-  deathYear: number | null
+  birthYear: string
+  deathYear: string | null
   birthPlace: string
   background: string
   personality: string
@@ -519,70 +514,6 @@ const changePage = (page: number) => {
   }
 }
 
-// 触摸事件处理
-const handleTouchStart = (e: TouchEvent) => {
-  touchStartX.value = e.changedTouches[0].screenX
-}
-
-const handleTouchMove = (e: TouchEvent) => {
-  touchEndX.value = e.changedTouches[0].screenX
-}
-
-const handleTouchEnd = () => {
-  const swipeThreshold = 50
-  const diff = touchStartX.value - touchEndX.value
-  
-  if (Math.abs(diff) > swipeThreshold) {
-    if (diff > 0) {
-      // 向左滑动，下一页
-      if (currentPage.value < totalPages.value) {
-        changePage(currentPage.value + 1)
-      }
-    } else {
-      // 向右滑动，上一页
-      if (currentPage.value > 1) {
-        changePage(currentPage.value - 1)
-      }
-    }
-  }
-  
-  // 重置触摸值
-  touchStartX.value = 0
-  touchEndX.value = 0
-}
-
-// 鼠标事件处理
-const handleMouseDown = (e: MouseEvent) => {
-  mouseStartX.value = e.screenX
-}
-
-const handleMouseMove = (e: MouseEvent) => {
-  mouseEndX.value = e.screenX
-}
-
-const handleMouseUp = () => {
-  const swipeThreshold = 50
-  const diff = mouseStartX.value - mouseEndX.value
-  
-  if (Math.abs(diff) > swipeThreshold) {
-    if (diff > 0) {
-      // 向左滑动，下一页
-      if (currentPage.value < totalPages.value) {
-        changePage(currentPage.value + 1)
-      }
-    } else {
-      // 向右滑动，上一页
-      if (currentPage.value > 1) {
-        changePage(currentPage.value - 1)
-      }
-    }
-  }
-  
-  // 重置鼠标值
-  mouseStartX.value = 0
-  mouseEndX.value = 0
-}
-
 const fetchCharacterDetail = async (id: number) => {
   try {
     loading.value = true
@@ -628,11 +559,11 @@ const filteredCharacters = computed(() => {
     // 年份范围搜索
     if (searchYearStart.value !== null || searchYearEnd.value !== null) {
       // 生年过滤
-      if (searchYearStart.value !== null && character.birthYear !== 3000 && character.birthYear < searchYearStart.value) {
+      if (searchYearStart.value !== null && character.birthYear !== '?' && parseInt(character.birthYear) < searchYearStart.value) {
         return false
       }
       // 卒年过滤
-      if (searchYearEnd.value !== null && character.deathYear !== null && character.deathYear !== 3000 && character.deathYear > searchYearEnd.value) {
+      if (searchYearEnd.value !== null && character.deathYear !== null && character.deathYear !== '?' && parseInt(character.deathYear) > searchYearEnd.value) {
         return false
       }
     }
@@ -740,6 +671,11 @@ const handleCharacterGenerated = async (character: any) => {
 }
 
 onMounted(() => {
+  // 从本地存储中读取用户信息
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    user.value = JSON.parse(storedUser)
+  }
   fetchCharacters()
 })
 </script>

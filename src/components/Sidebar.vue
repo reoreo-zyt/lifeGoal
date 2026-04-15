@@ -4,26 +4,26 @@
       <h1></h1>
     </div>
     <nav class="nav">
-      <router-link to="/" class="nav-item" active-class="active">
+      <router-link to="/" class="nav-item" active-class="active" @click="toggleSidebar">
         <span class="icon" title="首页"><Home /></span>
       </router-link>
-      <router-link to="/ask" class="nav-item" active-class="active">
+      <router-link to="/ask" class="nav-item" active-class="active" @click="toggleSidebar">
         <span class="icon" title="AI"><HelpCircle /></span>
       </router-link>
-      <div class="nav-item auth-item" @click="openAuthModal">
+      <div class="nav-item auth-item" @click="() => { openAuthModal(); toggleSidebar(); }">
         <span class="icon" :title="user ? '个人' : '登录'"><Account /></span>
       </div>
     </nav>
   
     <!-- 登录后显示的功能 -->
     <div v-if="user" class="mobile-auth-actions">
-      <div class="nav-item" @click="openAIGenerateModal">
+      <div v-if="user.isAdmin" class="nav-item" @click="() => { openAIGenerateModal(); toggleSidebar(); }">
         <span class="icon" title="AI 生成"><Brain /></span>
       </div>
-      <router-link v-if="user.isAdmin" to="/admin" class="nav-item">
+      <router-link v-if="user.isAdmin" to="/admin" class="nav-item" @click="toggleSidebar">
         <span class="icon" title="配置"><Cog /></span>
       </router-link>
-      <div class="nav-item" @click="logout">
+      <div class="nav-item" @click="() => { logout(); toggleSidebar(); }">
         <span class="icon" title="退出"><Logout /></span>
       </div>
     </div>
