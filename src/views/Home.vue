@@ -569,6 +569,19 @@ const filteredCharacters = computed(() => {
     }
     
     return true
+  }).sort((a, b) => {
+    // 处理出生年为 '?' 的情况，将其排到后面
+    if (a.birthYear === '?' && b.birthYear !== '?') {
+      return 1
+    }
+    if (a.birthYear !== '?' && b.birthYear === '?') {
+      return -1
+    }
+    if (a.birthYear === '?' && b.birthYear === '?') {
+      return 0
+    }
+    // 按出生年从小到大排序
+    return parseInt(a.birthYear) - parseInt(b.birthYear)
   })
 })
 
