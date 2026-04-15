@@ -86,7 +86,9 @@
       <div class="modal-content advanced-search-modal bottom-up-modal" @click.stop>
         <div class="modal-header">
           <h2>高级搜索</h2>
-          <button class="close-button" @click="closeAdvancedSearchModal">×</button>
+          <div class="header-actions">
+            <button class="close-button" @click="closeAdvancedSearchModal">×</button>
+          </div>
         </div>
         <div class="modal-body">
           <div class="search-form">
@@ -203,16 +205,18 @@
                   :alt="selectedCharacter.name" 
                   class="avatar-image"
                 />
-                <input 
-                  type="file" 
-                  id="avatar-upload" 
-                  class="avatar-upload-input"
-                  @change="handleAvatarUpload"
-                  accept="image/*"
-                />
-                <label for="avatar-upload" class="avatar-upload-label">
-                  更换头像
-                </label>
+                <div v-if="user && user.isAdmin">
+                  <input 
+                    type="file" 
+                    id="avatar-upload" 
+                    class="avatar-upload-input"
+                    @change="handleAvatarUpload"
+                    accept="image/*"
+                  />
+                  <label for="avatar-upload" class="avatar-upload-label">
+                    更换头像
+                  </label>
+                </div>
               </div>
               <div v-if="uploading" class="uploading-indicator">
                 上传中...
@@ -293,12 +297,6 @@ const currentPage = ref(1)
 const pageSize = ref(100)
 const totalPages = ref(1)
 const totalCharacters = ref(0)
-
-// 滑动相关变量
-const touchStartX = ref(0)
-const touchEndX = ref(0)
-const mouseStartX = ref(0)
-const mouseEndX = ref(0)
 
 // 朝代标记数据
 const dynastyMarkers = [
@@ -1751,25 +1749,26 @@ html {
 
 .advanced-search-modal .close-button {
   background: white;
-  border: 2px solid #666;
-  font-size: 24px;
+  border: 2px solid #999;
+  font-size: 28px;
   cursor: pointer;
-  color: #6e6b6b;
-  width: 36px;
-  height: 36px;
+  color: #666;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  line-height: 1;
 }
 
 .advanced-search-modal .close-button:hover {
   background: #6e6b6b;
   color: white;
   border-color: #6e6b6b;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   transform: translateY(-2px);
 }
 
