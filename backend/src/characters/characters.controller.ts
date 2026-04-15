@@ -268,4 +268,35 @@ export class CharactersController {
 
     return { success: true, avatar: avatarPath };
   }
+
+  // 测试路由
+  @Get('test')
+  async test() {
+    return { success: true, message: 'Test route works!' };
+  }
+
+  // 访问图片接口
+  @Get('images/:fileName')
+  async getImage(
+    @Param('fileName') fileName: string,
+    @Res() res: Response
+  ) {
+    try {
+      // 构建图片文件路径
+      const imagePath = path.join(__dirname, '..', '..', 'public', 'images', fileName);
+      console.log('Image path:', imagePath);
+
+      // 检查文件是否存在
+      if (!fs.existsSync(imagePath)) {
+        console.log('File not found:', imagePath);
+        return res.status(404).json({ success: false, message: '图片不存在' });
+      }
+
+      // 发送图片文件
+      res.sendFile(imagePath);
+    } catch (error) {
+      console.error('获取图片失败:', error);
+      return res.status(500).json({ success: false, message: '获取图片失败' });
+    }
+  }
 }

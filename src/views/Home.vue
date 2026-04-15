@@ -48,7 +48,7 @@
           @click="showCharacterInfo(character)"
         >
           <div class="character-image">
-            <img :src="character.avatar ? `${character.avatar}` : (character.gender === '女' ? '/images/ancient_character_women.webp' : '/images/ancient_character_men.webp')" :alt="character.name" />
+            <img :src="character.avatar ? `${API_BASE_URL}${character.avatar}` : (character.gender === '女' ? `${API_BASE_URL}/public/images/ancient_character_women.webp` : `${API_BASE_URL}/public/images/ancient_character_men.webp`)" :alt="character.name" />
           </div>
           <div v-if="hoveredCharacter === character.id" class="character-tooltip">
             {{ character.name }}
@@ -172,8 +172,16 @@
     <div v-if="selectedCharacter" class="character-modal-overlay" @click="closeModal">
       <div class="character-modal" @click.stop>
         <div class="modal-header">
+          <button class="nav-button prev-button" @click="showPreviousCharacter" :disabled="getCurrentCharacterIndex() <= 0">
+            ←
+          </button>
           <h2>{{ selectedCharacter.name }}</h2>
-          <button class="close-button" @click="closeModal">×</button>
+          <div class="header-actions">
+            <button class="nav-button next-button" @click="showNextCharacter" :disabled="getCurrentCharacterIndex() >= filteredCharacters.length - 1">
+              →
+            </button>
+            <button class="close-button" @click="closeModal">×</button>
+          </div>
         </div>
         <div class="modal-body">
           <div class="character-info-container">
@@ -191,7 +199,7 @@
             <div class="character-avatar">
               <div class="avatar-container">
                 <img 
-                  :src="selectedCharacter.avatar ? `${selectedCharacter.avatar}` : (selectedCharacter.gender === '女' ? '/images/ancient_character_women.webp' : '/images/ancient_character_men.webp')" 
+                  :src="selectedCharacter.avatar ? `${API_BASE_URL}${selectedCharacter.avatar}` : (selectedCharacter.gender === '女' ? `${API_BASE_URL}/public/images/ancient_character_women.webp` : `${API_BASE_URL}/public/images/ancient_character_men.webp`)" 
                   :alt="selectedCharacter.name" 
                   class="avatar-image"
                 />
@@ -591,6 +599,27 @@ const showCharacterInfo = async (character: Character) => {
 
 const closeModal = () => {
   selectedCharacter.value = null
+}
+
+const getCurrentCharacterIndex = () => {
+  if (!selectedCharacter.value) return -1
+  return filteredCharacters.value.findIndex(c => c.id === selectedCharacter.value?.id)
+}
+
+const showPreviousCharacter = async () => {
+  const currentIndex = getCurrentCharacterIndex()
+  if (currentIndex > 0) {
+    const previousCharacter = filteredCharacters.value[currentIndex - 1]
+    await fetchCharacterDetail(previousCharacter.id)
+  }
+}
+
+const showNextCharacter = async () => {
+  const currentIndex = getCurrentCharacterIndex()
+  if (currentIndex < filteredCharacters.value.length - 1) {
+    const nextCharacter = filteredCharacters.value[currentIndex + 1]
+    await fetchCharacterDetail(nextCharacter.id)
+  }
 }
 
 // AI 生成人物相关方法
@@ -1261,13 +1290,63 @@ html {
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid #e0e0e0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-radius: 16px 16px 0 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.nav-button {
+  background: none;
+  border: 2px solid white;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin: 0 10px;
+}
+
+.nav-button:hover:not(:disabled) {
+  background: white;
+  color: #667eea;
+  transform: scale(1.1);
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.prev-button {
+  margin-left: 0;
+}
+
+.next-button {
+  margin-right: 0;
+}
+
+.character-modal .modal-header h2 {
+  flex: 1;
+  text-align: center;
+  margin: 0 20px;
 }
 
 .modal-header h2 {
@@ -1611,15 +1690,56 @@ html {
 
 .advanced-search-modal .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 2px solid #6e6b6b;
+  position: relative;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.nav-button {
   background: none;
+  border: 2px solid #6e6b6b;
   color: #6e6b6b;
-  border-radius: 0;
-  padding: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: bold;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin: 0 10px;
+}
+
+.nav-button:hover:not(:disabled) {
+  background: #6e6b6b;
+  color: white;
+  transform: scale(1.1);
+}
+
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #ccc;
+}
+
+.prev-button {
+  margin-left: 0;
+}
+
+.next-button {
+  margin-right: 0;
 }
 
 .advanced-search-modal .modal-header h2 {
