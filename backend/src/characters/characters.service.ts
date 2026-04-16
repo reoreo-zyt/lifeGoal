@@ -60,8 +60,7 @@ export class CharactersService {
     
     // 添加排序：按出生年份升序排列，'?' 排到最后
     const data = await queryBuilder
-      .orderBy('CASE WHEN character.birthYear = \'?\' THEN 1 ELSE 0 END', 'ASC')
-      .orderBy('character.birthYear', 'ASC')
+      .addOrderBy('CASE WHEN character.birthYear = \'?\' THEN 9999999 ELSE CAST(character.birthYear AS SIGNED) END', 'ASC')
       .skip((page - 1) * pageSize)
       .take(pageSize)
       .getMany();
