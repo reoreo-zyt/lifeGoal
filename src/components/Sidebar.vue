@@ -8,7 +8,7 @@
         <span class="icon" title="首页"><Home /></span>
       </router-link>
       <router-link to="/ask" class="nav-item" active-class="active" @click="toggleSidebar">
-        <span class="icon" title="AI"><HelpCircle /></span>
+        <span class="icon" title="卡牌"><HelpCircle /></span>
       </router-link>
       <div class="nav-item auth-item" @click="() => { user ? openLogoutConfirm() : openAuthModal(); toggleSidebar(); }">
         <span class="icon" :title="user ? '个人' : '登录'"><Account /></span>

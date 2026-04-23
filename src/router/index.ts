@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Home from '../views/Home.vue'
-import Ask from '../views/Ask.vue'
+import CardBattleGame from '../views/CardBattleGame.vue'
 import Admin from '../views/Admin.vue'
 
 const routes: Array<RouteRecordRaw> = [
@@ -11,8 +11,8 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/ask',
-    name: 'Ask',
-    component: Ask
+    name: 'CardBattleGame',
+    component: CardBattleGame
   },
   {
     path: '/admin',
