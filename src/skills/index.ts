@@ -1,5 +1,5 @@
 import { createYuchiJiong } from "./yuchi-jiong";
-import type { General, Skill } from "./types";
+import type { General } from "./types";
 
 // 所有可招募的特殊武将
 export const specialGenerals = {

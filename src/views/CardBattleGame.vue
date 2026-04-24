@@ -338,19 +338,7 @@
             </div>
           </div>
 
-          <div class="battle-report">
-            <div class="report-header">
-              <h3>战况播报</h3>
-            </div>
-            <div class="report-content">
-              <div
-                v-for="(report, index) in battleReports"
-                :key="index"
-                class="report-item"
-                v-html="report"
-              ></div>
-            </div>
-          </div>
+          <BattleReport :reports="battleReports" />
 
           <!-- 战斗场景 -->
           <div class="player-side enemy">
@@ -691,8 +679,9 @@ import { ref, computed, onMounted } from "vue";
 import AuthModal from "../components/AuthModal.vue";
 import GeneralTooltip from "../components/GeneralTooltip.vue";
 import GeneralList from "../components/GeneralList.vue";
+import BattleReport from "../components/BattleReport.vue";
 import { createYuchiJiong } from "../skills/yuchi-jiong";
-import type { SoldierType, General, Skill } from "../skills/types";
+import type { General } from "../skills/types";
 
 const isLoggedIn = ref(false);
 const showAuthModal = ref(false);
@@ -1084,71 +1073,6 @@ const endTurn = () => {
   startBattle();
 };
 
-const calculateBattle = () => {
-  const allGenerals: Array<{
-    general: General;
-    side: "player" | "enemy";
-    position: string;
-  }> = [];
-
-  if (playerFormation.value.前锋 && !playerFormation.value.前锋.isDead) {
-    allGenerals.push({
-      general: playerFormation.value.前锋,
-      side: "player",
-      position: "前锋",
-    });
-  }
-  if (playerFormation.value.中军 && !playerFormation.value.中军.isDead) {
-    allGenerals.push({
-      general: playerFormation.value.中军,
-      side: "player",
-      position: "中军",
-    });
-  }
-  if (playerFormation.value.大营 && !playerFormation.value.大营.isDead) {
-    allGenerals.push({
-      general: playerFormation.value.大营,
-      side: "player",
-      position: "大营",
-    });
-  }
-
-  if (enemyFormation.value.前锋 && !enemyFormation.value.前锋.isDead) {
-    allGenerals.push({
-      general: enemyFormation.value.前锋,
-      side: "enemy",
-      position: "前锋",
-    });
-  }
-  if (enemyFormation.value.中军 && !enemyFormation.value.中军.isDead) {
-    allGenerals.push({
-      general: enemyFormation.value.中军,
-      side: "enemy",
-      position: "中军",
-    });
-  }
-  if (enemyFormation.value.大营 && !enemyFormation.value.大营.isDead) {
-    allGenerals.push({
-      general: enemyFormation.value.大营,
-      side: "enemy",
-      position: "大营",
-    });
-  }
-
-  allGenerals.sort((a, b) => b.general.speed - a.general.speed);
-
-  for (const attacker of allGenerals) {
-    const targets = getTargetsInRange(attacker);
-    if (targets.length > 0) {
-      const target = targets[Math.floor(Math.random() * targets.length)];
-      performAttack(attacker, target);
-    }
-  }
-
-  checkDeadGenerals();
-  checkGameOver();
-};
-
 const getTargetsInRange = (attacker: {
   general: General;
   side: "player" | "enemy";
@@ -1467,24 +1391,6 @@ const performAttackWithAnimation = async (
   );
   // 清除攻击状态
   attackingCard.value = null;
-};
-
-const checkDeadGenerals = () => {
-  Object.keys(playerFormation.value).forEach((key) => {
-    const general =
-      playerFormation.value[key as keyof typeof playerFormation.value];
-    if (general && general.troops <= 0) {
-      general.isDead = true;
-    }
-  });
-
-  Object.keys(enemyFormation.value).forEach((key) => {
-    const general =
-      enemyFormation.value[key as keyof typeof enemyFormation.value];
-    if (general && general.troops <= 0) {
-      general.isDead = true;
-    }
-  });
 };
 
 const checkGameOver = () => {
@@ -2781,44 +2687,7 @@ const nextWave = () => {
   text-align: right;
 }
 
-.battle-report {
-  width: 350px;
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-}
 
-.report-header {
-  text-align: center;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #667eea;
-  margin-bottom: 15px;
-}
-
-.report-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #2c3e50;
-}
-
-.report-content {
-  flex: 1;
-  overflow-y: auto;
-  max-height: 600px;
-}
-
-.report-item {
-  padding: 10px;
-  margin-bottom: 8px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #2c3e50;
-  border-left: 3px solid #667eea;
-}
 
 .general-list-overlay {
   position: fixed;
