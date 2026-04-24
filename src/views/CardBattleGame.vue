@@ -49,12 +49,6 @@
             <div class="formation horizontal">
               <div class="card-slot" @click="selectSlot('player', '大营')">
                 <div class="card-container">
-                  <div class="speed-bar-container" :class="{ active: isBattleActive }">
-                    <div class="speed-bar">
-                      <div class="speed-fill" :style="{ width: getCardSpeed('player', '大营') + '%' }"></div>
-                    </div>
-                    <div class="speed-text">{{ Math.floor(getCardSpeed('player', '大营')) }}/100</div>
-                  </div>
                   <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.大营 }">
                     <div class="troops-bar">
                       <div class="troops-fill" :style="{ width: playerFormation.大营 ? (playerFormation.大营.troops / (playerFormation.大营.level * 100)) * 100 + '%' : '0%' }"></div>
@@ -122,12 +116,6 @@
               </div>
               <div class="card-slot" @click="selectSlot('player', '中军')">
                 <div class="card-container">
-                  <div class="speed-bar-container" :class="{ active: isBattleActive }">
-                    <div class="speed-bar">
-                      <div class="speed-fill" :style="{ width: getCardSpeed('player', '中军') + '%' }"></div>
-                    </div>
-                    <div class="speed-text">{{ Math.floor(getCardSpeed('player', '中军')) }}/100</div>
-                  </div>
                   <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.中军 }">
                     <div class="troops-bar">
                       <div class="troops-fill" :style="{ width: playerFormation.中军 ? (playerFormation.中军.troops / (playerFormation.中军.level * 100)) * 100 + '%' : '0%' }"></div>
@@ -193,12 +181,6 @@
               </div>
               <div class="card-slot" @click="selectSlot('player', '前锋')">
                 <div class="card-container">
-                  <div class="speed-bar-container" :class="{ active: isBattleActive }">
-                    <div class="speed-bar">
-                      <div class="speed-fill" :style="{ width: getCardSpeed('player', '前锋') + '%' }"></div>
-                    </div>
-                    <div class="speed-text">{{ Math.floor(getCardSpeed('player', '前锋')) }}/100</div>
-                  </div>
                   <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.前锋 }">
                     <div class="troops-bar">
                       <div class="troops-fill" :style="{ width: playerFormation.前锋 ? (playerFormation.前锋.troops / (playerFormation.前锋.level * 100)) * 100 + '%' : '0%' }"></div>
@@ -284,12 +266,6 @@
             <div class="formation horizontal enemy">
               <div class="card-slot" @click="selectSlot('enemy', '前锋')">
                 <div class="card-container">
-                  <div class="speed-bar-container" :class="{ active: isBattleActive }">
-                    <div class="speed-bar">
-                      <div class="speed-fill" :style="{ width: getCardSpeed('enemy', '前锋') + '%' }"></div>
-                    </div>
-                    <div class="speed-text">{{ Math.floor(getCardSpeed('enemy', '前锋')) }}/100</div>
-                  </div>
                   <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.前锋 }">
                     <div class="troops-bar">
                       <div class="troops-fill" :style="{ width: enemyFormation.前锋 ? (enemyFormation.前锋.troops / (enemyFormation.前锋.level * 100)) * 100 + '%' : '0%' }"></div>
@@ -355,12 +331,6 @@
               </div>
               <div class="card-slot" @click="selectSlot('enemy', '中军')">
                 <div class="card-container">
-                  <div class="speed-bar-container" :class="{ active: isBattleActive }">
-                    <div class="speed-bar">
-                      <div class="speed-fill" :style="{ width: getCardSpeed('enemy', '中军') + '%' }"></div>
-                    </div>
-                    <div class="speed-text">{{ Math.floor(getCardSpeed('enemy', '中军')) }}/100</div>
-                  </div>
                   <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.中军 }">
                     <div class="troops-bar">
                       <div class="troops-fill" :style="{ width: enemyFormation.中军 ? (enemyFormation.中军.troops / (enemyFormation.中军.level * 100)) * 100 + '%' : '0%' }"></div>
@@ -426,12 +396,6 @@
               </div>
               <div class="card-slot" @click="selectSlot('enemy', '大营')">
                 <div class="card-container">
-                  <div class="speed-bar-container" :class="{ active: isBattleActive }">
-                    <div class="speed-bar">
-                      <div class="speed-fill" :style="{ width: getCardSpeed('enemy', '大营') + '%' }"></div>
-                    </div>
-                    <div class="speed-text">{{ Math.floor(getCardSpeed('enemy', '大营')) }}/100</div>
-                  </div>
                   <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.大营 }">
                     <div class="troops-bar">
                       <div class="troops-fill" :style="{ width: enemyFormation.大营 ? (enemyFormation.大营.troops / (enemyFormation.大营.level * 100)) * 100 + '%' : '0%' }"></div>
@@ -828,27 +792,50 @@ const selectSlot = (side: "player" | "enemy", position: string) => {
 
 const tooltipData = ref<General | null>(null);
 
+let tooltipTimer: number | null = null;
+
 const showTooltip = (slotKey: string) => {
-  const [side, position] = slotKey.split("-");
-  const formation =
-    side === "player" ? playerFormation.value : enemyFormation.value;
-  const general = formation[position as keyof typeof formation];
-  if (general) {
-    tooltipData.value = general;
+  // 清除之前的定时器
+  if (tooltipTimer) {
+    clearTimeout(tooltipTimer);
   }
+  
+  // 设置新的定时器，2秒后显示tooltip
+  tooltipTimer = window.setTimeout(() => {
+    const [side, position] = slotKey.split("-");
+    const formation = side === "player" ? playerFormation.value : enemyFormation.value;
+    const general = formation[position as keyof typeof formation];
+    if (general) {
+      tooltipData.value = general;
+    }
+  }, 2000);
 };
 
 const hideTooltip = () => {
+  // 清除定时器
+  if (tooltipTimer) {
+    clearTimeout(tooltipTimer);
+    tooltipTimer = null;
+  }
   tooltipData.value = null;
 };
 
 const showGeneralTooltip = (general: General) => {
-  tooltipData.value = general;
+  // 清除之前的定时器
+  if (tooltipTimer) {
+    clearTimeout(tooltipTimer);
+  }
+  
+  // 设置新的定时器，2秒后显示tooltip
+  tooltipTimer = window.setTimeout(() => {
+    tooltipData.value = general;
+  }, 2000);
 };
 
 const closeGeneralList = () => {
   showGeneralList.value = false;
   selectedSlot.value = null;
+  hideTooltip();
 };
 
 const deployGeneral = (general: General) => {
@@ -1783,7 +1770,7 @@ const nextWave = () => {
 }
 
 .game-container {
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -2039,34 +2026,7 @@ const nextWave = () => {
   height: 100%;
 }
 
-.speed-bar-container {
-  margin-bottom: 8px;
-  width: 100%;
-  display: none;
-}
 
-.speed-bar-container.active {
-  display: block;
-}
-
-.speed-bar {
-  width: 100%;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.speed-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #ffd700, #ffed4e);
-  border-radius: 10px;
-  transition: width 0.3s ease;
-}
-
-.speed-text {
-  display: none;
-}
 
 .troops-bar-container {
   margin-bottom: 8px;
