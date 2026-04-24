@@ -77,14 +77,15 @@
                         <div class="card-name">{{ playerFormation.大营.name }}</div>
                       </div>
                       <div class="card-right-top">
-                        <div class="card-stars">
+                        <div class="card-stars" :class="{
+                          'star-level-3': playerFormation.大营.level === 3,
+                          'star-level-4': playerFormation.大营.level === 4,
+                          'star-level-5': playerFormation.大营.level === 5
+                        }">
                           <span
-                            v-for="i in 5"
+                            v-for="i in playerFormation.大营.level"
                             :key="i"
-                            class="star"
-                            :class="{
-                              active: i <= Math.ceil(playerFormation.大营.level),
-                            }"
+                            class="star active"
                             >★</span
                           >
                         </div>
@@ -144,14 +145,15 @@
                         <div class="card-name">{{ playerFormation.中军.name }}</div>
                       </div>
                       <div class="card-right-top">
-                        <div class="card-stars">
+                        <div class="card-stars" :class="{
+                          'star-level-3': playerFormation.中军.level === 3,
+                          'star-level-4': playerFormation.中军.level === 4,
+                          'star-level-5': playerFormation.中军.level === 5
+                        }">
                           <span
-                            v-for="i in 5"
+                            v-for="i in playerFormation.中军.level"
                             :key="i"
-                            class="star"
-                            :class="{
-                              active: i <= Math.ceil(playerFormation.中军.level),
-                            }"
+                            class="star active"
                             >★</span
                           >
                         </div>
@@ -209,14 +211,15 @@
                         <div class="card-name">{{ playerFormation.前锋.name }}</div>
                       </div>
                       <div class="card-right-top">
-                        <div class="card-stars">
+                        <div class="card-stars" :class="{
+                          'star-level-3': playerFormation.前锋.level === 3,
+                          'star-level-4': playerFormation.前锋.level === 4,
+                          'star-level-5': playerFormation.前锋.level === 5
+                        }">
                           <span
-                            v-for="i in 5"
+                            v-for="i in playerFormation.前锋.level"
                             :key="i"
-                            class="star"
-                            :class="{
-                              active: i <= Math.ceil(playerFormation.前锋.level),
-                            }"
+                            class="star active"
                             >★</span
                           >
                         </div>
@@ -294,14 +297,15 @@
                         <div class="card-name">{{ enemyFormation.前锋.name }}</div>
                       </div>
                       <div class="card-right-top">
-                        <div class="card-stars">
+                        <div class="card-stars" :class="{
+                          'star-level-3': enemyFormation.前锋.level === 3,
+                          'star-level-4': enemyFormation.前锋.level === 4,
+                          'star-level-5': enemyFormation.前锋.level === 5
+                        }">
                           <span
-                            v-for="i in 5"
+                            v-for="i in enemyFormation.前锋.level"
                             :key="i"
-                            class="star"
-                            :class="{
-                              active: i <= Math.ceil(enemyFormation.前锋.level),
-                            }"
+                            class="star active"
                             >★</span
                           >
                         </div>
@@ -359,14 +363,15 @@
                         <div class="card-name">{{ enemyFormation.中军.name }}</div>
                       </div>
                       <div class="card-right-top">
-                        <div class="card-stars">
+                        <div class="card-stars" :class="{
+                          'star-level-3': enemyFormation.中军.level === 3,
+                          'star-level-4': enemyFormation.中军.level === 4,
+                          'star-level-5': enemyFormation.中军.level === 5
+                        }">
                           <span
-                            v-for="i in 5"
+                            v-for="i in enemyFormation.中军.level"
                             :key="i"
-                            class="star"
-                            :class="{
-                              active: i <= Math.ceil(enemyFormation.中军.level),
-                            }"
+                            class="star active"
                             >★</span
                           >
                         </div>
@@ -424,14 +429,15 @@
                         <div class="card-name">{{ enemyFormation.大营.name }}</div>
                       </div>
                       <div class="card-right-top">
-                        <div class="card-stars">
+                        <div class="card-stars" :class="{
+                          'star-level-3': enemyFormation.大营.level === 3,
+                          'star-level-4': enemyFormation.大营.level === 4,
+                          'star-level-5': enemyFormation.大营.level === 5
+                        }">
                           <span
-                            v-for="i in 5"
+                            v-for="i in enemyFormation.大营.level"
                             :key="i"
-                            class="star"
-                            :class="{
-                              active: i <= Math.ceil(enemyFormation.大营.level),
-                            }"
+                            class="star active"
                             >★</span
                           >
                         </div>
@@ -490,12 +496,15 @@
                       <div class="card-name">{{ general.name }}</div>
                     </div>
                     <div class="card-right-top">
-                      <div class="card-stars">
+                      <div class="card-stars" :class="{
+                        'star-level-3': general.level === 3,
+                        'star-level-4': general.level === 4,
+                        'star-level-5': general.level === 5
+                      }">
                         <span
-                          v-for="i in 5"
+                          v-for="i in general.level"
                           :key="i"
-                          class="star"
-                          :class="{ active: i <= Math.ceil(general.level) }"
+                          class="star active"
                           >★</span
                         >
                       </div>
@@ -534,20 +543,20 @@
             </div>
             <div class="tooltip-stats">
               <div class="tooltip-stat-row">
-                <span>攻击: {{ tooltipData.attack }} ({{ tooltipData.attackGrowth || 0 }})</span>
-                <span>防御: {{ tooltipData.defense }} ({{ tooltipData.defenseGrowth || 0 }})</span>
+                <span>攻击: {{ tooltipData.attack }} (<span class="growth-value">{{ tooltipData.attackGrowth || 0 }}</span>)</span>
+                <span>防御: {{ tooltipData.defense }} (<span class="growth-value">{{ tooltipData.defenseGrowth || 0 }}</span>)</span>
               </div>
               <div class="tooltip-stat-row">
-                <span>策略: {{ tooltipData.strategy }} ({{ tooltipData.strategyGrowth || 0 }})</span>
-                <span>速度: {{ tooltipData.speed }}</span>
+                <span>策略: {{ tooltipData.strategy }} (<span class="growth-value">{{ tooltipData.strategyGrowth || 0 }}</span>)</span>
+                <span>速度: {{ tooltipData.speed }} (<span class="growth-value">{{ tooltipData.speedGrowth || 0 }}</span>)</span>
               </div>
               <div class="tooltip-stat-row">
                 <span>兵力: {{ tooltipData.troops }}</span>
                 <span>攻击距离: {{ tooltipData.attackRange }}</span>
               </div>
               <div class="tooltip-stat-row">
-                <span>攻城: {{ tooltipData.siege }} ({{ tooltipData.siegeGrowth || 0 }})</span>
-                <span>统御: {{ tooltipData.command }} ({{ tooltipData.commandGrowth || 0 }})</span>
+                <span>攻城: {{ tooltipData.siege }} (<span class="growth-value">{{ tooltipData.siegeGrowth || 0 }}</span>)</span>
+                <span>统御: {{ tooltipData.command }} (<span class="growth-value">{{ tooltipData.commandGrowth || 0 }}</span>)</span>
               </div>
             </div>
           </div>
@@ -556,12 +565,12 @@
         <div class="game-footer">
           <button
             class="action-button recruit"
-            @click="recruitCard"
-            :disabled="money < recruitCost"
+            @click="openCardPackModal"
+            :disabled="money < 100"
           >
             <span class="button-icon">📦</span>
             <span class="button-text">卡包招募</span>
-            <span class="button-cost">{{ recruitCost }}金额</span>
+            <span class="button-cost">100金额</span>
           </button>
           <button class="action-button end-turn" @click="endTurn">
             <span class="button-text">开始</span>
@@ -569,6 +578,108 @@
           <button class="action-button next-wave" @click="nextWave">
             <span class="button-text">下一轮</span>
           </button>
+        </div>
+
+        <!-- 卡包模态框 -->
+        <div v-if="showCardPackModal" class="modal-overlay">
+          <div class="modal-content card-pack-modal">
+            <div class="modal-header">
+              <h2>选择卡包</h2>
+              <button class="modal-close" @click="closeCardPackModal">×</button>
+            </div>
+            <div class="modal-body">
+              <div v-if="!isOpeningPack" class="card-pack-selection">
+                <div 
+                  class="card-pack-option" 
+                  :class="{ active: selectedCardPack === 'sui' }"
+                  @click="selectCardPack('sui')"
+                >
+                  <h3>隋朝卡包</h3>
+                  <p>包含隋朝时期的武将</p>
+                  <p class="pack-price">价格: $100</p>
+                </div>
+                <div 
+                  class="card-pack-option" 
+                  :class="{ active: selectedCardPack === 'tang' }"
+                  @click="selectCardPack('tang')"
+                >
+                  <h3>唐朝卡包</h3>
+                  <p>包含唐朝时期的武将</p>
+                  <p class="pack-price">价格: $100</p>
+                </div>
+              </div>
+              <div v-else class="pack-opening">
+                <h3>开包中...</h3>
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: packOpeningProgress + '%' }"></div>
+                </div>
+                <p>鼠标右滑开包</p>
+              </div>
+              <div v-if="packResult.length > 0" class="pack-result">
+                <h3>获得武将</h3>
+                <div class="pack-generals">
+                  <div v-for="(general, index) in packResult" :key="index" class="pack-general-item">
+                    <div class="card player" :style="{
+                      backgroundImage: `url(${general.avatar ? API_BASE_URL + general.avatar : (general.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
+                    }">
+                      <div class="card-top">
+                        <div class="card-left-top">
+                          <div class="card-dynasty">{{ general.dynasty }}</div>
+                          <div class="card-name">{{ general.name }}</div>
+                        </div>
+                        <div class="card-right-top">
+                          <div class="card-stars" :class="{
+                            'star-level-3': general.level === 3,
+                            'star-level-4': general.level === 4,
+                            'star-level-5': general.level === 5
+                          }">
+                            <span
+                              v-for="i in general.level"
+                              :key="i"
+                              class="star active"
+                              >★</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                      <div class="card-bottom">
+                        <div class="card-bottom-item">
+                          <span class="card-level">Lv.{{ general.level }}</span>
+                        </div>
+                        <div class="card-bottom-item">
+                          <span class="card-command">{{ general.command }}</span>
+                          <span class="card-bottom-label">统</span>
+                        </div>
+                        <div class="card-bottom-item">
+                          <span class="card-soldier-type">{{ general.soldierType }}</span>
+                        </div>
+                        <div class="card-bottom-item">
+                          <span class="card-range">{{ general.attackRange }}</span>
+                          <span class="card-bottom-label">距</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button 
+                class="modal-button cancel" 
+                @click="closeCardPackModal"
+                :disabled="isOpeningPack"
+              >
+                取消
+              </button>
+              <button 
+                class="modal-button open" 
+                @click="openCardPack"
+                :disabled="isOpeningPack || money < 100"
+              >
+                抽取
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -693,6 +804,20 @@ const isBattleActive = ref(false);
 const damageTexts = ref<any[]>([]);
 const attackingCard = ref<string | null>(null);
 
+// 卡包相关状态
+const showCardPackModal = ref(false);
+const selectedCardPack = ref('sui'); // sui: 隋朝, tang: 唐朝
+const isOpeningPack = ref(false);
+const packOpeningProgress = ref(0);
+const packResult = ref<General[]>([]);
+
+// 卡包概率配置
+const cardPackProbabilities = {
+  level3: 70,  // 3星概率70%
+  level4: 20,  // 4星概率20%
+  level5: 10   // 5星概率10%
+};
+
 interface General {
   id: number;
   name: string;
@@ -703,6 +828,7 @@ interface General {
   strategy: number;
   strategyGrowth: number;
   speed: number;
+  speedGrowth: number;
   attackRange: number;
   siege: number;
   siegeGrowth: number;
@@ -849,6 +975,128 @@ const closeGeneralList = () => {
   hideTooltip();
 };
 
+// 卡包相关函数
+const openCardPackModal = () => {
+  showCardPackModal.value = true;
+};
+
+const closeCardPackModal = () => {
+  showCardPackModal.value = false;
+  isOpeningPack.value = false;
+  packOpeningProgress.value = 0;
+  packResult.value = [];
+};
+
+const selectCardPack = (packType: string) => {
+  selectedCardPack.value = packType;
+};
+
+const openCardPack = async () => {
+  if (money.value < 100) {
+    addReport("金额不足，无法抽取卡包！");
+    return;
+  }
+
+  money.value -= 100;
+  isOpeningPack.value = true;
+  packOpeningProgress.value = 0;
+  packResult.value = [];
+
+  // 开包动画（模拟鼠标右滑）
+  const animationDuration = 1500; // 1.5秒
+  const stepDuration = 50; // 每50毫秒更新一次
+  const steps = animationDuration / stepDuration;
+
+  for (let i = 0; i <= steps; i++) {
+    packOpeningProgress.value = (i / steps) * 100;
+    await new Promise(resolve => setTimeout(resolve, stepDuration));
+  }
+
+  // 生成卡包结果
+  const packGenerals: General[] = [];
+  // 每个卡包包含5张卡
+  for (let i = 0; i < 5; i++) {
+    const level = getRandomLevel();
+    packGenerals.push(generatePackGeneral(level));
+  }
+
+  packResult.value = packGenerals;
+  
+  // 显示获得的武将
+  packGenerals.forEach(general => {
+    generals.value.push(general);
+    addReport(
+      `恭喜获得【${general.name}】！等级:${general.level} 攻:${general.attack} 防:${general.defense} 策:${general.strategy} 速:${general.speed} 兵:${general.troops} 距:${general.attackRange} 统率:${general.command} 兵种:${general.soldierType}`
+    );
+  });
+};
+
+// 根据概率获取随机等级
+const getRandomLevel = (): number => {
+  const random = Math.random() * 100;
+  if (random <= cardPackProbabilities.level3) {
+    return 3;
+  } else if (random <= cardPackProbabilities.level3 + cardPackProbabilities.level4) {
+    return 4;
+  } else {
+    return 5;
+  }
+};
+
+// 生成卡包武将
+const generatePackGeneral = (level: number): General => {
+  const commandValues = [2, 2.5, 3, 3.5];
+  const command = commandValues[Math.floor(Math.random() * commandValues.length)];
+  const troops = level * 100;
+
+  // 从API获取的人物中随机选择，或者使用默认人物
+  let character = null;
+  if (characters.value.length > 0) {
+    character = characters.value[Math.floor(Math.random() * characters.value.length)];
+  }
+
+  // 根据卡包类型选择不同朝代的武将
+  let generalName = '';
+  let dynasty = '';
+  if (selectedCardPack.value === 'sui') {
+    // 隋朝武将
+    const suiDynastyGenerals = ['杨坚', '杨广', '杨素', '高颎', '韩擒虎', '贺若弼', '史万岁', '李密', '窦建德', '王世充'];
+    generalName = character?.name || suiDynastyGenerals[Math.floor(Math.random() * suiDynastyGenerals.length)];
+    dynasty = '隋朝';
+  } else {
+    // 唐朝武将
+    const tangDynastyGenerals = ['李渊', '李世民', '李治', '李隆基', '郭子仪', '李光弼', '李靖', '李勣', '秦琼', '尉迟恭'];
+    generalName = character?.name || tangDynastyGenerals[Math.floor(Math.random() * tangDynastyGenerals.length)];
+    dynasty = '唐朝';
+  }
+
+  return {
+    id: character?.id || Date.now() + Math.random(),
+    name: generalName,
+    attack: Math.floor(Math.random() * 100) + 50,
+    attackGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    defense: Math.floor(Math.random() * 100) + 50,
+    defenseGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    strategy: Math.floor(Math.random() * 100) + 50,
+    strategyGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    speed: Math.floor(Math.random() * 100) + 50,
+    speedGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    attackRange: Math.floor(Math.random() * 3) + 1,
+    siege: Math.floor(Math.random() * 100) + 50,
+    siegeGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    troops: troops,
+    maxTroops: troops,
+    level: level,
+    command: command,
+    commandGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    isDead: false,
+    dynasty: dynasty,
+    soldierType: getRandomSoldierType(),
+    avatar: character?.avatar,
+    gender: character?.gender,
+  };
+};
+
 const deployGeneral = (general: General) => {
   if (selectedSlot.value) {
     const [, position] = selectedSlot.value.split("-");
@@ -908,6 +1156,7 @@ const generateEnemyTeam = () => {
       strategy: Math.floor(Math.random() * 100) + 50,
       strategyGrowth: Math.round((Math.random() * 3) * 100) / 100,
       speed: Math.floor(Math.random() * 100) + 50,
+      speedGrowth: Math.round((Math.random() * 3) * 100) / 100,
       attackRange: Math.floor(Math.random() * 3) + 1,
       siege: Math.floor(Math.random() * 100) + 50,
       siegeGrowth: Math.round((Math.random() * 3) * 100) / 100,
@@ -926,521 +1175,8 @@ const generateEnemyTeam = () => {
   addReport("敌方队伍已集结完毕！");
 };
 
-const recruitCard = () => {
-  if (money.value < recruitCost.value) {
-    addReport("金额不足，无法招募！");
-    return;
-  }
-
-  money.value -= recruitCost.value;
-
-  const level = Math.floor(Math.random() * 5) + 1;
-  const commandValues = [2, 2.5, 3, 3.5];
-  const command =
-    commandValues[Math.floor(Math.random() * commandValues.length)];
-  const troops = level * 100;
-
-  // 从API获取的人物中随机选择，或者使用默认人物
-  let character = null;
-  if (characters.value.length > 0) {
-    character =
-      characters.value[Math.floor(Math.random() * characters.value.length)];
-  }
-
-  const generalName =
-    character?.name ||
-    xiaDynastyGenerals[Math.floor(Math.random() * xiaDynastyGenerals.length)];
-
-  const newGeneral: General = {
-    id: character?.id || Date.now(),
-    name: generalName,
-    attack: Math.floor(Math.random() * 100) + 50,
-    attackGrowth: Math.round((Math.random() * 3) * 100) / 100,
-    defense: Math.floor(Math.random() * 100) + 50,
-    defenseGrowth: Math.round((Math.random() * 3) * 100) / 100,
-    strategy: Math.floor(Math.random() * 100) + 50,
-    strategyGrowth: Math.round((Math.random() * 3) * 100) / 100,
-    speed: Math.floor(Math.random() * 100) + 50,
-    attackRange: Math.floor(Math.random() * 3) + 1,
-    siege: Math.floor(Math.random() * 100) + 50,
-    siegeGrowth: Math.round((Math.random() * 3) * 100) / 100,
-    troops: troops,
-    maxTroops: troops,
-    level: level,
-    command: command,
-    commandGrowth: Math.round((Math.random() * 3) * 100) / 100,
-    isDead: false,
-    dynasty: "夏朝",
-    soldierType: getRandomSoldierType(),
-    avatar: character?.avatar,
-    gender: character?.gender,
-  };
-
-  generals.value.push(newGeneral);
-  addReport(
-    `恭喜获得【${newGeneral.name}】！等级:${newGeneral.level} 攻:${newGeneral.attack} 防:${newGeneral.defense} 策:${newGeneral.strategy} 速:${newGeneral.speed} 兵:${newGeneral.troops} 距:${newGeneral.attackRange} 统率:${newGeneral.command} 兵种:${newGeneral.soldierType}`,
-  );
-};
-
 const endTurn = () => {
   startBattle();
-};
-
-const calculateBattle = () => {
-  const allGenerals: Array<{
-    general: General;
-    side: "player" | "enemy";
-    position: string;
-  }> = [];
-
-  if (playerFormation.value.前锋 && !playerFormation.value.前锋.isDead) {
-    allGenerals.push({
-      general: playerFormation.value.前锋,
-      side: "player",
-      position: "前锋",
-    });
-  }
-  if (playerFormation.value.中军 && !playerFormation.value.中军.isDead) {
-    allGenerals.push({
-      general: playerFormation.value.中军,
-      side: "player",
-      position: "中军",
-    });
-  }
-  if (playerFormation.value.大营 && !playerFormation.value.大营.isDead) {
-    allGenerals.push({
-      general: playerFormation.value.大营,
-      side: "player",
-      position: "大营",
-    });
-  }
-
-  if (enemyFormation.value.前锋 && !enemyFormation.value.前锋.isDead) {
-    allGenerals.push({
-      general: enemyFormation.value.前锋,
-      side: "enemy",
-      position: "前锋",
-    });
-  }
-  if (enemyFormation.value.中军 && !enemyFormation.value.中军.isDead) {
-    allGenerals.push({
-      general: enemyFormation.value.中军,
-      side: "enemy",
-      position: "中军",
-    });
-  }
-  if (enemyFormation.value.大营 && !enemyFormation.value.大营.isDead) {
-    allGenerals.push({
-      general: enemyFormation.value.大营,
-      side: "enemy",
-      position: "大营",
-    });
-  }
-
-  allGenerals.sort((a, b) => b.general.speed - a.general.speed);
-
-  for (const attacker of allGenerals) {
-    const targets = getTargetsInRange(attacker);
-    if (targets.length > 0) {
-      const target = targets[Math.floor(Math.random() * targets.length)];
-      performAttack(attacker, target);
-    }
-  }
-
-  checkDeadGenerals();
-  checkGameOver();
-};
-
-const getTargetsInRange = (attacker: {
-  general: General;
-  side: "player" | "enemy";
-  position: string;
-}) => {
-  const targets: Array<{
-    general: General;
-    side: "player" | "enemy";
-    position: string;
-  }> = [];
-  // 位置深度：前锋=1，中军=2，大营=3
-  // 固定距离规则：
-  // 我方前锋到敌方前锋：距离1
-  // 我方前锋到敌方中军：距离2
-  // 我方前锋到敌方大营：距离3
-  // 我方中军到敌方前锋：距离2
-  // 我方中军到敌方中军：距离3
-  // 我方中军到敌方大营：距离4
-  // 我方大营到敌方前锋：距离3
-  // 我方大营到敌方中军：距离4
-  // 我方大营到敌方大营：距离5
-  const positionIndex: Record<string, number> = { 前锋: 1, 中军: 2, 大营: 3 };
-
-  // 计算敌方存活位置的实际位置索引（跳过死亡位置）
-  const getEnemyAlivePositions = (): Array<{
-    position: string;
-    actualPosition: number;
-    general: General;
-  }> => {
-    const formation =
-      attacker.side === "player" ? enemyFormation.value : playerFormation.value;
-    const positions = ["前锋", "中军", "大营"] as const;
-    const alivePositions: Array<{
-      position: string;
-      actualPosition: number;
-      general: General;
-    }> = [];
-    let actualPosition = 1; // 实际位置从1开始
-
-    for (const pos of positions) {
-      const general = formation[pos];
-      if (general && !general.isDead) {
-        alivePositions.push({
-          position: pos,
-          actualPosition: actualPosition,
-          general,
-        });
-        actualPosition++;
-      }
-    }
-    return alivePositions;
-  };
-
-  const enemyAlivePositions = getEnemyAlivePositions();
-
-  for (const enemyPos of enemyAlivePositions) {
-    const enemy = enemyPos.general;
-
-    // 计算距离：攻击方原始位置 + 敌方实际位置 - 1
-    // 死亡位置被跳过，敌方实际位置重新计算
-    const distance =
-      positionIndex[attacker.position] + enemyPos.actualPosition - 1;
-
-    // 攻击范围决定能打到的最大距离
-    if (distance <= attacker.general.attackRange) {
-      targets.push({
-        general: enemy,
-        side: attacker.side === "player" ? "enemy" : "player",
-        position: enemyPos.position,
-      });
-    }
-  }
-
-  // 详细播报可攻击目标
-  if (targets.length > 0) {
-    const targetList = targets
-      .map((target) => {
-        const targetPrefix = target.side === "player" ? "我方" : "敌方";
-        return `${targetPrefix}${target.position}【${target.general.name}】`;
-      })
-      .join("、");
-    addReport(`可攻击目标：${targetList}（共${targets.length}个）`);
-  }
-
-  return targets;
-};
-
-const performAttack = (
-  attacker: { general: General; side: "player" | "enemy"; position: string },
-  target: { general: General; side: "player" | "enemy"; position: string },
-) => {
-  // 计算基础伤害
-  let damage = Math.max(
-    0,
-    attacker.general.attack - target.general.defense / 2,
-  );
-
-  // 兵种克制逻辑
-  if (attacker.general.soldierType && target.general.soldierType) {
-    const attackerType = attacker.general.soldierType;
-    const targetType = target.general.soldierType;
-
-    if (soldierType克制[attackerType] === targetType) {
-      // 克制关系，伤害额外降低30%
-      damage *= 0.7;
-      addReport(
-        `【${attacker.general.name}】的${attackerType}克制【${target.general.name}】的${targetType}，伤害降低30%！`,
-      );
-    }
-  }
-
-  const oldTroops = target.general.troops;
-  target.general.troops = Math.max(
-    0,
-    target.general.troops - Math.floor(damage),
-  );
-
-  const attackerPrefix = attacker.side === "player" ? "我方" : "敌方";
-  const targetPrefix = target.side === "player" ? "我方" : "敌方";
-
-  // 返回攻击详情，不直接播报
-  const attackResult = {
-    damage: Math.floor(damage),
-    oldTroops: oldTroops,
-    newTroops: target.general.troops,
-    isTargetDied: target.general.troops <= 0,
-  };
-
-  if (target.general.troops <= 0) {
-    target.general.isDead = true;
-  }
-
-  return attackResult;
-};
-
-const showDamageText = (
-  damage: number,
-  side: "player" | "enemy",
-  position: string,
-) => {
-  // 查找对应卡牌内的troops元素
-  const troopsElement = document.querySelector(
-    `.${side}-side [data-card-position="${position}"] .troops, ` +
-      `.player-side.enemy [data-card-position="${position}"] .troops, ` +
-      `.enemy-side [data-card-position="${position}"] .troops`,
-  );
-
-  if (!troopsElement) {
-    // 备用方案：查找卡牌本身
-    const cardElement = document.querySelector(
-      `[data-card-side="${side}"][data-card-position="${position}"]`,
-    );
-    if (!cardElement) return;
-
-    const cardRect = cardElement.getBoundingClientRect();
-    const damageText = {
-      id: Date.now() + Math.random(),
-      text: "-" + damage,
-      x: cardRect.left + cardRect.width / 2 - 20,
-      y: cardRect.top + cardRect.height / 2,
-      delay: 0,
-    };
-
-    damageTexts.value.push(damageText);
-
-    setTimeout(() => {
-      damageTexts.value = damageTexts.value.filter(
-        (dt) => dt.id !== damageText.id,
-      );
-    }, 2000);
-    return;
-  }
-
-  const troopsRect = troopsElement.getBoundingClientRect();
-  const damageText = {
-    id: Date.now() + Math.random(),
-    text: "-" + damage,
-    x: troopsRect.left + troopsRect.width / 2 - 20,
-    y: troopsRect.top - 10,
-    delay: 0,
-  };
-
-  damageTexts.value.push(damageText);
-
-  // 2秒后移除伤害文本
-  setTimeout(() => {
-    damageTexts.value = damageTexts.value.filter(
-      (dt) => dt.id !== damageText.id,
-    );
-  }, 2000);
-};
-
-const performAttackWithAnimation = async (
-  attacker: { general: General; side: "player" | "enemy"; position: string },
-  target: { general: General; side: "player" | "enemy"; position: string },
-) => {
-  // 设置攻击中的卡牌
-  attackingCard.value = `${attacker.side}-${attacker.position}`;
-
-  const attackerPrefix = attacker.side === "player" ? "我方" : "敌方";
-  const targetPrefix = target.side === "player" ? "我方" : "敌方";
-
-  // 详细播报：谁开始行动
-  addReport(
-    `${attackerPrefix}${attacker.position}开始行动`,
-    attacker.general,
-    attacker.side
-  );
-  addReport(
-    `攻击距离：${attacker.general.attackRange}，可以攻击到${targetPrefix}${target.position}`,
-  );
-
-  // 计算伤害
-  const damage = Math.max(
-    0,
-    attacker.general.attack - target.general.defense / 2,
-  );
-
-  // 详细播报：选择攻击目标
-  addReport(
-    `选择攻击${targetPrefix}${target.position}【${target.general.name}】`,
-    attacker.general,
-    attacker.side
-  );
-
-  // 执行攻击逻辑
-  const attackResult = performAttack(attacker, target);
-
-  if (attackResult.damage > 0) {
-    addReport(`造成${attackResult.damage}点伤害！`, attacker.general, attacker.side);
-    addReport(`兵力从${attackResult.oldTroops}降至${attackResult.newTroops}`, target.general, target.side);
-
-    // 显示伤害数值 - 显示在目标卡牌上
-    showDamageText(attackResult.damage, target.side, target.position);
-
-    if (attackResult.isTargetDied) {
-      addReport(
-        `阵亡！`,
-        target.general,
-        target.side
-      );
-    } else {
-      addReport(
-        `剩余兵力：${attackResult.newTroops}`,
-        target.general,
-        target.side
-      );
-    }
-  } else {
-    addReport(`攻击被格挡，未造成伤害！`);
-  }
-
-  // 模拟动画时间
-  await new Promise((resolve) => setTimeout(resolve, 1200)); // 增加动画时间以便用户看到播报
-
-  addReport(
-    `${attackerPrefix}${attacker.position}【${attacker.general.name}】行动结束`,
-  );
-  // 清除攻击状态
-  attackingCard.value = null;
-};
-
-const checkDeadGenerals = () => {
-  Object.keys(playerFormation.value).forEach((key) => {
-    const general =
-      playerFormation.value[key as keyof typeof playerFormation.value];
-    if (general && general.troops <= 0) {
-      general.isDead = true;
-    }
-  });
-
-  Object.keys(enemyFormation.value).forEach((key) => {
-    const general =
-      enemyFormation.value[key as keyof typeof enemyFormation.value];
-    if (general && general.troops <= 0) {
-      general.isDead = true;
-    }
-  });
-};
-
-const checkGameOver = () => {
-  if (enemyFormation.value.大营 && enemyFormation.value.大营.isDead) {
-    // 胜利结算
-    const reward = currentWave.value * 10;
-    money.value += reward;
-    addReport(`恭喜！你击败了敌方大营，获得胜利！`);
-    addReport(`获得奖励：${reward} 金额！`);
-    setTimeout(() => {
-      alert(`恭喜通关！获得 ${reward} 金额奖励！`);
-    }, 1000);
-    return true;
-  }
-
-  if (playerFormation.value.大营 && playerFormation.value.大营.isDead) {
-    // 失败重置
-    addReport("我方大营阵亡，战斗失败！");
-    setTimeout(() => {
-      alert("战斗失败！恢复游戏初始数据！");
-      // 恢复游戏开始时的数据
-      money.value = initialGameData.money;
-      currentYear.value = initialGameData.currentYear;
-      currentWave.value = initialGameData.currentWave;
-      currentTurn.value = 0;
-      currentCommand.value = 0;
-      generals.value = [];
-      playerFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      enemyFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      battleReports.value = [];
-    }, 1000);
-    return true;
-  }
-
-  return false;
-};
-
-const checkGameOverByTurns = () => {
-  // 首先检查双方大营是否都存活 - 用户要求的新和局逻辑
-  const playerCampAlive =
-    playerFormation.value.大营 && !playerFormation.value.大营.isDead;
-  const enemyCampAlive =
-    enemyFormation.value.大营 && !enemyFormation.value.大营.isDead;
-
-  if (playerCampAlive && enemyCampAlive) {
-    // 双方大营都存活 - 和局，保留当前状态可以重新开始
-    addReport("回合结束！双方大营都未阵亡，和局！");
-    addReport('可以再次点击"开始"重新战斗！');
-    setTimeout(() => {
-      alert('和局！当前状态已保留，可以再次点击"开始"重新战斗！');
-    }, 1000);
-    return;
-  }
-
-  // 如果有大营阵亡，按原本的兵力对比逻辑处理
-  let playerTroops = 0;
-  let enemyTroops = 0;
-
-  Object.values(playerFormation.value).forEach((general) => {
-    if (general && !general.isDead) {
-      playerTroops += general.troops;
-    }
-  });
-
-  Object.values(enemyFormation.value).forEach((general) => {
-    if (general && !general.isDead) {
-      enemyTroops += general.troops;
-    }
-  });
-
-  if (playerTroops > enemyTroops) {
-    // 胜利结算
-    const reward = currentWave.value * 10;
-    money.value += reward;
-    addReport("回合结束！我方兵力占优，获得胜利！");
-    addReport(`获得奖励：${reward} 金额！`);
-    setTimeout(() => {
-      alert(`恭喜胜利！获得 ${reward} 金额奖励！`);
-    }, 1000);
-  } else if (enemyTroops > playerTroops) {
-    // 失败重置
-    addReport("回合结束！敌方兵力占优，战斗失败！");
-    setTimeout(() => {
-      alert("战斗失败！恢复游戏初始数据！");
-      // 恢复游戏开始时的数据
-      money.value = initialGameData.money;
-      currentYear.value = initialGameData.currentYear;
-      currentWave.value = initialGameData.currentWave;
-      currentTurn.value = 0;
-      currentCommand.value = 0;
-      generals.value = [];
-      playerFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      enemyFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      battleReports.value = [];
-    }, 1000);
-  }
 };
 
 const advanceTime = () => {
@@ -2199,6 +1935,24 @@ const nextWave = () => {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+.card-stars.star-level-3 {
+  border: 1px solid white;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.card-stars.star-level-4 {
+  border: 1px solid #4caf50;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.card-stars.star-level-5 {
+  border: 1px solid #ffd700;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
 .card-middle {
   flex: 1;
   z-index: 1;
@@ -2539,6 +2293,11 @@ const nextWave = () => {
   background-color: rgba(255, 255, 255, 0.2);
 }
 
+.growth-value {
+  color: #4caf50;
+  font-weight: bold;
+}
+
 .tooltip-stats {
   display: flex;
   flex-direction: column;
@@ -2802,5 +2561,225 @@ const nextWave = () => {
   .action-button {
     padding: 15px;
   }
+}
+
+/* 登录模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.modal-body {
+  margin-bottom: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.modal-button.cancel {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.modal-button.cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.modal-button.confirm {
+  background-color: #4caf50;
+  color: white;
+}
+
+.modal-button.confirm:hover {
+  background-color: #45a049;
+}
+
+.modal-button.open {
+  background-color: #2196f3;
+  color: white;
+}
+
+.modal-button.open:hover {
+  background-color: #1976d2;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.error-message {
+  color: #f44336;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.success-message {
+  color: #4caf50;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+/* 卡包模态框样式 */
+.card-pack-modal {
+  max-width: 600px;
+}
+
+.card-pack-selection {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.card-pack-option {
+  flex: 1;
+  padding: 20px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f9f9f9;
+}
+
+.card-pack-option:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-pack-option.active {
+  border-color: #4caf50;
+  background: #e8f5e9;
+}
+
+.card-pack-option h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.pack-price {
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.pack-opening {
+  text-align: center;
+  padding: 30px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #81c784);
+  transition: width 0.3s ease;
+}
+
+.pack-result {
+  margin-top: 20px;
+}
+
+.pack-generals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.pack-general-item {
+  text-align: center;
+}
+
+.pack-general-item .card {
+  width: 100%;
+  max-width: 120px;
+  margin: 0 auto;
 }
 </style>
