@@ -637,127 +637,24 @@
         </div>
 
         <!-- 选择武将界面 -->
-        <div
+        <GeneralList
           v-if="showGeneralList"
-          class="general-list-overlay"
-          @click="closeGeneralList"
-        >
-          <div class="general-list" @click.stop>
-            <div class="list-header">
-              <h3>选择武将</h3>
-              <button class="close-btn" @click="closeGeneralList">×</button>
-            </div>
-            <div class="general-items">
-              <div
-                v-for="general in availableGenerals"
-                :key="general.id"
-                class="general-item"
-                @click="
-                  deployGeneral(general);
-                  hideTooltip();
-                "
-                @contextmenu="showGeneralTooltip(general, $event)"
-              >
-                <div
-                  class="card player"
-                  :style="{
-                    backgroundImage: `url(${general.avatar ? API_BASE_URL + general.avatar : general.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                  }"
-                >
-                  <div class="card-top">
-                    <div class="card-left-top">
-                      <div class="card-dynasty">{{ general.dynasty }}</div>
-                      <div class="card-name">{{ general.name }}</div>
-                    </div>
-                    <div class="card-right-top">
-                      <div class="card-stars">
-                        <span
-                          v-for="i in 5"
-                          :key="i"
-                          class="star"
-                          :class="{ active: i <= Math.ceil(general.level) }"
-                          >★</span
-                        >
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-middle"></div>
-                  <div class="card-bottom">
-                    <div class="card-bottom-item">
-                      <span class="card-level">Lv.{{ general.level }}</span>
-                    </div>
-                    <div class="card-bottom-item">
-                      <span class="card-command">{{ general.command }}</span>
-                      <span class="card-bottom-label">统</span>
-                    </div>
-                    <div class="card-bottom-item">
-                      <span class="card-soldier-type">{{
-                        general.soldierType
-                      }}</span>
-                    </div>
-                    <div class="card-bottom-item">
-                      <span class="card-range">{{ general.attackRange }}</span>
-                      <span class="card-bottom-label">距</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          :generals="availableGenerals"
+          :API_BASE_URL="API_BASE_URL"
+          @close="closeGeneralList"
+          @select="(general) => {
+            deployGeneral(general);
+            hideTooltip();
+          }"
+          @show-tooltip="showGeneralTooltip"
+        />
 
         <!-- 武将信息 -->
-        <div v-if="tooltipData" class="tooltip-overlay">
-          <div class="tooltip-content">
-            <div class="tooltip-header">
-              <div class="tooltip-name">{{ tooltipData.name }}</div>
-              <div class="tooltip-level">Lv.{{ tooltipData.level }}</div>
-              <button class="tooltip-close" @click="hideTooltip">×</button>
-            </div>
-            <div class="tooltip-stats">
-              <div class="tooltip-stat-row">
-                <span
-                  >攻击: {{ tooltipData.attack }} ({{
-                    tooltipData.attackGrowth || 0
-                  }})</span
-                >
-                <span
-                  >防御: {{ tooltipData.defense }} ({{
-                    tooltipData.defenseGrowth || 0
-                  }})</span
-                >
-              </div>
-              <div class="tooltip-stat-row">
-                <span
-                  >策略: {{ tooltipData.strategy }} ({{
-                    tooltipData.strategyGrowth || 0
-                  }})</span
-                >
-                <span
-                  >速度: {{ tooltipData.speed }} ({{
-                    tooltipData.speedGrowth || 0
-                  }})</span
-                >
-              </div>
-              <div class="tooltip-stat-row">
-                <span>兵力: {{ tooltipData.troops }}</span>
-                <span>攻击距离: {{ tooltipData.attackRange }}</span>
-              </div>
-              <div class="tooltip-stat-row">
-                <span
-                  >攻城: {{ tooltipData.siege }} ({{
-                    tooltipData.siegeGrowth || 0
-                  }})</span
-                >
-                <span
-                  >统御: {{ tooltipData.command }} ({{
-                    tooltipData.commandGrowth || 0
-                  }})</span
-                >
-              </div>
-            </div>
-          </div>
-        </div>
+        <GeneralTooltip
+          v-if="tooltipData"
+          :general="tooltipData"
+          @close="hideTooltip"
+        />
 
         <!-- 底部操作按钮 -->
         <div class="game-footer">
@@ -792,6 +689,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import AuthModal from "../components/AuthModal.vue";
+import GeneralTooltip from "../components/GeneralTooltip.vue";
+import GeneralList from "../components/GeneralList.vue";
+import { createYuchiJiong } from "../skills/yuchi-jiong";
+import type { SoldierType, General, Skill } from "../skills/types";
 
 const isLoggedIn = ref(false);
 const showAuthModal = ref(false);
@@ -822,9 +723,6 @@ const API_BASE_URL =
 const characters = ref<any[]>([]);
 const loadingCharacters = ref(false);
 
-// 兵种类型
-type SoldierType = "步兵" | "弓兵" | "骑兵";
-
 // 兵种克制关系
 const soldierType克制 = {
   骑兵: "步兵",
@@ -833,8 +731,8 @@ const soldierType克制 = {
 };
 
 // 随机兵种
-const getRandomSoldierType = (): SoldierType => {
-  const types: SoldierType[] = ["步兵", "弓兵", "骑兵"];
+const getRandomSoldierType = (): "步兵" | "弓兵" | "骑兵" => {
+  const types: Array<"步兵" | "弓兵" | "骑兵"> = ["步兵", "弓兵", "骑兵"];
   return types[Math.floor(Math.random() * types.length)];
 };
 
@@ -900,44 +798,6 @@ const isBattleActive = ref(false);
 const damageTexts = ref<any[]>([]);
 const attackingCard = ref<string | null>(null);
 
-interface Skill {
-  id: string;
-  name: string;
-  type: "command" | "active" | "passive";
-  description: string;
-  effect: (general: General, context: any) => void;
-}
-
-interface General {
-  id: number;
-  name: string;
-  attack: number;
-  attackGrowth: number;
-  defense: number;
-  defenseGrowth: number;
-  strategy: number;
-  strategyGrowth: number;
-  speed: number;
-  speedGrowth: number;
-  attackRange: number;
-  siege: number;
-  siegeGrowth: number;
-  troops: number;
-  maxTroops: number;
-  level: number;
-  command: number;
-  commandGrowth: number;
-  isDead: boolean;
-  dynasty?: string;
-  soldierType?: SoldierType;
-  avatar?: string;
-  gender?: string;
-  skills?: Skill[];
-  skillEffects?: {
-    [key: string]: any;
-  };
-}
-
 interface SpeedUnit {
   id: string;
   general: General;
@@ -969,124 +829,7 @@ const xiaDynastyGenerals = [
   "寒浞",
 ];
 
-// 尉迟迥的自带战法【危壁霸临】
-const createYuchiJiongSkill = (): Skill => {
-  return {
-    id: "weibi-baling",
-    name: "危壁霸临",
-    type: "passive",
-    description:
-      "被攻击时受到物理伤害减25%；回合结束兵力低于70%全属性+8%至多4层；兵力低于50%增伤20%；首次兵力跌破30%净化负面并回复15%兵力，单局一次。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) {
-        general.skillEffects = {
-          damageReduction: 0.25,
-          attributeBonus: 0,
-          maxAttributeBonus: 4,
-          damageIncrease: 0,
-          hasTriggeredRecovery: false,
-        };
-      }
 
-      const { type, event, currentTroops, maxTroops } = context;
-
-      // 被攻击时受到物理伤害减25%
-      if (type === "attacked" && event === "beforeDamage") {
-        return { damageReduction: general.skillEffects.damageReduction };
-      }
-
-      // 回合结束兵力低于70%全属性+8%至多4层
-      if (type === "turnEnd") {
-        const troopPercentage = currentTroops / maxTroops;
-        if (
-          troopPercentage < 0.7 &&
-          general.skillEffects.attributeBonus <
-            general.skillEffects.maxAttributeBonus
-        ) {
-          general.skillEffects.attributeBonus += 1;
-          const bonus = general.skillEffects.attributeBonus * 0.08;
-          general.attack *= 1 + bonus;
-          general.defense *= 1 + bonus;
-          general.strategy *= 1 + bonus;
-          general.speed *= 1 + bonus;
-          general.siege *= 1 + bonus;
-          addReport(
-            `【${general.name}】触发【危壁霸临】，兵力低于70%，全属性提升8%，当前提升${(bonus * 100).toFixed(0)}%！`,
-          );
-        }
-      }
-
-      // 兵力低于50%增伤20%
-      if (type === "attack" && event === "beforeAttack") {
-        const troopPercentage = currentTroops / maxTroops;
-        if (troopPercentage < 0.5) {
-          general.skillEffects.damageIncrease = 0.2;
-          return { damageIncrease: general.skillEffects.damageIncrease };
-        } else {
-          general.skillEffects.damageIncrease = 0;
-        }
-      }
-
-      // 首次兵力跌破30%净化负面并回复15%兵力，单局一次
-      if (
-        type === "troopChange" &&
-        !general.skillEffects.hasTriggeredRecovery
-      ) {
-        const troopPercentage = currentTroops / maxTroops;
-        if (troopPercentage < 0.3) {
-          general.skillEffects.hasTriggeredRecovery = true;
-          const recoveryAmount = Math.floor(maxTroops * 0.15);
-          general.troops = Math.min(maxTroops, general.troops + recoveryAmount);
-          addReport(
-            `【${general.name}】触发【危壁霸临】，兵力跌破30%，净化负面效果并回复15%兵力！`,
-          );
-          addReport(`【${general.name}】回复了${recoveryAmount}点兵力！`);
-        }
-      }
-
-      return null;
-    },
-  };
-};
-
-// 创建尉迟迥武将数据
-const createYuchiJiong = (): General => {
-  const level = 5;
-  const troops = level * 100;
-
-  return {
-    id: 999, // 临时ID，实际应该从数据库获取
-    name: "尉迟迥",
-    attack: 96,
-    attackGrowth: 2.72,
-    defense: 102,
-    defenseGrowth: 2.35,
-    strategy: 42,
-    strategyGrowth: 0.7,
-    speed: 38,
-    speedGrowth: 0.52,
-    attackRange: 2,
-    siege: 18,
-    siegeGrowth: 0.85,
-    troops: troops,
-    maxTroops: troops,
-    level: level,
-    command: 9.2, // 统御值
-    commandGrowth: 2.2,
-    isDead: false,
-    dynasty: "北周",
-    soldierType: "步兵",
-    gender: "男",
-    skills: [createYuchiJiongSkill()],
-    skillEffects: {
-      damageReduction: 0.25,
-      attributeBonus: 0,
-      maxAttributeBonus: 4,
-      damageIncrease: 0,
-      hasTriggeredRecovery: false,
-    },
-  };
-};
 
 const availableGenerals = computed(() => {
   return generals.value.filter((g) => {
@@ -1497,7 +1240,11 @@ const triggerSkillEffects = (general: General, context: any) => {
   if (general.skills) {
     for (const skill of general.skills) {
       if (skill.type === "passive") {
-        const result: any = skill.effect(general, context);
+        // 传递addReport函数给技能效果
+        const result: any = skill.effect(general, {
+          ...context,
+          addReport
+        });
         if (result) {
           return result;
         }
