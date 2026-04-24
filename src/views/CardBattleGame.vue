@@ -68,8 +68,8 @@
                     }"
                     data-card-side="player"
                     data-card-position="大营"
-                    @mouseenter="showTooltip('player-大营')"
-                    @mouseleave="hideTooltip"
+                    @contextmenu="showTooltip('player-大营', $event)"
+                    @click="hideTooltip"
                   >
                     <div class="card-top">
                       <div class="card-left-top">
@@ -135,8 +135,8 @@
                     }"
                     data-card-side="player"
                     data-card-position="中军"
-                    @mouseenter="showTooltip('player-中军')"
-                    @mouseleave="hideTooltip"
+                    @contextmenu="showTooltip('player-中军', $event)"
+                    @click="hideTooltip"
                   >
                     <div class="card-top">
                       <div class="card-left-top">
@@ -200,8 +200,8 @@
                     }"
                     data-card-side="player"
                     data-card-position="前锋"
-                    @mouseenter="showTooltip('player-前锋')"
-                    @mouseleave="hideTooltip"
+                    @contextmenu="showTooltip('player-前锋', $event)"
+                    @click="hideTooltip"
                   >
                     <div class="card-top">
                       <div class="card-left-top">
@@ -285,8 +285,8 @@
                     }"
                     data-card-side="enemy"
                     data-card-position="前锋"
-                    @mouseenter="showTooltip('enemy-前锋')"
-                    @mouseleave="hideTooltip"
+                    @contextmenu="showTooltip('enemy-前锋', $event)"
+                    @click="hideTooltip"
                   >
                     <div class="card-top">
                       <div class="card-left-top">
@@ -350,8 +350,8 @@
                     }"
                     data-card-side="enemy"
                     data-card-position="中军"
-                    @mouseenter="showTooltip('enemy-中军')"
-                    @mouseleave="hideTooltip"
+                    @contextmenu="showTooltip('enemy-中军', $event)"
+                    @click="hideTooltip"
                   >
                     <div class="card-top">
                       <div class="card-left-top">
@@ -415,8 +415,8 @@
                     }"
                     data-card-side="enemy"
                     data-card-position="大营"
-                    @mouseenter="showTooltip('enemy-大营')"
-                    @mouseleave="hideTooltip"
+                    @contextmenu="showTooltip('enemy-大营', $event)"
+                    @click="hideTooltip"
                   >
                     <div class="card-top">
                       <div class="card-left-top">
@@ -478,9 +478,8 @@
                 v-for="general in availableGenerals"
                 :key="general.id"
                 class="general-item"
-                @click="deployGeneral(general)"
-                @mouseenter="showGeneralTooltip(general)"
-                @mouseleave="hideTooltip"
+                @click="deployGeneral(general); hideTooltip()"
+                @contextmenu="showGeneralTooltip(general, $event)"
               >
                 <div class="card player" :style="{
                     backgroundImage: `url(${general.avatar ? API_BASE_URL + general.avatar : (general.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
@@ -531,14 +530,15 @@
             <div class="tooltip-header">
               <div class="tooltip-name">{{ tooltipData.name }}</div>
               <div class="tooltip-level">Lv.{{ tooltipData.level }}</div>
+              <button class="tooltip-close" @click="hideTooltip">×</button>
             </div>
             <div class="tooltip-stats">
               <div class="tooltip-stat-row">
-                <span>攻击: {{ tooltipData.attack }}</span>
-                <span>防御: {{ tooltipData.defense }}</span>
+                <span>攻击: {{ tooltipData.attack }} ({{ tooltipData.attackGrowth || 0 }})</span>
+                <span>防御: {{ tooltipData.defense }} ({{ tooltipData.defenseGrowth || 0 }})</span>
               </div>
               <div class="tooltip-stat-row">
-                <span>策略: {{ tooltipData.strategy }}</span>
+                <span>策略: {{ tooltipData.strategy }} ({{ tooltipData.strategyGrowth || 0 }})</span>
                 <span>速度: {{ tooltipData.speed }}</span>
               </div>
               <div class="tooltip-stat-row">
@@ -546,10 +546,8 @@
                 <span>攻击距离: {{ tooltipData.attackRange }}</span>
               </div>
               <div class="tooltip-stat-row">
-                <span>攻城: {{ tooltipData.siege }}</span>
-              </div>
-              <div class="tooltip-stat-row command">
-                <span>统率: {{ tooltipData.command }}</span>
+                <span>攻城: {{ tooltipData.siege }} ({{ tooltipData.siegeGrowth || 0 }})</span>
+                <span>统御: {{ tooltipData.command }} ({{ tooltipData.commandGrowth || 0 }})</span>
               </div>
             </div>
           </div>
@@ -699,15 +697,20 @@ interface General {
   id: number;
   name: string;
   attack: number;
+  attackGrowth: number;
   defense: number;
+  defenseGrowth: number;
   strategy: number;
+  strategyGrowth: number;
   speed: number;
   attackRange: number;
   siege: number;
+  siegeGrowth: number;
   troops: number;
   maxTroops: number;
   level: number;
   command: number;
+  commandGrowth: number;
   isDead: boolean;
   dynasty?: string;
   soldierType?: SoldierType;
@@ -794,21 +797,25 @@ const tooltipData = ref<General | null>(null);
 
 let tooltipTimer: number | null = null;
 
-const showTooltip = (slotKey: string) => {
+const showTooltip = (slotKey: string, event?: MouseEvent) => {
+  // 阻止默认的右键菜单
+  if (event) {
+    event.preventDefault();
+  }
+  
   // 清除之前的定时器
   if (tooltipTimer) {
     clearTimeout(tooltipTimer);
+    tooltipTimer = null;
   }
   
-  // 设置新的定时器，2秒后显示tooltip
-  tooltipTimer = window.setTimeout(() => {
-    const [side, position] = slotKey.split("-");
-    const formation = side === "player" ? playerFormation.value : enemyFormation.value;
-    const general = formation[position as keyof typeof formation];
-    if (general) {
-      tooltipData.value = general;
-    }
-  }, 2000);
+  // 立即显示tooltip
+  const [side, position] = slotKey.split("-");
+  const formation = side === "player" ? playerFormation.value : enemyFormation.value;
+  const general = formation[position as keyof typeof formation];
+  if (general) {
+    tooltipData.value = general;
+  }
 };
 
 const hideTooltip = () => {
@@ -820,16 +827,20 @@ const hideTooltip = () => {
   tooltipData.value = null;
 };
 
-const showGeneralTooltip = (general: General) => {
+const showGeneralTooltip = (general: General, event?: MouseEvent) => {
+  // 阻止默认的右键菜单
+  if (event) {
+    event.preventDefault();
+  }
+  
   // 清除之前的定时器
   if (tooltipTimer) {
     clearTimeout(tooltipTimer);
+    tooltipTimer = null;
   }
   
-  // 设置新的定时器，2秒后显示tooltip
-  tooltipTimer = window.setTimeout(() => {
-    tooltipData.value = general;
-  }, 2000);
+  // 立即显示tooltip
+  tooltipData.value = general;
 };
 
 const closeGeneralList = () => {
@@ -891,15 +902,20 @@ const generateEnemyTeam = () => {
       id: character?.id || Date.now() + Math.random(),
       name: generalName,
       attack: Math.floor(Math.random() * 100) + 50,
+      attackGrowth: Math.round((Math.random() * 3) * 100) / 100,
       defense: Math.floor(Math.random() * 100) + 50,
+      defenseGrowth: Math.round((Math.random() * 3) * 100) / 100,
       strategy: Math.floor(Math.random() * 100) + 50,
+      strategyGrowth: Math.round((Math.random() * 3) * 100) / 100,
       speed: Math.floor(Math.random() * 100) + 50,
       attackRange: Math.floor(Math.random() * 3) + 1,
       siege: Math.floor(Math.random() * 100) + 50,
+      siegeGrowth: Math.round((Math.random() * 3) * 100) / 100,
       troops: troops,
       maxTroops: troops,
       level: level,
       command: command,
+      commandGrowth: Math.round((Math.random() * 3) * 100) / 100,
       isDead: false,
       dynasty: "夏朝",
       soldierType: getRandomSoldierType(),
@@ -939,15 +955,20 @@ const recruitCard = () => {
     id: character?.id || Date.now(),
     name: generalName,
     attack: Math.floor(Math.random() * 100) + 50,
+    attackGrowth: Math.round((Math.random() * 3) * 100) / 100,
     defense: Math.floor(Math.random() * 100) + 50,
+    defenseGrowth: Math.round((Math.random() * 3) * 100) / 100,
     strategy: Math.floor(Math.random() * 100) + 50,
+    strategyGrowth: Math.round((Math.random() * 3) * 100) / 100,
     speed: Math.floor(Math.random() * 100) + 50,
     attackRange: Math.floor(Math.random() * 3) + 1,
     siege: Math.floor(Math.random() * 100) + 50,
+    siegeGrowth: Math.round((Math.random() * 3) * 100) / 100,
     troops: troops,
     maxTroops: troops,
     level: level,
     command: command,
+    commandGrowth: Math.round((Math.random() * 3) * 100) / 100,
     isDead: false,
     dynasty: "夏朝",
     soldierType: getRandomSoldierType(),
@@ -2495,6 +2516,27 @@ const nextWave = () => {
   background: rgba(0, 0, 0, 0.3);
   padding: 4px 8px;
   border-radius: 10px;
+}
+
+.tooltip-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.tooltip-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .tooltip-stats {
