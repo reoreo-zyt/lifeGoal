@@ -89,7 +89,7 @@ export const createYuchiJiong = (): General => {
   const troops = level * 100;
 
   return {
-    id: 999, // 临时ID，实际应该从数据库获取
+    id: 633, // 数据库中的 id
     name: "尉迟迥",
     attack: 96,
     attackGrowth: 2.72,
@@ -111,6 +111,7 @@ export const createYuchiJiong = (): General => {
     dynasty: "北周",
     soldierType: "步兵",
     gender: "男",
+    avatar: "/images/yuchi_jiong.jpg", // 数据库中的头像路径
     skills: [createYuchiJiongSkill()],
     skillEffects: {
       damageReduction: 0.25,
@@ -120,4 +121,56 @@ export const createYuchiJiong = (): General => {
       hasTriggeredRecovery: false,
     },
   };
+};
+
+// 从数据库获取尉迟迥的详细信息（包括头像）
+export const fetchYuchiJiongFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/characters/633`);
+    if (!response.ok) {
+      throw new Error('获取人物信息失败');
+    }
+    const characterData = await response.json();
+    
+    const level = 5;
+    const troops = level * 100;
+    
+    return {
+      id: characterData.id,
+      name: characterData.name,
+      attack: 96,
+      attackGrowth: 2.72,
+      defense: 102,
+      defenseGrowth: 2.35,
+      strategy: 42,
+      strategyGrowth: 0.7,
+      speed: 38,
+      speedGrowth: 0.52,
+      attackRange: 2,
+      siege: 18,
+      siegeGrowth: 0.85,
+      troops: troops,
+      maxTroops: troops,
+      level: level,
+      command: 9.2,
+      commandGrowth: 2.2,
+      isDead: false,
+      dynasty: characterData.dynasty,
+      soldierType: "步兵",
+      gender: characterData.gender,
+      avatar: characterData.avatar, // 使用数据库中的头像
+      skills: [createYuchiJiongSkill()],
+      skillEffects: {
+        damageReduction: 0.25,
+        attributeBonus: 0,
+        maxAttributeBonus: 4,
+        damageIncrease: 0,
+        hasTriggeredRecovery: false,
+      },
+    };
+  } catch (error) {
+    console.error('从数据库获取尉迟迥信息失败:', error);
+    // 如果获取失败，返回默认数据
+    return createYuchiJiong();
+  }
 };

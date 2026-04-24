@@ -1009,14 +1009,20 @@ const recruitCard = () => {
 
   // 10%的概率招募到尉迟迥
   if (Math.random() < 0.1) {
-    const yuchiJiong = createYuchiJiong();
-    generals.value.push(yuchiJiong);
-    addReport(
-      `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统率:${yuchiJiong.command} 兵种:${yuchiJiong.soldierType}`,
-    );
-    addReport(
-      `【${yuchiJiong.name}】自带战法：${yuchiJiong.skills?.[0].description}`,
-    );
+    // 尝试从数据库获取尉迟迥的详细信息（包括头像）
+    import('../skills/yuchi-jiong').then(({ fetchYuchiJiongFromDatabase }) => {
+      fetchYuchiJiongFromDatabase(API_BASE_URL).then((yuchiJiong) => {
+        if (yuchiJiong) {
+          generals.value.push(yuchiJiong);
+          addReport(
+            `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统率:${yuchiJiong.command} 兵种:${yuchiJiong.soldierType}`,
+          );
+          addReport(
+            `【${yuchiJiong.name}】自带战法：${yuchiJiong.skills?.[0].description}`,
+          );
+        }
+      });
+    });
     return;
   }
 
