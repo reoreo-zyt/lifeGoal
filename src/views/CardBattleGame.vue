@@ -1,293 +1,326 @@
-<template>
-  <div class="card-battle-game">
-    <div v-if="!isLoggedIn" class="login-required">
-      <div class="login-modal">
-        <h2>游戏开始</h2>
-        <p>请先进行注册登录</p>
-        <button @click="openAuthModal" class="start-button">登录/注册</button>
-      </div>
-    </div>
-
-    <div v-else class="game-container">
-      <div class="game-header">
-        <div class="game-info">
-          <div class="info-item">
-            <span class="info-label">时间:</span>
-            <span class="info-value">{{ currentYear }}年</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">贝币:</span>
-            <span class="info-value">{{ money }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">波次:</span>
-            <span class="info-value">{{ currentWave }}/{{ totalWaves }}</span>
+      <template>
+        <div class="card-battle-game">
+          <div v-if="!isLoggedIn" class="login-required">
+            <div class="login-modal">
+              <h2>游戏开始</h2>
+              <p>请先进行注册登录</p>
+              <button @click="openAuthModal" class="start-button">登录/注册</button>
+            </div>
           </div>
 
-          <div class="info-item" :class="{ 'command-warning': currentCommand > maxCommand }">
-            <span class="info-label">统率:</span>
-            <span class="info-value">{{ currentCommand }}/{{ maxCommand }}</span>
+          <div v-else class="game-container">
+            <div class="game-header">
+              <div class="game-info">
+                <div class="info-item">
+                  <span class="info-label">金额:</span>
+                  <span class="info-value">{{ money }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">波次:</span>
+                  <span class="info-value">{{ currentWave }}/{{ totalWaves }}</span>
+                </div>
+
+                <div class="info-item" :class="{ 'command-warning': currentCommand > maxCommand }">
+                  <span class="info-label">统率:</span>
+                  <span class="info-value">{{ currentCommand }}/{{ maxCommand }}</span>
+                </div>
+              </div>
+
+
+              <div class="game-area">
+                <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text" :style="{
+                  left: damageText.x + 'px',
+                  top: damageText.y + 'px',
+                  animationDelay: damageText.delay + 's'
+                }">
+                  {{ damageText.text }}
+                </div>
+                <div class="player-side">
+                  <div class="side-label">我方</div>
+                  <div class="formation horizontal">
+                    <div class="card-slot" @click="selectSlot('player', '大营')">
+                      <div v-if="playerFormation.大营" class="card" :class="{ selected: selectedSlot === 'player-大营', dead: playerFormation.大营.isDead, attacking: attackingCard === 'player-大营' }" data-card-side="player" data-card-position="大营"
+                        @mouseenter="showTooltip('player-大营')" @mouseleave="hideTooltip">
+                        <div class="card-header">
+                          <div class="card-name">{{ playerFormation.大营.name }}</div>
+                          <div class="card-level">Lv.{{ playerFormation.大营.level }}</div>
+                        </div>
+                        <div class="card-body">
+                          <div class="card-position">大营</div>
+                          <div class="card-speed-mini">
+                            <div class="mini-speed-bar">
+                              <div class="mini-speed-fill" :style="{ width: getCardSpeed('player', '大营') + '%' }"></div>
+                            </div>
+                            <span class="mini-speed-text">{{ Math.floor(getCardSpeed('player', '大营')) }}/100</span>
+                          </div>
+                          <div class="card-stars">
+                            <span v-for="i in 5" :key="i" class="star"
+                              :class="{ active: i <= Math.ceil(playerFormation.大营.level) }">★</span>
+                          </div>
+                          <div class="card-stats simple">
+                            <span class="troops">{{ playerFormation.大营.troops }}</span>
+                            <span class="command">{{ playerFormation.大营.command }}</span>
+                            <span class="range">{{ playerFormation.大营.attackRange }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="empty-slot">
+                        <span>大营</span>
+                      </div>
+                    </div>
+                    <div class="card-slot" @click="selectSlot('player', '中军')">
+                      <div v-if="playerFormation.中军" class="card" :class="{ selected: selectedSlot === 'player-中军', dead: playerFormation.中军.isDead, attacking: attackingCard === 'player-中军' }" data-card-side="player" data-card-position="中军"
+                        @mouseenter="showTooltip('player-中军')" @mouseleave="hideTooltip">
+                        <div class="card-header">
+                          <div class="card-name">{{ playerFormation.中军.name }}</div>
+                          <div class="card-level">Lv.{{ playerFormation.中军.level }}</div>
+                        </div>
+                        <div class="card-body">
+                          <div class="card-position">中军</div>
+                          <div class="card-speed-mini">
+                            <div class="mini-speed-bar">
+                              <div class="mini-speed-fill" :style="{ width: getCardSpeed('player', '中军') + '%' }"></div>
+                            </div>
+                            <span class="mini-speed-text">{{ Math.floor(getCardSpeed('player', '中军')) }}/100</span>
+                          </div>
+                          <div class="card-stars">
+                            <span v-for="i in 5" :key="i" class="star"
+                              :class="{ active: i <= Math.ceil(playerFormation.中军.level) }">★</span>
+                          </div>
+                          <div class="card-stats simple">
+                            <span class="troops">{{ playerFormation.中军.troops }}</span>
+                            <span class="command">{{ playerFormation.中军.command }}</span>
+                            <span class="range">{{ playerFormation.中军.attackRange }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="empty-slot">
+                        <span>中军</span>
+                      </div>
+                    </div>
+                    <div class="card-slot" @click="selectSlot('player', '前锋')">
+                      <div v-if="playerFormation.前锋" class="card" :class="{ selected: selectedSlot === 'player-前锋', dead: playerFormation.前锋.isDead, attacking: attackingCard === 'player-前锋' }" data-card-side="player" data-card-position="前锋"
+                        @mouseenter="showTooltip('player-前锋')" @mouseleave="hideTooltip">
+                        <div class="card-header">
+                          <div class="card-name">{{ playerFormation.前锋.name }}</div>
+                          <div class="card-level">Lv.{{ playerFormation.前锋.level }}</div>
+                        </div>
+                        <div class="card-body">
+                          <div class="card-position">前锋</div>
+                          <div class="card-speed-mini">
+                            <div class="mini-speed-bar">
+                              <div class="mini-speed-fill" :style="{ width: getCardSpeed('player', '前锋') + '%' }"></div>
+                            </div>
+                            <span class="mini-speed-text">{{ Math.floor(getCardSpeed('player', '前锋')) }}/100</span>
+                          </div>
+                          <div class="card-stars">
+                            <span v-for="i in 5" :key="i" class="star"
+                              :class="{ active: i <= Math.ceil(playerFormation.前锋.level) }">★</span>
+                          </div>
+                          <div class="card-stats simple">
+                            <span class="troops">{{ playerFormation.前锋.troops }}</span>
+                            <span class="command">{{ playerFormation.前锋.command }}</span>
+                            <span class="range">{{ playerFormation.前锋.attackRange }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="empty-slot">
+                        <span>前锋</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="battle-report">
+                  <div class="report-header">
+                    <h3>战况播报</h3>
+                  </div>
+                  <div class="report-content">
+                    <div v-for="(report, index) in battleReports" :key="index" class="report-item">
+                      {{ report }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="player-side enemy">
+                  <div class="side-label">敌方</div>
+                  <div class="formation horizontal enemy">
+                    <div class="card-slot" @click="selectSlot('enemy', '前锋')">
+                      <div v-if="enemyFormation.前锋" class="card enemy" :class="{ selected: selectedSlot === 'enemy-前锋', dead: enemyFormation.前锋.isDead, attacking: attackingCard === 'enemy-前锋' }" data-card-side="enemy" data-card-position="前锋"
+                        @mouseenter="showTooltip('enemy-前锋')" @mouseleave="hideTooltip">
+                        <div class="card-header">
+                          <div class="card-name">{{ enemyFormation.前锋.name }}</div>
+                          <div class="card-level">Lv.{{ enemyFormation.前锋.level }}</div>
+                        </div>
+                        <div class="card-body">
+                          <div class="card-position">前锋</div>
+                          <div class="card-speed-mini">
+                            <div class="mini-speed-bar">
+                              <div class="mini-speed-fill" :style="{ width: getCardSpeed('enemy', '前锋') + '%' }"></div>
+                            </div>
+                            <span class="mini-speed-text">{{ Math.floor(getCardSpeed('enemy', '前锋')) }}/100</span>
+                          </div>
+                          <div class="card-stars">
+                            <span v-for="i in 5" :key="i" class="star"
+                              :class="{ active: i <= Math.ceil(enemyFormation.前锋.level) }">★</span>
+                          </div>
+                          <div class="card-stats simple">
+                            <span class="troops">{{ enemyFormation.前锋.troops }}</span>
+                            <span class="command">{{ enemyFormation.前锋.command }}</span>
+                            <span class="range">{{ enemyFormation.前锋.attackRange }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="empty-slot">
+                        <span>前锋</span>
+                      </div>
+                    </div>
+                    <div class="card-slot" @click="selectSlot('enemy', '中军')">
+                      <div v-if="enemyFormation.中军" class="card enemy"
+                        :class="{ selected: selectedSlot === 'enemy-中军', dead: enemyFormation.中军.isDead, attacking: attackingCard === 'enemy-中军' }" data-card-side="enemy" data-card-position="中军"
+                        @mouseenter="showTooltip('enemy-中军')" @mouseleave="hideTooltip">
+                        <div class="card-header">
+                          <div class="card-name">{{ enemyFormation.中军.name }}</div>
+                          <div class="card-level">Lv.{{ enemyFormation.中军.level }}</div>
+                        </div>
+                        <div class="card-body">
+                          <div class="card-position">中军</div>
+                          <div class="card-speed-mini">
+                            <div class="mini-speed-bar">
+                              <div class="mini-speed-fill" :style="{ width: getCardSpeed('enemy', '中军') + '%' }"></div>
+                            </div>
+                            <span class="mini-speed-text">{{ Math.floor(getCardSpeed('enemy', '中军')) }}/100</span>
+                          </div>
+                          <div class="card-stars">
+                            <span v-for="i in 5" :key="i" class="star"
+                              :class="{ active: i <= Math.ceil(enemyFormation.中军.level) }">★</span>
+                          </div>
+                          <div class="card-stats simple">
+                            <span class="troops">{{ enemyFormation.中军.troops }}</span>
+                            <span class="command">{{ enemyFormation.中军.command }}</span>
+                            <span class="range">{{ enemyFormation.中军.attackRange }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="empty-slot">
+                        <span>中军</span>
+                      </div>
+                    </div>
+                    <div class="card-slot" @click="selectSlot('enemy', '大营')">
+                      <div v-if="enemyFormation.大营" class="card enemy"
+                        :class="{ selected: selectedSlot === 'enemy-大营', dead: enemyFormation.大营.isDead, attacking: attackingCard === 'enemy-大营' }" data-card-side="enemy" data-card-position="大营"
+                        @mouseenter="showTooltip('enemy-大营')" @mouseleave="hideTooltip">
+                        <div class="card-header">
+                          <div class="card-name">{{ enemyFormation.大营.name }}</div>
+                          <div class="card-level">Lv.{{ enemyFormation.大营.level }}</div>
+                        </div>
+                        <div class="card-body">
+                          <div class="card-position">大营</div>
+                          <div class="card-speed-mini">
+                            <div class="mini-speed-bar">
+                              <div class="mini-speed-fill" :style="{ width: getCardSpeed('enemy', '大营') + '%' }"></div>
+                            </div>
+                            <span class="mini-speed-text">{{ Math.floor(getCardSpeed('enemy', '大营')) }}/100</span>
+                          </div>
+                          <div class="card-stars">
+                            <span v-for="i in 5" :key="i" class="star"
+                              :class="{ active: i <= Math.ceil(enemyFormation.大营.level) }">★</span>
+                          </div>
+                          <div class="card-stats simple">
+                            <span class="troops">{{ enemyFormation.大营.troops }}</span>
+                            <span class="command">{{ enemyFormation.大营.command }}</span>
+                            <span class="range">{{ enemyFormation.大营.attackRange }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="empty-slot">
+                        <span>大营</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="showGeneralList" class="general-list-overlay" @click="closeGeneralList">
+                <div class="general-list" @click.stop>
+                  <div class="list-header">
+                    <h3>选择武将</h3>
+                    <button class="close-btn" @click="closeGeneralList">×</button>
+                  </div>
+                  <div class="general-items">
+                    <div v-for="general in availableGenerals" :key="general.id" class="general-item"
+                      @click="deployGeneral(general)" @mouseenter="showGeneralTooltip(general)"
+                      @mouseleave="hideTooltip">
+                      <div class="general-card">
+                        <div class="general-card-header">
+                          <div class="general-card-name">{{ general.name }}</div>
+                          <div class="general-card-level">Lv.{{ general.level }}</div>
+                        </div>
+                        <div class="general-card-body">
+                          <div class="general-card-stars">
+                            <span v-for="i in 5" :key="i" class="star"
+                              :class="{ active: i <= Math.ceil(general.level) }">★</span>
+                          </div>
+                          <div class="general-card-stats simple">
+                            <span class="troops">{{ general.troops }}</span>
+                            <span class="command">{{ general.command }}</span>
+                            <span class="range">{{ general.attackRange }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="tooltipData" class="tooltip-overlay">
+                <div class="tooltip-content">
+                  <div class="tooltip-header">
+                    <div class="tooltip-name">{{ tooltipData.name }}</div>
+                    <div class="tooltip-level">Lv.{{ tooltipData.level }}</div>
+                  </div>
+                  <div class="tooltip-stats">
+                    <div class="tooltip-stat-row">
+                      <span>攻击: {{ tooltipData.attack }}</span>
+                      <span>防御: {{ tooltipData.defense }}</span>
+                    </div>
+                    <div class="tooltip-stat-row">
+                      <span>策略: {{ tooltipData.strategy }}</span>
+                      <span>速度: {{ tooltipData.speed }}</span>
+                    </div>
+                    <div class="tooltip-stat-row">
+                      <span>兵力: {{ tooltipData.troops }}</span>
+                      <span>攻击距离: {{ tooltipData.attackRange }}</span>
+                    </div>
+                    <div class="tooltip-stat-row">
+                      <span>攻城: {{ tooltipData.siege }}</span>
+                    </div>
+                    <div class="tooltip-stat-row command">
+                      <span>统率: {{ tooltipData.command }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="game-footer">
+                <button class="action-button recruit" @click="recruitCard" :disabled="money < recruitCost">
+                  <span class="button-icon">📦</span>
+                  <span class="button-text">卡包招募</span>
+                  <span class="button-cost">{{ recruitCost }}金额</span>
+                </button>
+                <button class="action-button end-turn" @click="endTurn">
+                  <span class="button-text">开始</span>
+                </button>
+                <button class="action-button next-wave" @click="nextWave">
+                  <span class="button-text">下一轮</span>
+                </button>
+              </div>
+            </div>
+
+            <AuthModal v-if="showAuthModal" :is-login="isLogin" @close="showAuthModal = false" @login="handleLogin" />
           </div>
         </div>
-      </div>
-
-      <div class="game-area">
-        <div class="player-side">
-          <div class="side-label">我方</div>
-          <div class="formation horizontal">
-            <div class="card-slot" @click="selectSlot('player', '大营')">
-              <div v-if="playerFormation.大营" class="card" :class="{ selected: selectedSlot === 'player-大营', dead: playerFormation.大营.isDead }"
-                @mouseenter="showTooltip('player-大营')"
-                @mouseleave="hideTooltip">
-                <div class="card-header">
-                  <div class="card-name">{{ playerFormation.大营.name }}</div>
-                  <div class="card-level">Lv.{{ playerFormation.大营.level }}</div>
-                </div>
-                <div class="card-body">
-                  <div class="card-position">大营</div>
-                  <div class="card-stars">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(playerFormation.大营.level) }">★</span>
-                  </div>
-                  <div class="card-stats simple">
-                    <span class="troops">{{ playerFormation.大营.troops }}</span>
-                    <span class="command">{{ playerFormation.大营.command }}</span>
-                    <span class="range">{{ playerFormation.大营.attackRange }}</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="empty-slot">
-                <span>大营</span>
-              </div>
-            </div>
-            <div class="card-slot" @click="selectSlot('player', '中军')">
-              <div v-if="playerFormation.中军" class="card" :class="{ selected: selectedSlot === 'player-中军', dead: playerFormation.中军.isDead }"
-                @mouseenter="showTooltip('player-中军')"
-                @mouseleave="hideTooltip">
-                <div class="card-header">
-                  <div class="card-name">{{ playerFormation.中军.name }}</div>
-                  <div class="card-level">Lv.{{ playerFormation.中军.level }}</div>
-                </div>
-                <div class="card-body">
-                  <div class="card-position">中军</div>
-                  <div class="card-stars">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(playerFormation.中军.level) }">★</span>
-                  </div>
-                  <div class="card-stats simple">
-                    <span class="troops">{{ playerFormation.中军.troops }}</span>
-                    <span class="command">{{ playerFormation.中军.command }}</span>
-                    <span class="range">{{ playerFormation.中军.attackRange }}</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="empty-slot">
-                <span>中军</span>
-              </div>
-            </div>
-            <div class="card-slot" @click="selectSlot('player', '前锋')">
-              <div v-if="playerFormation.前锋" class="card" :class="{ selected: selectedSlot === 'player-前锋', dead: playerFormation.前锋.isDead }"
-                @mouseenter="showTooltip('player-前锋')"
-                @mouseleave="hideTooltip">
-                <div class="card-header">
-                  <div class="card-name">{{ playerFormation.前锋.name }}</div>
-                  <div class="card-level">Lv.{{ playerFormation.前锋.level }}</div>
-                </div>
-                <div class="card-body">
-                  <div class="card-position">前锋</div>
-                  <div class="card-stars">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(playerFormation.前锋.level) }">★</span>
-                  </div>
-                  <div class="card-stats simple">
-                    <span class="troops">{{ playerFormation.前锋.troops }}</span>
-                    <span class="command">{{ playerFormation.前锋.command }}</span>
-                    <span class="range">{{ playerFormation.前锋.attackRange }}</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="empty-slot">
-                <span>前锋</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="battle-report">
-          <div class="report-header">
-            <h3>战况播报</h3>
-          </div>
-          <div class="report-content">
-            <div v-for="(report, index) in battleReports" :key="index" class="report-item">
-              {{ report }}
-            </div>
-          </div>
-        </div>
-
-        <div class="player-side enemy">
-          <div class="side-label">敌方</div>
-          <div class="formation horizontal enemy">
-            <div class="card-slot" @click="selectSlot('enemy', '前锋')">
-              <div v-if="enemyFormation.前锋" class="card enemy" :class="{ selected: selectedSlot === 'enemy-前锋', dead: enemyFormation.前锋.isDead }"
-                @mouseenter="showTooltip('enemy-前锋')"
-                @mouseleave="hideTooltip">
-                <div class="card-header">
-                  <div class="card-name">{{ enemyFormation.前锋.name }}</div>
-                  <div class="card-level">Lv.{{ enemyFormation.前锋.level }}</div>
-                </div>
-                <div class="card-body">
-                  <div class="card-position">前锋</div>
-                  <div class="card-stars">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(enemyFormation.前锋.level) }">★</span>
-                  </div>
-                  <div class="card-stats simple">
-                    <span class="troops">{{ enemyFormation.前锋.troops }}</span>
-                    <span class="command">{{ enemyFormation.前锋.command }}</span>
-                    <span class="range">{{ enemyFormation.前锋.attackRange }}</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="empty-slot">
-                <span>前锋</span>
-              </div>
-            </div>
-            <div class="card-slot" @click="selectSlot('enemy', '中军')">
-              <div v-if="enemyFormation.中军" class="card enemy" :class="{ selected: selectedSlot === 'enemy-中军', dead: enemyFormation.中军.isDead }"
-                @mouseenter="showTooltip('enemy-中军')"
-                @mouseleave="hideTooltip">
-                <div class="card-header">
-                  <div class="card-name">{{ enemyFormation.中军.name }}</div>
-                  <div class="card-level">Lv.{{ enemyFormation.中军.level }}</div>
-                </div>
-                <div class="card-body">
-                  <div class="card-position">中军</div>
-                  <div class="card-stars">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(enemyFormation.中军.level) }">★</span>
-                  </div>
-                  <div class="card-stats simple">
-                    <span class="troops">{{ enemyFormation.中军.troops }}</span>
-                    <span class="command">{{ enemyFormation.中军.command }}</span>
-                    <span class="range">{{ enemyFormation.中军.attackRange }}</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="empty-slot">
-                <span>中军</span>
-              </div>
-            </div>
-            <div class="card-slot" @click="selectSlot('enemy', '大营')">
-              <div v-if="enemyFormation.大营" class="card enemy" :class="{ selected: selectedSlot === 'enemy-大营', dead: enemyFormation.大营.isDead }"
-                @mouseenter="showTooltip('enemy-大营')"
-                @mouseleave="hideTooltip">
-                <div class="card-header">
-                  <div class="card-name">{{ enemyFormation.大营.name }}</div>
-                  <div class="card-level">Lv.{{ enemyFormation.大营.level }}</div>
-                </div>
-                <div class="card-body">
-                  <div class="card-position">大营</div>
-                  <div class="card-stars">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(enemyFormation.大营.level) }">★</span>
-                  </div>
-                  <div class="card-stats simple">
-                    <span class="troops">{{ enemyFormation.大营.troops }}</span>
-                    <span class="command">{{ enemyFormation.大营.command }}</span>
-                    <span class="range">{{ enemyFormation.大营.attackRange }}</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="empty-slot">
-                <span>大营</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="showGeneralList" class="general-list-overlay" @click="closeGeneralList">
-        <div class="general-list" @click.stop>
-          <div class="list-header">
-            <h3>选择武将</h3>
-            <button class="close-btn" @click="closeGeneralList">×</button>
-          </div>
-          <div class="general-items">
-            <div
-              v-for="general in availableGenerals"
-              :key="general.id"
-              class="general-item"
-              @click="deployGeneral(general)"
-              @mouseenter="showGeneralTooltip(general)"
-              @mouseleave="hideTooltip"
-            >
-              <div class="general-card">
-                <div class="general-card-header">
-                  <div class="general-card-name">{{ general.name }}</div>
-                  <div class="general-card-level">Lv.{{ general.level }}</div>
-                </div>
-                <div class="general-card-body">
-                  <div class="general-card-stars">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ active: i <= Math.ceil(general.level) }">★</span>
-                  </div>
-                  <div class="general-card-stats simple">
-                    <span class="troops">{{ general.troops }}</span>
-                    <span class="command">{{ general.command }}</span>
-                    <span class="range">{{ general.attackRange }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="tooltipData" class="tooltip-overlay">
-        <div class="tooltip-content">
-          <div class="tooltip-header">
-            <div class="tooltip-name">{{ tooltipData.name }}</div>
-            <div class="tooltip-level">Lv.{{ tooltipData.level }}</div>
-          </div>
-          <div class="tooltip-stats">
-            <div class="tooltip-stat-row">
-              <span>攻击: {{ tooltipData.attack }}</span>
-              <span>防御: {{ tooltipData.defense }}</span>
-            </div>
-            <div class="tooltip-stat-row">
-              <span>策略: {{ tooltipData.strategy }}</span>
-              <span>速度: {{ tooltipData.speed }}</span>
-            </div>
-            <div class="tooltip-stat-row">
-              <span>兵力: {{ tooltipData.troops }}</span>
-              <span>攻击距离: {{ tooltipData.attackRange }}</span>
-            </div>
-            <div class="tooltip-stat-row">
-              <span>攻城: {{ tooltipData.siege }}</span>
-            </div>
-            <div class="tooltip-stat-row command">
-              <span>统率: {{ tooltipData.command }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="game-footer">
-        <button class="action-button recruit" @click="recruitCard" :disabled="money < recruitCost">
-          <span class="button-icon">📦</span>
-          <span class="button-text">卡包招募</span>
-          <span class="button-cost">{{ recruitCost }}贝币</span>
-        </button>
-        <button class="action-button end-turn" @click="endTurn">
-          <span class="button-text">开始</span>
-        </button>
-        <button class="action-button next-wave" @click="nextWave">
-          <span class="button-text">下一轮</span>
-        </button>
-      </div>
-    </div>
-
-    <AuthModal
-      v-if="showAuthModal"
-      :is-login="isLogin"
-      @close="showAuthModal = false"
-      @login="handleLogin"
-    />
-  </div>
-</template>
+      </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
@@ -330,6 +363,10 @@ const generals = ref<General[]>([])
 const selectedSlot = ref<string | null>(null)
 const showGeneralList = ref(false)
 const battleReports = ref<string[]>([])
+const speedUnits = ref<any[]>([])
+const isBattleActive = ref(false)
+const damageTexts = ref<any[]>([])
+const attackingCard = ref<string | null>(null)
 
 interface General {
   id: number
@@ -345,6 +382,16 @@ interface General {
   level: number
   command: number
   isDead: boolean
+  dynasty?: string
+}
+
+interface SpeedUnit {
+  id: string
+  general: General
+  side: 'player' | 'enemy'
+  position: string
+  speed: number
+  isActive: boolean
 }
 
 const xiaDynastyGenerals = [
@@ -422,12 +469,12 @@ const deployGeneral = (general: General) => {
     const oldGeneral = playerFormation.value[position as keyof typeof playerFormation.value]
     const oldCommand = oldGeneral ? oldGeneral.command : 0
     const newTotalCommand = currentCommand.value - oldCommand + general.command
-    
+
     if (newTotalCommand > maxCommand.value) {
       addReport(`统率不足！当前统率: ${currentCommand.value}/${maxCommand.value}，需要: ${newTotalCommand}`)
       return
     }
-    
+
     playerFormation.value[position as keyof typeof playerFormation.value] = general
     updateCurrentCommand()
     addReport(`【${general.name}】已上阵至【${position}】！统率: ${currentCommand.value}/${maxCommand.value}`)
@@ -465,7 +512,7 @@ const generateEnemyTeam = () => {
 
 const recruitCard = () => {
   if (money.value < recruitCost.value) {
-    addReport('贝币不足，无法招募！')
+    addReport('金额不足，无法招募！')
     return
   }
 
@@ -497,33 +544,7 @@ const recruitCard = () => {
 }
 
 const endTurn = () => {
-  const hasEmptySlot = Object.values(playerFormation.value).some(slot => slot === null)
-  if (hasEmptySlot) {
-    addReport('请先将武将上阵！')
-    return
-  }
-
-  // 连续执行8个回合
-  for (let i = 1; i <= maxTurns.value; i++) {
-    currentTurn.value = i
-    addReport(`第 ${i} 回合开始！`)
-    
-    calculateBattle()
-    
-    // 检查是否有一方大营阵亡
-    if (checkGameOver()) {
-      return
-    }
-    
-    // 如果不是最后一回合，添加回合结束播报
-    if (i < maxTurns.value) {
-      addReport(`第 ${i} 回合结束！`)
-    }
-  }
-  
-  // 8回合结束后
-  addReport('8回合结束！')
-  checkGameOverByTurns()
+  startBattle()
 }
 
 const calculateBattle = () => {
@@ -565,23 +586,62 @@ const calculateBattle = () => {
 
 const getTargetsInRange = (attacker: { general: General, side: 'player' | 'enemy', position: string }) => {
   const targets: Array<{ general: General, side: 'player' | 'enemy', position: string }> = []
+  // 位置深度：前锋=1，中军=2，大营=3
+  // 固定距离规则：
+  // 我方前锋到敌方前锋：距离1
+  // 我方前锋到敌方中军：距离2
+  // 我方前锋到敌方大营：距离3
+  // 我方中军到敌方前锋：距离2
+  // 我方中军到敌方中军：距离3
+  // 我方中军到敌方大营：距离4
+  // 我方大营到敌方前锋：距离3
+  // 我方大营到敌方中军：距离4
+  // 我方大营到敌方大营：距离5
   const positionIndex: Record<string, number> = { '前锋': 1, '中军': 2, '大营': 3 }
-
-  const enemyPositions = attacker.side === 'player'
-    ? ['前锋', '中军', '大营']
-    : ['前锋', '中军', '大营']
-
-  for (const pos of enemyPositions) {
-    const enemy = attacker.side === 'player'
-      ? enemyFormation.value[pos as keyof typeof enemyFormation.value]
-      : playerFormation.value[pos as keyof typeof playerFormation.value]
-
-    if (enemy && !enemy.isDead) {
-      const distance = Math.abs(positionIndex[pos] - positionIndex[attacker.position])
-      if (distance <= attacker.general.attackRange) {
-        targets.push({ general: enemy, side: attacker.side === 'player' ? 'enemy' : 'player', position: pos })
+  
+  // 计算敌方存活位置的实际位置索引（跳过死亡位置）
+  const getEnemyAlivePositions = (): Array<{ position: string, actualPosition: number, general: General }> => {
+    const formation = attacker.side === 'player' ? enemyFormation.value : playerFormation.value
+    const positions = ['前锋', '中军', '大营'] as const
+    const alivePositions: Array<{ position: string, actualPosition: number, general: General }> = []
+    let actualPosition = 1 // 实际位置从1开始
+    
+    for (const pos of positions) {
+      const general = formation[pos]
+      if (general && !general.isDead) {
+        alivePositions.push({ position: pos, actualPosition: actualPosition, general })
+        actualPosition++
       }
     }
+    return alivePositions
+  }
+
+  const enemyAlivePositions = getEnemyAlivePositions()
+
+  for (const enemyPos of enemyAlivePositions) {
+    const enemy = enemyPos.general
+    
+    // 计算距离：攻击方原始位置 + 敌方实际位置 - 1
+    // 死亡位置被跳过，敌方实际位置重新计算
+    const distance = positionIndex[attacker.position] + enemyPos.actualPosition - 1
+    
+    // 攻击范围决定能打到的最大距离
+    if (distance <= attacker.general.attackRange) {
+      targets.push({ 
+        general: enemy, 
+        side: attacker.side === 'player' ? 'enemy' : 'player', 
+        position: enemyPos.position 
+      })
+    }
+  }
+
+  // 详细播报可攻击目标
+  if (targets.length > 0) {
+    const targetList = targets.map(target => {
+      const targetPrefix = target.side === 'player' ? '我方' : '敌方'
+      return `${targetPrefix}${target.position}【${target.general.name}】`
+    }).join('、')
+    addReport(`可攻击目标：${targetList}（共${targets.length}个）`)
   }
 
   return targets
@@ -595,13 +655,110 @@ const performAttack = (attacker: { general: General, side: 'player' | 'enemy', p
   const attackerPrefix = attacker.side === 'player' ? '我方' : '敌方'
   const targetPrefix = target.side === 'player' ? '我方' : '敌方'
   
-  addReport(`${attackerPrefix}${attacker.position}【${attacker.general.name}】攻击${targetPrefix}${target.position}【${target.general.name}】，造成${Math.floor(damage)}伤害！`)
-  addReport(`${targetPrefix}${target.position}【${target.general.name}】兵力从 ${oldTroops} 降至 ${target.general.troops}`)
-
+  // 返回攻击详情，不直接播报
+  const attackResult = {
+    damage: Math.floor(damage),
+    oldTroops: oldTroops,
+    newTroops: target.general.troops,
+    isTargetDied: target.general.troops <= 0
+  }
+  
   if (target.general.troops <= 0) {
     target.general.isDead = true
-    addReport(`${targetPrefix}${target.position}【${target.general.name}】阵亡！`)
   }
+  
+  return attackResult
+}
+
+const showDamageText = (damage: number, side: 'player' | 'enemy', position: string) => {
+  // 查找对应卡牌内的troops元素
+  const troopsElement = document.querySelector(
+    `.${side}-side [data-card-position="${position}"] .troops, ` +
+    `.player-side.enemy [data-card-position="${position}"] .troops, ` +
+    `.enemy-side [data-card-position="${position}"] .troops`
+  )
+  
+  if (!troopsElement) {
+    // 备用方案：查找卡牌本身
+    const cardElement = document.querySelector(`[data-card-side="${side}"][data-card-position="${position}"]`)
+    if (!cardElement) return
+    
+    const cardRect = cardElement.getBoundingClientRect()
+    const damageText = {
+      id: Date.now() + Math.random(),
+      text: '-' + damage,
+      x: cardRect.left + cardRect.width / 2 - 20,
+      y: cardRect.top + cardRect.height / 2,
+      delay: 0
+    }
+    
+    damageTexts.value.push(damageText)
+    
+    setTimeout(() => {
+      damageTexts.value = damageTexts.value.filter(dt => dt.id !== damageText.id)
+    }, 2000)
+    return
+  }
+  
+  const troopsRect = troopsElement.getBoundingClientRect()
+  const damageText = {
+    id: Date.now() + Math.random(),
+    text: '-' + damage,
+    x: troopsRect.left + troopsRect.width / 2 - 20,
+    y: troopsRect.top - 10,
+    delay: 0
+  }
+  
+  damageTexts.value.push(damageText)
+  
+  // 2秒后移除伤害文本
+  setTimeout(() => {
+    damageTexts.value = damageTexts.value.filter(dt => dt.id !== damageText.id)
+  }, 2000)
+}
+
+const performAttackWithAnimation = async (attacker: { general: General, side: 'player' | 'enemy', position: string }, target: { general: General, side: 'player' | 'enemy', position: string }) => {
+  // 设置攻击中的卡牌
+  attackingCard.value = `${attacker.side}-${attacker.position}`
+  
+  const attackerPrefix = attacker.side === 'player' ? '我方' : '敌方'
+  const targetPrefix = target.side === 'player' ? '我方' : '敌方'
+  
+  // 详细播报：谁开始行动
+  addReport(`${attackerPrefix}${attacker.position}【${attacker.general.name}】开始行动`)
+  addReport(`攻击距离：${attacker.general.attackRange}，可以攻击到${targetPrefix}${target.position}`)
+  
+  // 计算伤害
+  const damage = Math.max(0, attacker.general.attack - target.general.defense / 2)
+  
+  // 详细播报：选择攻击目标
+  addReport(`【${attacker.general.name}】选择攻击${targetPrefix}${target.position}【${target.general.name}】`)
+  
+  // 执行攻击逻辑
+  const attackResult = performAttack(attacker, target)
+  
+  if (attackResult.damage > 0) {
+    addReport(`造成${attackResult.damage}点伤害！`)
+    addReport(`兵力从${attackResult.oldTroops}降至${attackResult.newTroops}`)
+    
+    // 显示伤害数值 - 显示在目标卡牌上
+    showDamageText(attackResult.damage, target.side, target.position)
+    
+    if (attackResult.isTargetDied) {
+      addReport(`${targetPrefix}${target.position}【${target.general.name}】阵亡！`)
+    } else {
+      addReport(`${targetPrefix}${target.position}【${target.general.name}】剩余兵力：${attackResult.newTroops}`)
+    }
+  } else {
+    addReport(`攻击被格挡，未造成伤害！`)
+  }
+  
+  // 模拟动画时间
+  await new Promise(resolve => setTimeout(resolve, 1200)) // 增加动画时间以便用户看到播报
+  
+  addReport(`${attackerPrefix}${attacker.position}【${attacker.general.name}】行动结束`)
+  // 清除攻击状态
+  attackingCard.value = null
 }
 
 const checkDeadGenerals = () => {
@@ -626,9 +783,9 @@ const checkGameOver = () => {
     const reward = currentWave.value * 10
     money.value += reward
     addReport(`恭喜！你击败了敌方大营，获得胜利！`)
-    addReport(`获得奖励：${reward} 贝币！`)
+    addReport(`获得奖励：${reward} 金额！`)
     setTimeout(() => {
-      alert(`恭喜通关！获得 ${reward} 贝币奖励！`)
+      alert(`恭喜通关！获得 ${reward} 金额奖励！`)
     }, 1000)
     return true
   }
@@ -664,29 +821,44 @@ const checkGameOver = () => {
 }
 
 const checkGameOverByTurns = () => {
+  // 首先检查双方大营是否都存活 - 用户要求的新和局逻辑
+  const playerCampAlive = playerFormation.value.大营 && !playerFormation.value.大营.isDead
+  const enemyCampAlive = enemyFormation.value.大营 && !enemyFormation.value.大营.isDead
+  
+  if (playerCampAlive && enemyCampAlive) {
+    // 双方大营都存活 - 和局，保留当前状态可以重新开始
+    addReport('回合结束！双方大营都未阵亡，和局！')
+    addReport('可以再次点击"开始"重新战斗！')
+    setTimeout(() => {
+      alert('和局！当前状态已保留，可以再次点击"开始"重新战斗！')
+    }, 1000)
+    return
+  }
+  
+  // 如果有大营阵亡，按原本的兵力对比逻辑处理
   let playerTroops = 0
   let enemyTroops = 0
-  
+
   Object.values(playerFormation.value).forEach(general => {
     if (general && !general.isDead) {
       playerTroops += general.troops
     }
   })
-  
+
   Object.values(enemyFormation.value).forEach(general => {
     if (general && !general.isDead) {
       enemyTroops += general.troops
     }
   })
-  
+
   if (playerTroops > enemyTroops) {
     // 胜利结算
     const reward = currentWave.value * 10
     money.value += reward
     addReport('回合结束！我方兵力占优，获得胜利！')
-    addReport(`获得奖励：${reward} 贝币！`)
+    addReport(`获得奖励：${reward} 金额！`)
     setTimeout(() => {
-      alert(`恭喜胜利！获得 ${reward} 贝币奖励！`)
+      alert(`恭喜胜利！获得 ${reward} 金额奖励！`)
     }, 1000)
   } else if (enemyTroops > playerTroops) {
     // 失败重置
@@ -712,11 +884,6 @@ const checkGameOverByTurns = () => {
       }
       battleReports.value = []
     }, 1000)
-  } else {
-    addReport('回合结束！双方兵力相当，平局！')
-    setTimeout(() => {
-      alert('平局！')
-    }, 1000)
   }
 }
 
@@ -731,10 +898,16 @@ const advanceTime = () => {
 }
 
 const addReport = (message: string) => {
-  battleReports.value.unshift(message)
-  if (battleReports.value.length > 10) {
-    battleReports.value.pop()
-  }
+  battleReports.value.push(message) // 改为push，从上到下显示
+  // 不再限制播报数量，保留全部历史记录
+  
+  // 自动滚动到最新播报
+  setTimeout(() => {
+    const reportContent = document.querySelector('.report-content')
+    if (reportContent) {
+      reportContent.scrollTop = reportContent.scrollHeight
+    }
+  }, 100)
 }
 
 const resetGame = () => {
@@ -756,6 +929,212 @@ const resetGame = () => {
     前锋: null
   }
   battleReports.value = []
+}
+
+const getCardSpeed = (side: 'player' | 'enemy', position: string): number => {
+  // 查找当前卡牌在speedUnits中的速度值
+  const unit = speedUnits.value.find(u => u.side === side && u.position === position)
+  return unit ? unit.speed : 0
+}
+
+const initializeSpeedUnits = () => {
+  const units: SpeedUnit[] = []
+
+  // 添加我方武将
+  Object.entries(playerFormation.value).forEach(([position, general]) => {
+    if (general && !general.isDead) {
+      units.push({
+        id: `player-${position}-${general.id}`,
+        general,
+        side: 'player' as const,
+        position,
+        speed: Math.random() * 50, // 给一些初始速度，0-50随机
+        isActive: false
+      })
+    }
+  })
+
+  // 添加敌方武将
+  Object.entries(enemyFormation.value).forEach(([position, general]) => {
+    if (general && !general.isDead) {
+      units.push({
+        id: `enemy-${position}-${general.id}`,
+        general,
+        side: 'enemy' as const,
+        position,
+        speed: Math.random() * 50, // 给一些初始速度，0-50随机
+        isActive: false
+      })
+    }
+  })
+
+  // 按速度排序（初始状态）
+  units.sort((a, b) => b.speed - a.speed)
+  speedUnits.value = units
+}
+
+const updateSpeed = () => {
+  speedUnits.value.forEach(unit => {
+    if (!unit.general.isDead) {
+      unit.speed += unit.general.speed / 20 // 降低速度增长速率，使其更慢
+      if (unit.speed >= 100) {
+        unit.speed = 100
+      }
+    }
+  })
+  
+  // 按当前速度排序
+  speedUnits.value.sort((a, b) => b.speed - a.speed)
+}
+
+const checkSpeedThreshold = () => {
+  const readyUnit = speedUnits.value.find(unit => unit.speed >= 100 && !unit.general.isDead)
+  if (readyUnit) {
+    return readyUnit
+  }
+  return null
+}
+
+const resetUnitSpeed = (unit: SpeedUnit) => {
+  unit.speed = 0
+  unit.isActive = false
+}
+
+const startBattle = async () => {
+  const hasEmptySlot = Object.values(playerFormation.value).some(slot => slot === null)
+  if (hasEmptySlot) {
+    addReport('请先将武将上阵！')
+    return
+  }
+
+  isBattleActive.value = true
+  initializeSpeedUnits()
+
+  // 战斗循环
+  for (let i = 1; i <= maxTurns.value; i++) {
+    currentTurn.value = i
+    addReport(`========== 第 ${i} 回合开始！ ==========`)
+
+    // 每回合的行动循环
+    let actionCount = 0
+    const maxActions = 20 // 防止无限循环
+    let unitIndex = 1
+    let loopCount = 0 // 循环计数器
+    let actionThisRound = false // 本轮是否有行动
+
+    while (actionCount < maxActions) {
+      loopCount++
+      if (loopCount % 10 === 0) { // 每10次循环播报一次进度
+        addReport(`回合进行中...（速度累积中，第${loopCount}轮）`)
+      }
+      
+      updateSpeed()
+      const readyUnit = checkSpeedThreshold()
+      
+      if (readyUnit) {
+        actionThisRound = true
+        readyUnit.isActive = true
+        
+        // 详细播报当前行动者信息
+        const sidePrefix = readyUnit.side === 'player' ? '我方' : '敌方'
+        addReport(`== ${unitIndex}. ${sidePrefix}${readyUnit.position}【${readyUnit.general.name}】开始行动（速度达到100）==`)
+        addReport(`兵力：${readyUnit.general.troops}，攻击：${readyUnit.general.attack}，防御：${readyUnit.general.defense}，策略：${readyUnit.general.strategy}，速度：${readyUnit.general.speed}，攻击距离：${readyUnit.general.attackRange}，攻城：${readyUnit.general.siege}`)
+
+        // 执行攻击
+        const targets = getTargetsInRange({
+          general: readyUnit.general,
+          side: readyUnit.side,
+          position: readyUnit.position
+        })
+
+        if (targets.length > 0) {
+          addReport(`可攻击目标：${targets.length}个`)
+          const target = targets[Math.floor(Math.random() * targets.length)]
+          await performAttackWithAnimation({
+            general: readyUnit.general,
+            side: readyUnit.side,
+            position: readyUnit.position
+          }, target)
+        } else {
+          addReport(`范围内没有可攻击的目标！`)
+        }
+
+        resetUnitSpeed(readyUnit)
+        actionCount++
+        unitIndex++
+
+        // 检查游戏结束条件
+        if (checkGameOver()) {
+          isBattleActive.value = false
+          return
+        }
+        
+        // 增加行动间隔时间，让用户能看到详细播报
+        await new Promise(resolve => setTimeout(resolve, 400))
+      } else {
+        // 没有单位可以行动，继续下一轮增速
+        if (loopCount % 20 === 0) {
+          addReport(`回合进行中...（正在加速累积，预计还需时间）`)
+        }
+        
+        // 检查是否所有单位都已达最大速度，如果是的话自动给速度最快的单位一个随机数值
+        let anyCanAct = false
+        let maxSpeedUnit = null
+        let maxSpeed = 0
+        
+        for (const unit of speedUnits.value) {
+          if (!unit.general.isDead && unit.speed < 100) {
+            anyCanAct = true
+            if (unit.speed > maxSpeed) {
+              maxSpeed = unit.speed
+              maxSpeedUnit = unit
+            }
+          }
+        }
+        
+        // 如果没有任何单位可以达到100速度，给最快单位一些额外加速
+        if (!anyCanAct && maxSpeedUnit) {
+          maxSpeedUnit.speed += 10 + Math.random() * 10
+          addReport(`🔄 加速机制触发：${maxSpeedUnit.side === 'player' ? '我方' : '敌方'}${maxSpeedUnit.position}【${maxSpeedUnit.general.name}】获得额外加速`)
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // 如果连续多个循环都没有行动，强制退出以避免死循环
+        if (loopCount > 50 && !actionThisRound) {
+          addReport(`回合等待超时，当前回合无有效行动，进入下一回合...`)
+          break
+        }
+        
+        continue
+      }
+    }
+
+    // 回合统计
+    if (actionThisRound) {
+      addReport(`本轮共进行了${unitIndex - 1}次有效行动`)
+    } else {
+      addReport(`本回合没有单位行动`)
+    }
+    
+    // 如果不是最后一回合，添加回合结束播报
+    if (i < maxTurns.value) {
+      addReport(`========== 第 ${i} 回合结束！ ==========`)
+    } else {
+      addReport(`========== 第 ${i} 回合结束！ ==========`)
+      addReport('8个回合结束！')
+    }
+    
+    // 回合间等待时间
+    if (i < maxTurns.value) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  }
+
+  // 8回合结束后
+  addReport('8回合结束！')
+  checkGameOverByTurns()
+  isBattleActive.value = false
 }
 
 const nextWave = () => {
@@ -831,6 +1210,138 @@ const nextWave = () => {
   margin-bottom: 30px;
 }
 
+.speed-bar-container {
+  margin-bottom: 20px;
+}
+
+.speed-bar-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.speed-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  min-height: 120px;
+}
+
+.speed-unit {
+  flex: 0 0 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.speed-unit.active {
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.speed-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 8px;
+  border: 2px solid #667eea;
+}
+
+.speed-progress {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.speed-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.speed-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #2c3e50;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.damage-text {
+  position: absolute;
+  font-size: 24px;
+  font-weight: bold;
+  color: #e74c3c;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 1000;
+  animation: damagePop 2s ease-out forwards;
+}
+
+.card-speed-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4px 0;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.mini-speed-bar {
+  width: 60px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-right: 4px;
+}
+
+.mini-speed-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #ff9800);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.mini-speed-text {
+  font-size: 8px;
+  color: #ffd700;
+  font-weight: bold;
+  min-width: 30px;
+}
+
+@keyframes damagePop {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(1.5);
+  }
+}
+
 .game-info {
   display: flex;
   justify-content: space-around;
@@ -861,9 +1372,17 @@ const nextWave = () => {
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .game-area {
@@ -962,6 +1481,26 @@ const nextWave = () => {
 .card.selected {
   border: 3px solid #ffd700;
   box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+}
+
+.card.attacking {
+  animation: attackHighlight 0.5s ease-in-out;
+}
+
+@keyframes attackHighlight {
+  0% {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(255, 165, 0, 0.8);
+    transform: scale(1.05);
+  }
+
+  100% {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: scale(1);
+  }
 }
 
 .card.dead {
@@ -1163,6 +1702,7 @@ const nextWave = () => {
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -1255,7 +1795,7 @@ const nextWave = () => {
 .report-content {
   flex: 1;
   overflow-y: auto;
-  max-height: 200px;
+  max-height: 400px; /* 增加到400px，显示更多内容 */
 }
 
 .report-item {
