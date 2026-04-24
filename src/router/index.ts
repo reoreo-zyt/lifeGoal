@@ -10,7 +10,7 @@ const routes: Array<RouteRecordRaw> = [
     component: Home
   },
   {
-    path: '/ask',
+    path: '/game',
     name: 'CardBattleGame',
     component: CardBattleGame
   },

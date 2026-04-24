@@ -1,5 +1,6 @@
 <template>
   <div class="card-battle-game">
+    <!-- 没登录的时候会弹出提示框需要进行登录 -->
     <div v-if="!isLoggedIn" class="login-required">
       <div class="login-modal">
         <h2>游戏开始</h2>
@@ -8,8 +9,10 @@
       </div>
     </div>
 
+    <!-- 登录后游戏主界面 -->
     <div v-else class="game-container">
       <div class="game-header">
+        <!-- 游戏顶部信息 -->
         <div class="game-info">
           <div class="info-item">
             <span class="info-label">金额:</span>
@@ -19,7 +22,6 @@
             <span class="info-label">波次:</span>
             <span class="info-value">{{ currentWave }}/{{ totalWaves }}</span>
           </div>
-
           <div
             class="info-item"
             :class="{ 'command-warning': currentCommand > maxCommand }"
@@ -49,17 +51,34 @@
             <div class="formation horizontal">
               <div class="card-slot" @click="selectSlot('player', '大营')">
                 <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.大营 }">
+                  <div
+                    class="troops-bar-container"
+                    :class="{ active: isBattleActive && playerFormation.大营 }"
+                  >
                     <div class="troops-bar">
-                      <div class="troops-fill" :style="{ width: playerFormation.大营 ? (playerFormation.大营.troops / (playerFormation.大营.level * 100)) * 100 + '%' : '0%' }"></div>
+                      <div
+                        class="troops-fill"
+                        :style="{
+                          width: playerFormation.大营
+                            ? (playerFormation.大营.troops /
+                                (playerFormation.大营.level * 100)) *
+                                100 +
+                              '%'
+                            : '0%',
+                        }"
+                      ></div>
                     </div>
-                    <div class="troops-text">{{ playerFormation.大营 ? playerFormation.大营.troops : 0 }}</div>
+                    <div class="troops-text">
+                      {{
+                        playerFormation.大营 ? playerFormation.大营.troops : 0
+                      }}
+                    </div>
                   </div>
                   <div
                     v-if="playerFormation.大营"
                     class="card player"
                     :style="{
-                      backgroundImage: `url(${playerFormation.大营.avatar ? API_BASE_URL + playerFormation.大营.avatar : (playerFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
+                      backgroundImage: `url(${playerFormation.大营.avatar ? API_BASE_URL + playerFormation.大营.avatar : playerFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
                     }"
                     :class="{
                       selected: selectedSlot === 'player-大营',
@@ -73,8 +92,12 @@
                   >
                     <div class="card-top">
                       <div class="card-left-top">
-                        <div class="card-dynasty">{{ playerFormation.大营.dynasty }}</div>
-                        <div class="card-name">{{ playerFormation.大营.name }}</div>
+                        <div class="card-dynasty">
+                          {{ playerFormation.大营.dynasty }}
+                        </div>
+                        <div class="card-name">
+                          {{ playerFormation.大营.name }}
+                        </div>
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
@@ -83,28 +106,36 @@
                             :key="i"
                             class="star"
                             :class="{
-                              active: i <= Math.ceil(playerFormation.大营.level),
+                              active:
+                                i <= Math.ceil(playerFormation.大营.level),
                             }"
                             >★</span
                           >
                         </div>
                       </div>
                     </div>
-                    <div class="card-middle">
-                    </div>
+                    <div class="card-middle"></div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ playerFormation.大营.level }}</span>
+                        <span class="card-level"
+                          >Lv.{{ playerFormation.大营.level }}</span
+                        >
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-command">{{ playerFormation.大营.command }}</span>
+                        <span class="card-command">{{
+                          playerFormation.大营.command
+                        }}</span>
                         <span class="card-bottom-label">统</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{ playerFormation.大营.soldierType }}</span>
+                        <span class="card-soldier-type">{{
+                          playerFormation.大营.soldierType
+                        }}</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-range">{{ playerFormation.大营.attackRange }}</span>
+                        <span class="card-range">{{
+                          playerFormation.大营.attackRange
+                        }}</span>
                         <span class="card-bottom-label">距</span>
                       </div>
                     </div>
@@ -116,17 +147,34 @@
               </div>
               <div class="card-slot" @click="selectSlot('player', '中军')">
                 <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.中军 }">
+                  <div
+                    class="troops-bar-container"
+                    :class="{ active: isBattleActive && playerFormation.中军 }"
+                  >
                     <div class="troops-bar">
-                      <div class="troops-fill" :style="{ width: playerFormation.中军 ? (playerFormation.中军.troops / (playerFormation.中军.level * 100)) * 100 + '%' : '0%' }"></div>
+                      <div
+                        class="troops-fill"
+                        :style="{
+                          width: playerFormation.中军
+                            ? (playerFormation.中军.troops /
+                                (playerFormation.中军.level * 100)) *
+                                100 +
+                              '%'
+                            : '0%',
+                        }"
+                      ></div>
                     </div>
-                    <div class="troops-text">{{ playerFormation.中军 ? playerFormation.中军.troops : 0 }}</div>
+                    <div class="troops-text">
+                      {{
+                        playerFormation.中军 ? playerFormation.中军.troops : 0
+                      }}
+                    </div>
                   </div>
                   <div
                     v-if="playerFormation.中军"
                     class="card player"
                     :style="{
-                      backgroundImage: `url(${playerFormation.中军.avatar ? API_BASE_URL + playerFormation.中军.avatar : (playerFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
+                      backgroundImage: `url(${playerFormation.中军.avatar ? API_BASE_URL + playerFormation.中军.avatar : playerFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
                     }"
                     :class="{
                       selected: selectedSlot === 'player-中军',
@@ -140,8 +188,12 @@
                   >
                     <div class="card-top">
                       <div class="card-left-top">
-                        <div class="card-dynasty">{{ playerFormation.中军.dynasty }}</div>
-                        <div class="card-name">{{ playerFormation.中军.name }}</div>
+                        <div class="card-dynasty">
+                          {{ playerFormation.中军.dynasty }}
+                        </div>
+                        <div class="card-name">
+                          {{ playerFormation.中军.name }}
+                        </div>
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
@@ -150,7 +202,8 @@
                             :key="i"
                             class="star"
                             :class="{
-                              active: i <= Math.ceil(playerFormation.中军.level),
+                              active:
+                                i <= Math.ceil(playerFormation.中军.level),
                             }"
                             >★</span
                           >
@@ -159,17 +212,25 @@
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ playerFormation.中军.level }}</span>
+                        <span class="card-level"
+                          >Lv.{{ playerFormation.中军.level }}</span
+                        >
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-command">{{ playerFormation.中军.command }}</span>
+                        <span class="card-command">{{
+                          playerFormation.中军.command
+                        }}</span>
                         <span class="card-bottom-label">统</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{ playerFormation.中军.soldierType }}</span>
+                        <span class="card-soldier-type">{{
+                          playerFormation.中军.soldierType
+                        }}</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-range">{{ playerFormation.中军.attackRange }}</span>
+                        <span class="card-range">{{
+                          playerFormation.中军.attackRange
+                        }}</span>
                         <span class="card-bottom-label">距</span>
                       </div>
                     </div>
@@ -181,17 +242,34 @@
               </div>
               <div class="card-slot" @click="selectSlot('player', '前锋')">
                 <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.前锋 }">
+                  <div
+                    class="troops-bar-container"
+                    :class="{ active: isBattleActive && playerFormation.前锋 }"
+                  >
                     <div class="troops-bar">
-                      <div class="troops-fill" :style="{ width: playerFormation.前锋 ? (playerFormation.前锋.troops / (playerFormation.前锋.level * 100)) * 100 + '%' : '0%' }"></div>
+                      <div
+                        class="troops-fill"
+                        :style="{
+                          width: playerFormation.前锋
+                            ? (playerFormation.前锋.troops /
+                                (playerFormation.前锋.level * 100)) *
+                                100 +
+                              '%'
+                            : '0%',
+                        }"
+                      ></div>
                     </div>
-                    <div class="troops-text">{{ playerFormation.前锋 ? playerFormation.前锋.troops : 0 }}</div>
+                    <div class="troops-text">
+                      {{
+                        playerFormation.前锋 ? playerFormation.前锋.troops : 0
+                      }}
+                    </div>
                   </div>
                   <div
                     v-if="playerFormation.前锋"
                     class="card player"
                     :style="{
-                      backgroundImage: `url(${playerFormation.前锋.avatar ? API_BASE_URL + playerFormation.前锋.avatar : (playerFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
+                      backgroundImage: `url(${playerFormation.前锋.avatar ? API_BASE_URL + playerFormation.前锋.avatar : playerFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
                     }"
                     :class="{
                       selected: selectedSlot === 'player-前锋',
@@ -205,8 +283,12 @@
                   >
                     <div class="card-top">
                       <div class="card-left-top">
-                        <div class="card-dynasty">{{ playerFormation.前锋.dynasty }}</div>
-                        <div class="card-name">{{ playerFormation.前锋.name }}</div>
+                        <div class="card-dynasty">
+                          {{ playerFormation.前锋.dynasty }}
+                        </div>
+                        <div class="card-name">
+                          {{ playerFormation.前锋.name }}
+                        </div>
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
@@ -215,7 +297,8 @@
                             :key="i"
                             class="star"
                             :class="{
-                              active: i <= Math.ceil(playerFormation.前锋.level),
+                              active:
+                                i <= Math.ceil(playerFormation.前锋.level),
                             }"
                             >★</span
                           >
@@ -224,17 +307,25 @@
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ playerFormation.前锋.level }}</span>
+                        <span class="card-level"
+                          >Lv.{{ playerFormation.前锋.level }}</span
+                        >
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-command">{{ playerFormation.前锋.command }}</span>
+                        <span class="card-command">{{
+                          playerFormation.前锋.command
+                        }}</span>
                         <span class="card-bottom-label">统</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{ playerFormation.前锋.soldierType }}</span>
+                        <span class="card-soldier-type">{{
+                          playerFormation.前锋.soldierType
+                        }}</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-range">{{ playerFormation.前锋.attackRange }}</span>
+                        <span class="card-range">{{
+                          playerFormation.前锋.attackRange
+                        }}</span>
                         <span class="card-bottom-label">距</span>
                       </div>
                     </div>
@@ -261,22 +352,38 @@
             </div>
           </div>
 
+          <!-- 战斗场景 -->
           <div class="player-side enemy">
             <div class="side-label">敌方</div>
             <div class="formation horizontal enemy">
               <div class="card-slot" @click="selectSlot('enemy', '前锋')">
                 <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.前锋 }">
+                  <div
+                    class="troops-bar-container"
+                    :class="{ active: isBattleActive && enemyFormation.前锋 }"
+                  >
                     <div class="troops-bar">
-                      <div class="troops-fill" :style="{ width: enemyFormation.前锋 ? (enemyFormation.前锋.troops / (enemyFormation.前锋.level * 100)) * 100 + '%' : '0%' }"></div>
+                      <div
+                        class="troops-fill"
+                        :style="{
+                          width: enemyFormation.前锋
+                            ? (enemyFormation.前锋.troops /
+                                (enemyFormation.前锋.level * 100)) *
+                                100 +
+                              '%'
+                            : '0%',
+                        }"
+                      ></div>
                     </div>
-                    <div class="troops-text">{{ enemyFormation.前锋 ? enemyFormation.前锋.troops : 0 }}</div>
+                    <div class="troops-text">
+                      {{ enemyFormation.前锋 ? enemyFormation.前锋.troops : 0 }}
+                    </div>
                   </div>
                   <div
                     v-if="enemyFormation.前锋"
                     class="card enemy"
                     :style="{
-                      backgroundImage: `url(${enemyFormation.前锋.avatar ? API_BASE_URL + enemyFormation.前锋.avatar : (enemyFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
+                      backgroundImage: `url(${enemyFormation.前锋.avatar ? API_BASE_URL + enemyFormation.前锋.avatar : enemyFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
                     }"
                     :class="{
                       selected: selectedSlot === 'enemy-前锋',
@@ -290,8 +397,12 @@
                   >
                     <div class="card-top">
                       <div class="card-left-top">
-                        <div class="card-dynasty">{{ enemyFormation.前锋.dynasty }}</div>
-                        <div class="card-name">{{ enemyFormation.前锋.name }}</div>
+                        <div class="card-dynasty">
+                          {{ enemyFormation.前锋.dynasty }}
+                        </div>
+                        <div class="card-name">
+                          {{ enemyFormation.前锋.name }}
+                        </div>
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
@@ -309,17 +420,25 @@
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ enemyFormation.前锋.level }}</span>
+                        <span class="card-level"
+                          >Lv.{{ enemyFormation.前锋.level }}</span
+                        >
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-command">{{ enemyFormation.前锋.command }}</span>
+                        <span class="card-command">{{
+                          enemyFormation.前锋.command
+                        }}</span>
                         <span class="card-bottom-label">统</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{ enemyFormation.前锋.soldierType }}</span>
+                        <span class="card-soldier-type">{{
+                          enemyFormation.前锋.soldierType
+                        }}</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-range">{{ enemyFormation.前锋.attackRange }}</span>
+                        <span class="card-range">{{
+                          enemyFormation.前锋.attackRange
+                        }}</span>
                         <span class="card-bottom-label">距</span>
                       </div>
                     </div>
@@ -331,17 +450,32 @@
               </div>
               <div class="card-slot" @click="selectSlot('enemy', '中军')">
                 <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.中军 }">
+                  <div
+                    class="troops-bar-container"
+                    :class="{ active: isBattleActive && enemyFormation.中军 }"
+                  >
                     <div class="troops-bar">
-                      <div class="troops-fill" :style="{ width: enemyFormation.中军 ? (enemyFormation.中军.troops / (enemyFormation.中军.level * 100)) * 100 + '%' : '0%' }"></div>
+                      <div
+                        class="troops-fill"
+                        :style="{
+                          width: enemyFormation.中军
+                            ? (enemyFormation.中军.troops /
+                                (enemyFormation.中军.level * 100)) *
+                                100 +
+                              '%'
+                            : '0%',
+                        }"
+                      ></div>
                     </div>
-                    <div class="troops-text">{{ enemyFormation.中军 ? enemyFormation.中军.troops : 0 }}</div>
+                    <div class="troops-text">
+                      {{ enemyFormation.中军 ? enemyFormation.中军.troops : 0 }}
+                    </div>
                   </div>
                   <div
                     v-if="enemyFormation.中军"
                     class="card enemy"
                     :style="{
-                      backgroundImage: `url(${enemyFormation.中军.avatar ? API_BASE_URL + enemyFormation.中军.avatar : (enemyFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
+                      backgroundImage: `url(${enemyFormation.中军.avatar ? API_BASE_URL + enemyFormation.中军.avatar : enemyFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
                     }"
                     :class="{
                       selected: selectedSlot === 'enemy-中军',
@@ -355,8 +489,12 @@
                   >
                     <div class="card-top">
                       <div class="card-left-top">
-                        <div class="card-dynasty">{{ enemyFormation.中军.dynasty }}</div>
-                        <div class="card-name">{{ enemyFormation.中军.name }}</div>
+                        <div class="card-dynasty">
+                          {{ enemyFormation.中军.dynasty }}
+                        </div>
+                        <div class="card-name">
+                          {{ enemyFormation.中军.name }}
+                        </div>
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
@@ -374,17 +512,25 @@
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ enemyFormation.中军.level }}</span>
+                        <span class="card-level"
+                          >Lv.{{ enemyFormation.中军.level }}</span
+                        >
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-command">{{ enemyFormation.中军.command }}</span>
+                        <span class="card-command">{{
+                          enemyFormation.中军.command
+                        }}</span>
                         <span class="card-bottom-label">统</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{ enemyFormation.中军.soldierType }}</span>
+                        <span class="card-soldier-type">{{
+                          enemyFormation.中军.soldierType
+                        }}</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-range">{{ enemyFormation.中军.attackRange }}</span>
+                        <span class="card-range">{{
+                          enemyFormation.中军.attackRange
+                        }}</span>
                         <span class="card-bottom-label">距</span>
                       </div>
                     </div>
@@ -396,17 +542,32 @@
               </div>
               <div class="card-slot" @click="selectSlot('enemy', '大营')">
                 <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.大营 }">
+                  <div
+                    class="troops-bar-container"
+                    :class="{ active: isBattleActive && enemyFormation.大营 }"
+                  >
                     <div class="troops-bar">
-                      <div class="troops-fill" :style="{ width: enemyFormation.大营 ? (enemyFormation.大营.troops / (enemyFormation.大营.level * 100)) * 100 + '%' : '0%' }"></div>
+                      <div
+                        class="troops-fill"
+                        :style="{
+                          width: enemyFormation.大营
+                            ? (enemyFormation.大营.troops /
+                                (enemyFormation.大营.level * 100)) *
+                                100 +
+                              '%'
+                            : '0%',
+                        }"
+                      ></div>
                     </div>
-                    <div class="troops-text">{{ enemyFormation.大营 ? enemyFormation.大营.troops : 0 }}</div>
+                    <div class="troops-text">
+                      {{ enemyFormation.大营 ? enemyFormation.大营.troops : 0 }}
+                    </div>
                   </div>
                   <div
                     v-if="enemyFormation.大营"
                     class="card enemy"
                     :style="{
-                      backgroundImage: `url(${enemyFormation.大营.avatar ? API_BASE_URL + enemyFormation.大营.avatar : (enemyFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
+                      backgroundImage: `url(${enemyFormation.大营.avatar ? API_BASE_URL + enemyFormation.大营.avatar : enemyFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
                     }"
                     :class="{
                       selected: selectedSlot === 'enemy-大营',
@@ -420,8 +581,12 @@
                   >
                     <div class="card-top">
                       <div class="card-left-top">
-                        <div class="card-dynasty">{{ enemyFormation.大营.dynasty }}</div>
-                        <div class="card-name">{{ enemyFormation.大营.name }}</div>
+                        <div class="card-dynasty">
+                          {{ enemyFormation.大营.dynasty }}
+                        </div>
+                        <div class="card-name">
+                          {{ enemyFormation.大营.name }}
+                        </div>
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
@@ -439,17 +604,25 @@
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ enemyFormation.大营.level }}</span>
+                        <span class="card-level"
+                          >Lv.{{ enemyFormation.大营.level }}</span
+                        >
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-command">{{ enemyFormation.大营.command }}</span>
+                        <span class="card-command">{{
+                          enemyFormation.大营.command
+                        }}</span>
                         <span class="card-bottom-label">统</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{ enemyFormation.大营.soldierType }}</span>
+                        <span class="card-soldier-type">{{
+                          enemyFormation.大营.soldierType
+                        }}</span>
                       </div>
                       <div class="card-bottom-item">
-                        <span class="card-range">{{ enemyFormation.大营.attackRange }}</span>
+                        <span class="card-range">{{
+                          enemyFormation.大营.attackRange
+                        }}</span>
                         <span class="card-bottom-label">距</span>
                       </div>
                     </div>
@@ -463,6 +636,7 @@
           </div>
         </div>
 
+        <!-- 选择武将界面 -->
         <div
           v-if="showGeneralList"
           class="general-list-overlay"
@@ -478,12 +652,18 @@
                 v-for="general in availableGenerals"
                 :key="general.id"
                 class="general-item"
-                @click="deployGeneral(general); hideTooltip()"
+                @click="
+                  deployGeneral(general);
+                  hideTooltip();
+                "
                 @contextmenu="showGeneralTooltip(general, $event)"
               >
-                <div class="card player" :style="{
-                    backgroundImage: `url(${general.avatar ? API_BASE_URL + general.avatar : (general.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
-                  }">
+                <div
+                  class="card player"
+                  :style="{
+                    backgroundImage: `url(${general.avatar ? API_BASE_URL + general.avatar : general.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
+                  }"
+                >
                   <div class="card-top">
                     <div class="card-left-top">
                       <div class="card-dynasty">{{ general.dynasty }}</div>
@@ -501,8 +681,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="card-middle">
-                  </div>
+                  <div class="card-middle"></div>
                   <div class="card-bottom">
                     <div class="card-bottom-item">
                       <span class="card-level">Lv.{{ general.level }}</span>
@@ -512,7 +691,9 @@
                       <span class="card-bottom-label">统</span>
                     </div>
                     <div class="card-bottom-item">
-                      <span class="card-soldier-type">{{ general.soldierType }}</span>
+                      <span class="card-soldier-type">{{
+                        general.soldierType
+                      }}</span>
                     </div>
                     <div class="card-bottom-item">
                       <span class="card-range">{{ general.attackRange }}</span>
@@ -525,6 +706,7 @@
           </div>
         </div>
 
+        <!-- 武将信息 -->
         <div v-if="tooltipData" class="tooltip-overlay">
           <div class="tooltip-content">
             <div class="tooltip-header">
@@ -534,25 +716,50 @@
             </div>
             <div class="tooltip-stats">
               <div class="tooltip-stat-row">
-                <span>攻击: {{ tooltipData.attack }} ({{ tooltipData.attackGrowth || 0 }})</span>
-                <span>防御: {{ tooltipData.defense }} ({{ tooltipData.defenseGrowth || 0 }})</span>
+                <span
+                  >攻击: {{ tooltipData.attack }} ({{
+                    tooltipData.attackGrowth || 0
+                  }})</span
+                >
+                <span
+                  >防御: {{ tooltipData.defense }} ({{
+                    tooltipData.defenseGrowth || 0
+                  }})</span
+                >
               </div>
               <div class="tooltip-stat-row">
-                <span>策略: {{ tooltipData.strategy }} ({{ tooltipData.strategyGrowth || 0 }})</span>
-                <span>速度: {{ tooltipData.speed }}</span>
+                <span
+                  >策略: {{ tooltipData.strategy }} ({{
+                    tooltipData.strategyGrowth || 0
+                  }})</span
+                >
+                <span
+                  >速度: {{ tooltipData.speed }} ({{
+                    tooltipData.speedGrowth || 0
+                  }})</span
+                >
               </div>
               <div class="tooltip-stat-row">
                 <span>兵力: {{ tooltipData.troops }}</span>
                 <span>攻击距离: {{ tooltipData.attackRange }}</span>
               </div>
               <div class="tooltip-stat-row">
-                <span>攻城: {{ tooltipData.siege }} ({{ tooltipData.siegeGrowth || 0 }})</span>
-                <span>统御: {{ tooltipData.command }} ({{ tooltipData.commandGrowth || 0 }})</span>
+                <span
+                  >攻城: {{ tooltipData.siege }} ({{
+                    tooltipData.siegeGrowth || 0
+                  }})</span
+                >
+                <span
+                  >统御: {{ tooltipData.command }} ({{
+                    tooltipData.commandGrowth || 0
+                  }})</span
+                >
               </div>
             </div>
           </div>
         </div>
 
+        <!-- 底部操作按钮 -->
         <div class="game-footer">
           <button
             class="action-button recruit"
@@ -604,7 +811,7 @@ const totalWaves = ref(300);
 const currentTurn = ref(0);
 const maxTurns = ref(8);
 const recruitCost = ref(100);
-const maxCommand = ref(8);
+const maxCommand = ref(100);
 const currentCommand = ref(0);
 
 // API配置
@@ -693,6 +900,14 @@ const isBattleActive = ref(false);
 const damageTexts = ref<any[]>([]);
 const attackingCard = ref<string | null>(null);
 
+interface Skill {
+  id: string;
+  name: string;
+  type: "command" | "active" | "passive";
+  description: string;
+  effect: (general: General, context: any) => void;
+}
+
 interface General {
   id: number;
   name: string;
@@ -703,6 +918,7 @@ interface General {
   strategy: number;
   strategyGrowth: number;
   speed: number;
+  speedGrowth: number;
   attackRange: number;
   siege: number;
   siegeGrowth: number;
@@ -716,6 +932,10 @@ interface General {
   soldierType?: SoldierType;
   avatar?: string;
   gender?: string;
+  skills?: Skill[];
+  skillEffects?: {
+    [key: string]: any;
+  };
 }
 
 interface SpeedUnit {
@@ -748,6 +968,125 @@ const xiaDynastyGenerals = [
   "羿",
   "寒浞",
 ];
+
+// 尉迟迥的自带战法【危壁霸临】
+const createYuchiJiongSkill = (): Skill => {
+  return {
+    id: "weibi-baling",
+    name: "危壁霸临",
+    type: "passive",
+    description:
+      "被攻击时受到物理伤害减25%；回合结束兵力低于70%全属性+8%至多4层；兵力低于50%增伤20%；首次兵力跌破30%净化负面并回复15%兵力，单局一次。",
+    effect: (general: General, context: any) => {
+      if (!general.skillEffects) {
+        general.skillEffects = {
+          damageReduction: 0.25,
+          attributeBonus: 0,
+          maxAttributeBonus: 4,
+          damageIncrease: 0,
+          hasTriggeredRecovery: false,
+        };
+      }
+
+      const { type, event, currentTroops, maxTroops } = context;
+
+      // 被攻击时受到物理伤害减25%
+      if (type === "attacked" && event === "beforeDamage") {
+        return { damageReduction: general.skillEffects.damageReduction };
+      }
+
+      // 回合结束兵力低于70%全属性+8%至多4层
+      if (type === "turnEnd") {
+        const troopPercentage = currentTroops / maxTroops;
+        if (
+          troopPercentage < 0.7 &&
+          general.skillEffects.attributeBonus <
+            general.skillEffects.maxAttributeBonus
+        ) {
+          general.skillEffects.attributeBonus += 1;
+          const bonus = general.skillEffects.attributeBonus * 0.08;
+          general.attack *= 1 + bonus;
+          general.defense *= 1 + bonus;
+          general.strategy *= 1 + bonus;
+          general.speed *= 1 + bonus;
+          general.siege *= 1 + bonus;
+          addReport(
+            `【${general.name}】触发【危壁霸临】，兵力低于70%，全属性提升8%，当前提升${(bonus * 100).toFixed(0)}%！`,
+          );
+        }
+      }
+
+      // 兵力低于50%增伤20%
+      if (type === "attack" && event === "beforeAttack") {
+        const troopPercentage = currentTroops / maxTroops;
+        if (troopPercentage < 0.5) {
+          general.skillEffects.damageIncrease = 0.2;
+          return { damageIncrease: general.skillEffects.damageIncrease };
+        } else {
+          general.skillEffects.damageIncrease = 0;
+        }
+      }
+
+      // 首次兵力跌破30%净化负面并回复15%兵力，单局一次
+      if (
+        type === "troopChange" &&
+        !general.skillEffects.hasTriggeredRecovery
+      ) {
+        const troopPercentage = currentTroops / maxTroops;
+        if (troopPercentage < 0.3) {
+          general.skillEffects.hasTriggeredRecovery = true;
+          const recoveryAmount = Math.floor(maxTroops * 0.15);
+          general.troops = Math.min(maxTroops, general.troops + recoveryAmount);
+          addReport(
+            `【${general.name}】触发【危壁霸临】，兵力跌破30%，净化负面效果并回复15%兵力！`,
+          );
+          addReport(`【${general.name}】回复了${recoveryAmount}点兵力！`);
+        }
+      }
+
+      return null;
+    },
+  };
+};
+
+// 创建尉迟迥武将数据
+const createYuchiJiong = (): General => {
+  const level = 5;
+  const troops = level * 100;
+
+  return {
+    id: 999, // 临时ID，实际应该从数据库获取
+    name: "尉迟迥",
+    attack: 96,
+    attackGrowth: 2.72,
+    defense: 102,
+    defenseGrowth: 2.35,
+    strategy: 42,
+    strategyGrowth: 0.7,
+    speed: 38,
+    speedGrowth: 0.52,
+    attackRange: 2,
+    siege: 18,
+    siegeGrowth: 0.85,
+    troops: troops,
+    maxTroops: troops,
+    level: level,
+    command: 9.2, // 统御值
+    commandGrowth: 2.2,
+    isDead: false,
+    dynasty: "北周",
+    soldierType: "步兵",
+    gender: "男",
+    skills: [createYuchiJiongSkill()],
+    skillEffects: {
+      damageReduction: 0.25,
+      attributeBonus: 0,
+      maxAttributeBonus: 4,
+      damageIncrease: 0,
+      hasTriggeredRecovery: false,
+    },
+  };
+};
 
 const availableGenerals = computed(() => {
   return generals.value.filter((g) => {
@@ -802,16 +1141,17 @@ const showTooltip = (slotKey: string, event?: MouseEvent) => {
   if (event) {
     event.preventDefault();
   }
-  
+
   // 清除之前的定时器
   if (tooltipTimer) {
     clearTimeout(tooltipTimer);
     tooltipTimer = null;
   }
-  
+
   // 立即显示tooltip
   const [side, position] = slotKey.split("-");
-  const formation = side === "player" ? playerFormation.value : enemyFormation.value;
+  const formation =
+    side === "player" ? playerFormation.value : enemyFormation.value;
   const general = formation[position as keyof typeof formation];
   if (general) {
     tooltipData.value = general;
@@ -832,13 +1172,13 @@ const showGeneralTooltip = (general: General, event?: MouseEvent) => {
   if (event) {
     event.preventDefault();
   }
-  
+
   // 清除之前的定时器
   if (tooltipTimer) {
     clearTimeout(tooltipTimer);
     tooltipTimer = null;
   }
-  
+
   // 立即显示tooltip
   tooltipData.value = general;
 };
@@ -902,20 +1242,21 @@ const generateEnemyTeam = () => {
       id: character?.id || Date.now() + Math.random(),
       name: generalName,
       attack: Math.floor(Math.random() * 100) + 50,
-      attackGrowth: Math.round((Math.random() * 3) * 100) / 100,
+      attackGrowth: Math.round(Math.random() * 3 * 100) / 100,
       defense: Math.floor(Math.random() * 100) + 50,
-      defenseGrowth: Math.round((Math.random() * 3) * 100) / 100,
+      defenseGrowth: Math.round(Math.random() * 3 * 100) / 100,
       strategy: Math.floor(Math.random() * 100) + 50,
-      strategyGrowth: Math.round((Math.random() * 3) * 100) / 100,
+      strategyGrowth: Math.round(Math.random() * 3 * 100) / 100,
       speed: Math.floor(Math.random() * 100) + 50,
+      speedGrowth: Math.round(Math.random() * 3 * 100) / 100,
       attackRange: Math.floor(Math.random() * 3) + 1,
       siege: Math.floor(Math.random() * 100) + 50,
-      siegeGrowth: Math.round((Math.random() * 3) * 100) / 100,
+      siegeGrowth: Math.round(Math.random() * 3 * 100) / 100,
       troops: troops,
       maxTroops: troops,
       level: level,
       command: command,
-      commandGrowth: Math.round((Math.random() * 3) * 100) / 100,
+      commandGrowth: Math.round(Math.random() * 3 * 100) / 100,
       isDead: false,
       dynasty: "夏朝",
       soldierType: getRandomSoldierType(),
@@ -933,6 +1274,19 @@ const recruitCard = () => {
   }
 
   money.value -= recruitCost.value;
+
+  // 10%的概率招募到尉迟迥
+  if (Math.random() < 0.1) {
+    const yuchiJiong = createYuchiJiong();
+    generals.value.push(yuchiJiong);
+    addReport(
+      `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统率:${yuchiJiong.command} 兵种:${yuchiJiong.soldierType}`,
+    );
+    addReport(
+      `【${yuchiJiong.name}】自带战法：${yuchiJiong.skills?.[0].description}`,
+    );
+    return;
+  }
 
   const level = Math.floor(Math.random() * 5) + 1;
   const commandValues = [2, 2.5, 3, 3.5];
@@ -955,20 +1309,21 @@ const recruitCard = () => {
     id: character?.id || Date.now(),
     name: generalName,
     attack: Math.floor(Math.random() * 100) + 50,
-    attackGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    attackGrowth: Math.round(Math.random() * 3 * 100) / 100,
     defense: Math.floor(Math.random() * 100) + 50,
-    defenseGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    defenseGrowth: Math.round(Math.random() * 3 * 100) / 100,
     strategy: Math.floor(Math.random() * 100) + 50,
-    strategyGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    strategyGrowth: Math.round(Math.random() * 3 * 100) / 100,
     speed: Math.floor(Math.random() * 100) + 50,
+    speedGrowth: Math.round(Math.random() * 3 * 100) / 100,
     attackRange: Math.floor(Math.random() * 3) + 1,
     siege: Math.floor(Math.random() * 100) + 50,
-    siegeGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    siegeGrowth: Math.round(Math.random() * 3 * 100) / 100,
     troops: troops,
     maxTroops: troops,
     level: level,
     command: command,
-    commandGrowth: Math.round((Math.random() * 3) * 100) / 100,
+    commandGrowth: Math.round(Math.random() * 3 * 100) / 100,
     isDead: false,
     dynasty: "夏朝",
     soldierType: getRandomSoldierType(),
@@ -1138,15 +1493,63 @@ const getTargetsInRange = (attacker: {
   return targets;
 };
 
+const triggerSkillEffects = (general: General, context: any) => {
+  if (general.skills) {
+    for (const skill of general.skills) {
+      if (skill.type === "passive") {
+        const result: any = skill.effect(general, context);
+        if (result) {
+          return result;
+        }
+      }
+    }
+  }
+  return null;
+};
+
 const performAttack = (
   attacker: { general: General; side: "player" | "enemy"; position: string },
   target: { general: General; side: "player" | "enemy"; position: string },
 ) => {
+  // 攻击前触发攻击者的战法效果
+  const attackContext = {
+    type: "attack",
+    event: "beforeAttack",
+    currentTroops: attacker.general.troops,
+    maxTroops: attacker.general.maxTroops,
+  };
+  const attackEffect = triggerSkillEffects(attacker.general, attackContext);
+
   // 计算基础伤害
   let damage = Math.max(
     0,
     attacker.general.attack - target.general.defense / 2,
   );
+
+  // 应用攻击者的增伤效果
+  if (attackEffect && attackEffect.damageIncrease) {
+    damage *= 1 + attackEffect.damageIncrease;
+    addReport(
+      `【${attacker.general.name}】触发战法效果，伤害提升${(attackEffect.damageIncrease * 100).toFixed(0)}%！`,
+    );
+  }
+
+  // 被攻击前触发目标的战法效果
+  const defendContext = {
+    type: "attacked",
+    event: "beforeDamage",
+    currentTroops: target.general.troops,
+    maxTroops: target.general.maxTroops,
+  };
+  const defendEffect = triggerSkillEffects(target.general, defendContext);
+
+  // 应用目标的减伤效果
+  if (defendEffect && defendEffect.damageReduction) {
+    damage *= 1 - defendEffect.damageReduction;
+    addReport(
+      `【${target.general.name}】触发战法效果，受到伤害降低${(defendEffect.damageReduction * 100).toFixed(0)}%！`,
+    );
+  }
 
   // 兵种克制逻辑
   if (attacker.general.soldierType && target.general.soldierType) {
@@ -1168,8 +1571,16 @@ const performAttack = (
     target.general.troops - Math.floor(damage),
   );
 
-  const attackerPrefix = attacker.side === "player" ? "我方" : "敌方";
-  const targetPrefix = target.side === "player" ? "我方" : "敌方";
+  // 兵力变化后触发目标的战法效果
+  if (target.general.troops < oldTroops) {
+    const troopChangeContext = {
+      type: "troopChange",
+      event: "afterDamage",
+      currentTroops: target.general.troops,
+      maxTroops: target.general.maxTroops,
+    };
+    triggerSkillEffects(target.general, troopChangeContext);
+  }
 
   // 返回攻击详情，不直接播报
   const attackResult = {
@@ -1257,46 +1668,44 @@ const performAttackWithAnimation = async (
   addReport(
     `${attackerPrefix}${attacker.position}开始行动`,
     attacker.general,
-    attacker.side
+    attacker.side,
   );
   addReport(
     `攻击距离：${attacker.general.attackRange}，可以攻击到${targetPrefix}${target.position}`,
-  );
-
-  // 计算伤害
-  const damage = Math.max(
-    0,
-    attacker.general.attack - target.general.defense / 2,
   );
 
   // 详细播报：选择攻击目标
   addReport(
     `选择攻击${targetPrefix}${target.position}【${target.general.name}】`,
     attacker.general,
-    attacker.side
+    attacker.side,
   );
 
   // 执行攻击逻辑
   const attackResult = performAttack(attacker, target);
 
   if (attackResult.damage > 0) {
-    addReport(`造成${attackResult.damage}点伤害！`, attacker.general, attacker.side);
-    addReport(`兵力从${attackResult.oldTroops}降至${attackResult.newTroops}`, target.general, target.side);
+    addReport(
+      `造成${attackResult.damage}点伤害！`,
+      attacker.general,
+      attacker.side,
+    );
+    addReport(
+      `兵力从${attackResult.oldTroops}降至${attackResult.newTroops}`,
+      target.general,
+      target.side,
+    );
 
     // 显示伤害数值 - 显示在目标卡牌上
     showDamageText(attackResult.damage, target.side, target.position);
 
     if (attackResult.isTargetDied) {
-      addReport(
-        `阵亡！`,
-        target.general,
-        target.side
-      );
+      addReport(`阵亡！`, target.general, target.side);
     } else {
       addReport(
         `剩余兵力：${attackResult.newTroops}`,
         target.general,
-        target.side
+        target.side,
       );
     }
   } else {
@@ -1453,18 +1862,22 @@ const advanceTime = () => {
   }
 };
 
-const addReport = (message: string, general?: General, side?: 'player' | 'enemy') => {
+const addReport = (
+  message: string,
+  general?: General,
+  side?: "player" | "enemy",
+) => {
   let formattedMessage = message;
-  
+
   if (general) {
-    const avatarUrl = general.avatar 
-      ? `${API_BASE_URL}${general.avatar}` 
-      : (general.gender === '女' 
-        ? `${API_BASE_URL}/public/images/ancient_character_women.webp` 
-        : `${API_BASE_URL}/public/images/ancient_character_men.webp`);
-    
-    const sideColor = side === 'player' ? '#667eea' : '#e74c3c';
-    
+    const avatarUrl = general.avatar
+      ? `${API_BASE_URL}${general.avatar}`
+      : general.gender === "女"
+        ? `${API_BASE_URL}/public/images/ancient_character_women.webp`
+        : `${API_BASE_URL}/public/images/ancient_character_men.webp`;
+
+    const sideColor = side === "player" ? "#667eea" : "#e74c3c";
+
     formattedMessage = `
       <div style="display: flex; align-items: center; gap: 8px;">
         <img src="${avatarUrl}" style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid ${sideColor};" />
@@ -1473,7 +1886,7 @@ const addReport = (message: string, general?: General, side?: 'player' | 'enemy'
       </div>
     `;
   }
-  
+
   battleReports.value.push(formattedMessage); // 改为push，从上到下显示
   // 不再限制播报数量，保留全部历史记录
 
@@ -1507,12 +1920,36 @@ const resetGame = () => {
   battleReports.value = [];
 };
 
-const getCardSpeed = (side: "player" | "enemy", position: string): number => {
-  // 查找当前卡牌在speedUnits中的速度值
-  const unit = speedUnits.value.find(
-    (u) => u.side === side && u.position === position,
-  );
-  return unit ? unit.speed : 0;
+const getAllGenerals = () => {
+  const allGenerals: Array<{
+    general: General;
+    side: "player" | "enemy";
+    position: string;
+  }> = [];
+
+  // 添加我方武将
+  Object.entries(playerFormation.value).forEach(([position, general]) => {
+    if (general && !general.isDead) {
+      allGenerals.push({
+        general,
+        side: "player" as const,
+        position,
+      });
+    }
+  });
+
+  // 添加敌方武将
+  Object.entries(enemyFormation.value).forEach(([position, general]) => {
+    if (general && !general.isDead) {
+      allGenerals.push({
+        general,
+        side: "enemy" as const,
+        position,
+      });
+    }
+  });
+
+  return allGenerals;
 };
 
 const initializeSpeedUnits = () => {
@@ -1709,6 +2146,19 @@ const startBattle = async () => {
       addReport(`本轮共进行了${unitIndex - 1}次有效行动`);
     } else {
       addReport(`本回合没有单位行动`);
+    }
+
+    // 回合结束时触发战法效果
+    addReport(`===== 回合结束效果 =====`);
+    const allAliveGenerals = getAllGenerals().filter((g) => !g.general.isDead);
+    for (const generalData of allAliveGenerals) {
+      const turnEndContext = {
+        type: "turnEnd",
+        event: "endOfTurn",
+        currentTroops: generalData.general.troops,
+        maxTroops: generalData.general.maxTroops,
+      };
+      triggerSkillEffects(generalData.general, turnEndContext);
     }
 
     // 如果不是最后一回合，添加回合结束播报
@@ -2047,8 +2497,6 @@ const nextWave = () => {
   height: 100%;
 }
 
-
-
 .troops-bar-container {
   margin-bottom: 8px;
   width: 100%;
@@ -2096,18 +2544,26 @@ const nextWave = () => {
 }
 
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.85) 0%,
+    rgba(118, 75, 162, 0.85) 100%
+  );
   z-index: 1;
 }
 
 .card.enemy::before {
-  background: linear-gradient(135deg, rgba(231, 76, 60, 0.85) 0%, rgba(192, 57, 43, 0.85) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(231, 76, 60, 0.85) 0%,
+    rgba(192, 57, 43, 0.85) 100%
+  );
 }
 
 .card:hover {
@@ -2212,7 +2668,11 @@ const nextWave = () => {
   font-weight: bold;
   color: #fff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  background: linear-gradient(180deg, rgba(231, 76, 60, 0.9) 0%, rgba(192, 57, 43, 0.9) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(231, 76, 60, 0.9) 0%,
+    rgba(192, 57, 43, 0.9) 100%
+  );
   padding: 8px 20px;
   border-radius: 25px;
   margin-top: auto;
@@ -2281,63 +2741,63 @@ const nextWave = () => {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   .formation.horizontal {
     flex-wrap: wrap;
   }
-  
+
   .card-slot {
     width: 140px;
     height: 220px;
   }
-  
+
   .card {
     padding: 8px;
   }
-  
+
   .card-name {
     font-size: 12px;
   }
-  
+
   .card-dynasty {
     font-size: 8px;
   }
-  
+
   .card-troops {
     font-size: 18px;
     padding: 4px 12px;
   }
-  
+
   .card-level,
   .card-command,
   .card-range {
     font-size: 10px;
   }
-  
+
   .card-soldier-type {
     font-size: 8px;
     padding: 1px 4px;
   }
-  
+
   .card-bottom-label {
     font-size: 6px;
   }
-  
+
   .battle-report {
     width: 100%;
     max-width: 100%;
   }
-  
+
   .game-footer {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .action-button {
     padding: 15px;
     font-size: 16px;
   }
-  
+
   .general-items {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
@@ -2349,35 +2809,35 @@ const nextWave = () => {
     width: 120px;
     height: 180px;
   }
-  
+
   .card-name {
     font-size: 10px;
   }
-  
+
   .card-dynasty {
     font-size: 7px;
   }
-  
+
   .card-troops {
     font-size: 16px;
     padding: 3px 10px;
   }
-  
+
   .card-level,
   .card-command,
   .card-range {
     font-size: 8px;
   }
-  
+
   .card-soldier-type {
     font-size: 7px;
     padding: 1px 3px;
   }
-  
+
   .card-bottom-label {
     font-size: 5px;
   }
-  
+
   .general-items {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
@@ -2695,8 +3155,6 @@ const nextWave = () => {
 .general-item .card::before {
   opacity: 0.35;
 }
-
-
 
 .game-footer {
   display: flex;
