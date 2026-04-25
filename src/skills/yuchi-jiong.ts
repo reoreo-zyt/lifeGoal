@@ -1,5 +1,45 @@
 import type { Skill, General } from "./types";
 
+// 尉迟迥的基础属性常量
+const YUCHI_JIONG_BASE = {
+  id: 633,
+  name: "尉迟迥",
+  attack: 96,
+  attackGrowth: 2.72,
+  defense: 102,
+  defenseGrowth: 2.35,
+  strategy: 42,
+  strategyGrowth: 0.7,
+  speed: 38,
+  speedGrowth: 0.52,
+  attackRange: 2,
+  siege: 18,
+  siegeGrowth: 0.85,
+  level: 5,
+  command: 92, // 统御值
+  commandGrowth: 2.2,
+  leadership: 3.5, // 统率值，用于组建队伍
+  isDead: false,
+  dynasty: "北周",
+  soldierType: "步兵" as const,
+  gender: "男",
+  avatar: "/images/yuchi_jiong.jpg",
+};
+
+// 尉迟迥的skillEffects默认值
+const DEFAULT_SKILL_EFFECTS = {
+  damageReduction: 0.25,
+  attributeBonus: 0,
+  maxAttributeBonus: 4,
+  damageIncrease: 0,
+  hasTriggeredRecovery: false,
+};
+
+// 计算兵力
+const calculateTroops = (commandValue: number): number => {
+  return Math.floor(commandValue * 10);
+};
+
 // 尉迟迥的自带战法【危壁霸临】
 export const createYuchiJiongSkill = (): Skill => {
   return {
@@ -9,13 +49,7 @@ export const createYuchiJiongSkill = (): Skill => {
     description: "被攻击时受到物理伤害减25%；回合结束兵力低于70%全属性+8%至多4层；兵力低于50%增伤20%；首次兵力跌破30%净化负面并回复15%兵力，单局一次。",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
-        general.skillEffects = {
-          damageReduction: 0.25,
-          attributeBonus: 0,
-          maxAttributeBonus: 4,
-          damageIncrease: 0,
-          hasTriggeredRecovery: false,
-        };
+        general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
       }
 
       const { type, event, currentTroops, maxTroops, addReport } = context;
@@ -85,41 +119,14 @@ export const createYuchiJiongSkill = (): Skill => {
 
 // 创建尉迟迥武将数据
 export const createYuchiJiong = (): General => {
-  const level = 5;
-  const troops = level * 100;
+  const troops = calculateTroops(YUCHI_JIONG_BASE.command);
 
   return {
-    id: 633, // 数据库中的 id
-    name: "尉迟迥",
-    attack: 96,
-    attackGrowth: 2.72,
-    defense: 102,
-    defenseGrowth: 2.35,
-    strategy: 42,
-    strategyGrowth: 0.7,
-    speed: 38,
-    speedGrowth: 0.52,
-    attackRange: 2,
-    siege: 18,
-    siegeGrowth: 0.85,
-    troops: troops,
+    ...YUCHI_JIONG_BASE,
+    troops,
     maxTroops: troops,
-    level: level,
-    command: 9.2, // 统御值
-    commandGrowth: 2.2,
-    isDead: false,
-    dynasty: "北周",
-    soldierType: "步兵",
-    gender: "男",
-    avatar: "/images/yuchi_jiong.jpg", // 数据库中的头像路径
     skills: [createYuchiJiongSkill()],
-    skillEffects: {
-      damageReduction: 0.25,
-      attributeBonus: 0,
-      maxAttributeBonus: 4,
-      damageIncrease: 0,
-      hasTriggeredRecovery: false,
-    },
+    skillEffects: { ...DEFAULT_SKILL_EFFECTS },
   };
 };
 
@@ -132,41 +139,19 @@ export const fetchYuchiJiongFromDatabase = async (API_BASE_URL: string): Promise
     }
     const characterData = await response.json();
     
-    const level = 5;
-    const troops = level * 100;
+    const troops = calculateTroops(YUCHI_JIONG_BASE.command);
     
     return {
+      ...YUCHI_JIONG_BASE,
       id: characterData.id,
       name: characterData.name,
-      attack: 96,
-      attackGrowth: 2.72,
-      defense: 102,
-      defenseGrowth: 2.35,
-      strategy: 42,
-      strategyGrowth: 0.7,
-      speed: 38,
-      speedGrowth: 0.52,
-      attackRange: 2,
-      siege: 18,
-      siegeGrowth: 0.85,
-      troops: troops,
-      maxTroops: troops,
-      level: level,
-      command: 9.2,
-      commandGrowth: 2.2,
-      isDead: false,
       dynasty: characterData.dynasty,
-      soldierType: "步兵",
       gender: characterData.gender,
       avatar: characterData.avatar, // 使用数据库中的头像
+      troops,
+      maxTroops: troops,
       skills: [createYuchiJiongSkill()],
-      skillEffects: {
-        damageReduction: 0.25,
-        attributeBonus: 0,
-        maxAttributeBonus: 4,
-        damageIncrease: 0,
-        hasTriggeredRecovery: false,
-      },
+      skillEffects: { ...DEFAULT_SKILL_EFFECTS },
     };
   } catch (error) {
     console.error('从数据库获取尉迟迥信息失败:', error);
@@ -174,3 +159,4 @@ export const fetchYuchiJiongFromDatabase = async (API_BASE_URL: string): Promise
     return createYuchiJiong();
   }
 };
+ 

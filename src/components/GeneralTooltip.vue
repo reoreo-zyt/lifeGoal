@@ -47,6 +47,9 @@
             }})</span
           >
         </div>
+        <div class="tooltip-stat-row">
+          <span>统率: {{ general.leadership }}</span>
+        </div>
       </div>
       <div v-if="general.skills && general.skills.length > 0" class="tooltip-skills">
         <div class="tooltip-skills-title">自带战法</div>
@@ -62,11 +65,11 @@
 <script setup lang="ts">
 import type { General } from "../skills/types";
 
-const props = defineProps<{
+defineProps<{
   general: General | null;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   (e: "close"): void;
 }>();
 </script>

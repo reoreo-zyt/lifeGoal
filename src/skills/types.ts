@@ -30,6 +30,7 @@ export interface General {
   level: number;
   command: number;
   commandGrowth: number;
+  leadership: number; // 统率值，用于组建队伍，值为2、2.5、3、3.5
   isDead: boolean;
   dynasty?: string;
   soldierType?: SoldierType;

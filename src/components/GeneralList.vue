@@ -42,8 +42,8 @@
                 <span class="card-level">Lv.{{ general.level }}</span>
               </div>
               <div class="card-bottom-item">
-                <span class="card-command">{{ general.command }}</span>
-                <span class="card-bottom-label">统</span>
+                <span class="card-command">{{ general.leadership }}</span>
+                <span class="card-bottom-label">统率</span>
               </div>
               <div class="card-bottom-item">
                 <span class="card-soldier-type">{{
@@ -65,12 +65,12 @@
 <script setup lang="ts">
 import type { General } from "../skills/types";
 
-const props = defineProps<{
+defineProps<{
   generals: General[];
   API_BASE_URL: string;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   (e: "close"): void;
   (e: "select", general: General): void;
   (e: "show-tooltip", general: General, event: MouseEvent): void;

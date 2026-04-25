@@ -61,7 +61,7 @@
                         :style="{
                           width: playerFormation.大营
                             ? (playerFormation.大营.troops /
-                                (playerFormation.大营.level * 100)) *
+                                playerFormation.大营.maxTroops) *
                                 100 +
                               '%'
                             : '0%',
@@ -123,9 +123,9 @@
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
-                          playerFormation.大营.command
+                          playerFormation.大营.leadership
                         }}</span>
-                        <span class="card-bottom-label">统</span>
+                        <span class="card-bottom-label">统率</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-soldier-type">{{
@@ -157,7 +157,7 @@
                         :style="{
                           width: playerFormation.中军
                             ? (playerFormation.中军.troops /
-                                (playerFormation.中军.level * 100)) *
+                                playerFormation.中军.maxTroops) *
                                 100 +
                               '%'
                             : '0%',
@@ -218,9 +218,9 @@
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
-                          playerFormation.中军.command
+                          playerFormation.中军.leadership
                         }}</span>
-                        <span class="card-bottom-label">统</span>
+                        <span class="card-bottom-label">统率</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-soldier-type">{{
@@ -252,7 +252,7 @@
                         :style="{
                           width: playerFormation.前锋
                             ? (playerFormation.前锋.troops /
-                                (playerFormation.前锋.level * 100)) *
+                                playerFormation.前锋.maxTroops) *
                                 100 +
                               '%'
                             : '0%',
@@ -313,9 +313,9 @@
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
-                          playerFormation.前锋.command
+                          playerFormation.前锋.leadership
                         }}</span>
-                        <span class="card-bottom-label">统</span>
+                        <span class="card-bottom-label">统率</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-soldier-type">{{
@@ -356,7 +356,7 @@
                         :style="{
                           width: enemyFormation.前锋
                             ? (enemyFormation.前锋.troops /
-                                (enemyFormation.前锋.level * 100)) *
+                                enemyFormation.前锋.maxTroops) *
                                 100 +
                               '%'
                             : '0%',
@@ -414,9 +414,9 @@
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
-                          enemyFormation.前锋.command
+                          enemyFormation.前锋.leadership
                         }}</span>
-                        <span class="card-bottom-label">统</span>
+                        <span class="card-bottom-label">统率</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-soldier-type">{{
@@ -448,7 +448,7 @@
                         :style="{
                           width: enemyFormation.中军
                             ? (enemyFormation.中军.troops /
-                                (enemyFormation.中军.level * 100)) *
+                                enemyFormation.中军.maxTroops) *
                                 100 +
                               '%'
                             : '0%',
@@ -506,9 +506,9 @@
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
-                          enemyFormation.中军.command
+                          enemyFormation.中军.leadership
                         }}</span>
-                        <span class="card-bottom-label">统</span>
+                        <span class="card-bottom-label">统率</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-soldier-type">{{
@@ -540,7 +540,7 @@
                         :style="{
                           width: enemyFormation.大营
                             ? (enemyFormation.大营.troops /
-                                (enemyFormation.大营.level * 100)) *
+                                enemyFormation.大营.maxTroops) *
                                 100 +
                               '%'
                             : '0%',
@@ -598,9 +598,9 @@
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
-                          enemyFormation.大营.command
+                          enemyFormation.大营.leadership
                         }}</span>
-                        <span class="card-bottom-label">统</span>
+                        <span class="card-bottom-label">统率</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-soldier-type">{{
@@ -680,7 +680,6 @@ import AuthModal from "../components/AuthModal.vue";
 import GeneralTooltip from "../components/GeneralTooltip.vue";
 import GeneralList from "../components/GeneralList.vue";
 import BattleReport from "../components/BattleReport.vue";
-import { createYuchiJiong } from "../skills/yuchi-jiong";
 import type { General } from "../skills/types";
 
 const isLoggedIn = ref(false);
@@ -829,7 +828,7 @@ const availableGenerals = computed(() => {
 const updateCurrentCommand = () => {
   let total = 0;
   Object.values(playerFormation.value).forEach((g) => {
-    if (g) total += g.command;
+    if (g) total += g.leadership;
   });
   currentCommand.value = total;
 };
@@ -924,10 +923,9 @@ const closeGeneralList = () => {
 const deployGeneral = (general: General) => {
   if (selectedSlot.value) {
     const [, position] = selectedSlot.value.split("-");
-    const oldGeneral =
-      playerFormation.value[position as keyof typeof playerFormation.value];
-    const oldCommand = oldGeneral ? oldGeneral.command : 0;
-    const newTotalCommand = currentCommand.value - oldCommand + general.command;
+    const oldGeneral = playerFormation.value[position as keyof typeof playerFormation.value];
+    const oldCommand = oldGeneral ? oldGeneral.leadership : 0;
+    const newTotalCommand = currentCommand.value - oldCommand + general.leadership;
 
     if (newTotalCommand > maxCommand.value) {
       addReport(
@@ -954,10 +952,10 @@ const generateEnemyTeam = () => {
   ];
   positions.forEach((position) => {
     const level = Math.floor(Math.random() * 5) + 1;
-    const commandValues = [2, 2.5, 3, 3.5];
-    const command =
-      commandValues[Math.floor(Math.random() * commandValues.length)];
-    const troops = level * 100;
+    const leadershipValues = [2, 2.5, 3, 3.5];
+    const leadership = leadershipValues[Math.floor(Math.random() * leadershipValues.length)];
+    const commandValue = Math.floor(Math.random() * 100) + 1; // 统御值 1-100
+    const troops = Math.floor(commandValue * 10);
 
     // 从API获取的人物中随机选择，或者使用默认人物
     let character = null;
@@ -987,8 +985,9 @@ const generateEnemyTeam = () => {
       troops: troops,
       maxTroops: troops,
       level: level,
-      command: command,
+      command: commandValue, // 统御值 1-100
       commandGrowth: Math.round(Math.random() * 3 * 100) / 100,
+      leadership: leadership, // 统率值，用于组建队伍
       isDead: false,
       dynasty: "夏朝",
       soldierType: getRandomSoldierType(),
@@ -1015,7 +1014,7 @@ const recruitCard = () => {
         if (yuchiJiong) {
           generals.value.push(yuchiJiong);
           addReport(
-            `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统率:${yuchiJiong.command} 兵种:${yuchiJiong.soldierType}`,
+            `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统御:${yuchiJiong.command} 统率:${yuchiJiong.leadership} 兵种:${yuchiJiong.soldierType}`,
           );
           addReport(
             `【${yuchiJiong.name}】自带战法：${yuchiJiong.skills?.[0].description}`,
@@ -1027,10 +1026,10 @@ const recruitCard = () => {
   }
 
   const level = Math.floor(Math.random() * 5) + 1;
-  const commandValues = [2, 2.5, 3, 3.5];
-  const command =
-    commandValues[Math.floor(Math.random() * commandValues.length)];
-  const troops = level * 100;
+  const leadershipValues = [2, 2.5, 3, 3.5];
+  const leadership = leadershipValues[Math.floor(Math.random() * leadershipValues.length)];
+  const commandValue = Math.floor(Math.random() * 100) + 1; // 统御值 1-100
+  const troops = Math.floor(commandValue * 10);
 
   // 从API获取的人物中随机选择，或者使用默认人物
   let character = null;
@@ -1060,8 +1059,9 @@ const recruitCard = () => {
     troops: troops,
     maxTroops: troops,
     level: level,
-    command: command,
+    command: commandValue, // 统御值 1-100
     commandGrowth: Math.round(Math.random() * 3 * 100) / 100,
+    leadership: leadership, // 统率值，用于组建队伍
     isDead: false,
     dynasty: "夏朝",
     soldierType: getRandomSoldierType(),
@@ -1071,7 +1071,7 @@ const recruitCard = () => {
 
   generals.value.push(newGeneral);
   addReport(
-    `恭喜获得【${newGeneral.name}】！等级:${newGeneral.level} 攻:${newGeneral.attack} 防:${newGeneral.defense} 策:${newGeneral.strategy} 速:${newGeneral.speed} 兵:${newGeneral.troops} 距:${newGeneral.attackRange} 统率:${newGeneral.command} 兵种:${newGeneral.soldierType}`,
+    `恭喜获得【${newGeneral.name}】！等级:${newGeneral.level} 攻:${newGeneral.attack} 防:${newGeneral.defense} 策:${newGeneral.strategy} 速:${newGeneral.speed} 兵:${newGeneral.troops} 距:${newGeneral.attackRange} 统御:${newGeneral.command} 统率:${newGeneral.leadership} 兵种:${newGeneral.soldierType}`
   );
 };
 
