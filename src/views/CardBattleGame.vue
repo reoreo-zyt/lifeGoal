@@ -57,6 +57,13 @@
           }">
             {{ damageText.text }}
           </div>
+          <div v-for="(quoteText, index) in quoteTexts" :key="index" class="quote-text" :style="{
+            left: quoteText.x + 'px',
+            top: quoteText.y + 'px',
+            animationDelay: quoteText.delay + 's',
+          }">
+            {{ quoteText.text }}
+          </div>
           <div class="player-side">
             <div class="side-label">我方</div>
             <div class="formation horizontal">
@@ -72,11 +79,9 @@
                           '%'
                           : '0%',
                       }"></div>
-                    </div>
-                    <div class="troops-text">
-                      {{
-                        playerFormation.大营 ? playerFormation.大营.troops : 0
-                      }}
+                      <div class="troops-text">
+                        {{ playerFormation.大营 ? playerFormation.大营.troops : 0 }}
+                      </div>
                     </div>
                   </div>
                   <div v-if="playerFormation.大营" class="card player" :style="{
@@ -178,11 +183,9 @@
                           '%'
                           : '0%',
                       }"></div>
-                    </div>
-                    <div class="troops-text">
-                      {{
-                        playerFormation.中军 ? playerFormation.中军.troops : 0
-                      }}
+                      <div class="troops-text">
+                        {{ playerFormation.中军 ? playerFormation.中军.troops : 0 }}
+                      </div>
                     </div>
                   </div>
                   <div v-if="playerFormation.中军" class="card player" :style="{
@@ -283,11 +286,9 @@
                           '%'
                           : '0%',
                       }"></div>
-                    </div>
-                    <div class="troops-text">
-                      {{
-                        playerFormation.前锋 ? playerFormation.前锋.troops : 0
-                      }}
+                      <div class="troops-text">
+                        {{ playerFormation.前锋 ? playerFormation.前锋.troops : 0 }}
+                      </div>
                     </div>
                   </div>
                   <div v-if="playerFormation.前锋" class="card player" :style="{
@@ -397,9 +398,9 @@
                           '%'
                           : '0%',
                       }"></div>
-                    </div>
-                    <div class="troops-text">
-                      {{ enemyFormation.前锋 ? enemyFormation.前锋.troops : 0 }}
+                      <div class="troops-text">
+                        {{ enemyFormation.前锋 ? enemyFormation.前锋.troops : 0 }}
+                      </div>
                     </div>
                   </div>
                   <div v-if="enemyFormation.前锋" class="card enemy" :style="{
@@ -500,9 +501,9 @@
                           '%'
                           : '0%',
                       }"></div>
-                    </div>
-                    <div class="troops-text">
-                      {{ enemyFormation.中军 ? enemyFormation.中军.troops : 0 }}
+                      <div class="troops-text">
+                        {{ enemyFormation.中军 ? enemyFormation.中军.troops : 0 }}
+                      </div>
                     </div>
                   </div>
                   <div v-if="enemyFormation.中军" class="card enemy" :style="{
@@ -603,9 +604,9 @@
                           '%'
                           : '0%',
                       }"></div>
-                    </div>
-                    <div class="troops-text">
-                      {{ enemyFormation.大营 ? enemyFormation.大营.troops : 0 }}
+                      <div class="troops-text">
+                        {{ enemyFormation.大营 ? enemyFormation.大营.troops : 0 }}
+                      </div>
                     </div>
                   </div>
                   <div v-if="enemyFormation.大营" class="card enemy" :style="{
@@ -910,6 +911,7 @@ const battleReports = ref<string[]>([]);
 const speedUnits = ref<any[]>([]);
 const isBattleActive = ref(false);
 const damageTexts = ref<any[]>([]);
+const quoteTexts = ref<any[]>([]);
 const attackingCard = ref<string | null>(null);
 
 interface SpeedUnit {
@@ -1454,6 +1456,40 @@ const showDamageText = (
   }, 2000);
 };
 
+const showQuoteText = (
+  quote: string,
+  side: "player" | "enemy",
+  position: string,
+) => {
+  // 查找对应卡牌
+  const cardElement = document.querySelector(
+    `[data-card-side="${side}"][data-card-position="${position}"]`,
+  );
+  if (!cardElement) return;
+
+  const cardRect = cardElement.getBoundingClientRect();
+  const quoteText = {
+    id: Date.now() + Math.random(),
+    text: quote,
+    x: cardRect.left + 10,
+    y: cardRect.top - 30,
+    delay: 0,
+  };
+
+  quoteTexts.value.push(quoteText);
+
+  // 3秒后移除台词文本
+  setTimeout(() => {
+    quoteTexts.value = quoteTexts.value.filter(
+      (qt) => qt.id !== quoteText.id,
+    );
+  }, 3000);
+};
+
+const getRandomQuote = (quotes: string[]): string => {
+  return quotes[Math.floor(Math.random() * quotes.length)];
+};
+
 const performAttackWithAnimation = async (
   attacker: { general: General; side: "player" | "enemy"; position: string },
   target: { general: General; side: "player" | "enemy"; position: string },
@@ -1487,6 +1523,19 @@ const performAttackWithAnimation = async (
   const attackResult = performAttack(attacker, target, attackType);
 
   if (attackResult.damage > 0) {
+    // 播放受击音效
+    const audio = new Audio('/assets/audios/hint.mp4');
+    audio.play().catch(e => console.error('播放音效失败:', e));
+    
+    // 触发受击动画
+    const targetCard = document.querySelector(`[data-card-side="${target.side}"][data-card-position="${target.position}"]`);
+    if (targetCard) {
+      targetCard.classList.add('hit');
+      setTimeout(() => {
+        targetCard.classList.remove('hit');
+      }, 500);
+    }
+    
     addReport(
       `造成${attackResult.damage}点${attackTypeText}伤害！`,
       attacker.general,
@@ -1503,6 +1552,11 @@ const performAttackWithAnimation = async (
 
     if (attackResult.isTargetDied) {
       addReport(`阵亡！`, target.general, target.side);
+      // 显示阵亡台词
+      if (target.general.quotes && target.general.quotes.death && target.general.quotes.death.length > 0) {
+        const deathQuote = getRandomQuote(target.general.quotes.death);
+        showQuoteText(deathQuote, target.side, target.position);
+      }
     } else {
       addReport(
         `剩余兵力：${attackResult.newTroops}`,
@@ -1954,6 +2008,11 @@ const startBattle = async () => {
                   const skillResult = skill.effect(readyUnit.general, skillContext);
                   if (skillResult && skillResult.triggered) {
                     activeSkillTriggered = true;
+                    // 显示技能释放台词
+                    if (readyUnit.general.quotes && readyUnit.general.quotes.skill && readyUnit.general.quotes.skill.length > 0) {
+                      const skillQuote = getRandomQuote(readyUnit.general.quotes.skill);
+                      showQuoteText(skillQuote, readyUnit.side, readyUnit.position);
+                    }
                     break;
                   }
                 }
@@ -2244,6 +2303,40 @@ const nextWave = () => {
   animation: damagePop 2s ease-out forwards;
 }
 
+.quote-text {
+  position: absolute;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 12px;
+  border-radius: 8px;
+  max-width: 200px;
+  animation: quoteFloat 3s ease-out forwards;
+}
+
+@keyframes quoteFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-10px);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
 .card-speed-mini {
   display: flex;
   justify-content: space-between;
@@ -2473,6 +2566,7 @@ const nextWave = () => {
   margin-bottom: 8px;
   width: 100%;
   display: none;
+  position: relative;
 }
 
 .troops-bar-container.active {
@@ -2481,21 +2575,32 @@ const nextWave = () => {
 
 .troops-bar {
   width: 100%;
-  height: 15px;
+  height: 20px;
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 7.5px;
+  border-radius: 10px;
   overflow: hidden;
+  position: relative;
 }
 
 .troops-fill {
   height: 100%;
   background: linear-gradient(90deg, #27ae60, #2ecc71);
-  border-radius: 7.5px;
+  border-radius: 10px;
   transition: width 0.3s ease;
 }
 
 .troops-text {
-  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 10;
+  pointer-events: none;
+  display: block;
 }
 
 .card {
@@ -2548,6 +2653,10 @@ const nextWave = () => {
   animation: attackHighlight 0.5s ease-in-out;
 }
 
+.card.hit {
+  animation: hitAnimation 0.5s ease-in-out;
+}
+
 @keyframes attackHighlight {
   0% {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -2561,6 +2670,31 @@ const nextWave = () => {
   100% {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transform: scale(1);
+  }
+}
+
+@keyframes hitAnimation {
+  0% {
+    transform: rotate(0deg);
+    filter: brightness(1);
+  }
+  25% {
+    transform: rotate(-5deg);
+    filter: brightness(1.2) sepia(1) hue-rotate(0deg);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+  }
+  50% {
+    transform: rotate(5deg);
+    filter: brightness(1.3) sepia(1) hue-rotate(0deg);
+  }
+  75% {
+    transform: rotate(-2deg);
+    filter: brightness(1.1) sepia(0.5) hue-rotate(0deg);
+  }
+  100% {
+    transform: rotate(0deg);
+    filter: brightness(1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
 }
 

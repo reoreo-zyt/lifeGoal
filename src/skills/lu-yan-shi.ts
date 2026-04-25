@@ -170,6 +170,14 @@ export const createLuYanShi = (): General => {
     maxTroops: troops,
     skills: [createLuYanShiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
+    quotes: {
+      skill: [
+        "整肃风纪，以正朝纲。",
+        "敦礼明伦，修身匡世。",
+        "清身守道，不以权势屈节。"
+      ],
+      death: ["正道难行，清节犹在，此生无愧名教。"]
+    }
   };
 };
 
@@ -195,6 +203,14 @@ export const fetchLuYanShiFromDatabase = async (API_BASE_URL: string): Promise<G
       maxTroops: troops,
       skills: [createLuYanShiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
+      quotes: {
+        skill: [
+          "整肃风纪，以正朝纲。",
+          "敦礼明伦，修身匡世。",
+          "清身守道，不以权势屈节。"
+        ],
+        death: ["正道难行，清节犹在，此生无愧名教。"]
+      }
     };
   } catch (error) {
     console.error('从数据库获取陆彦师信息失败:', error);

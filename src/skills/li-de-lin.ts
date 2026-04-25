@@ -153,6 +153,14 @@ export const createLiDeLin = (): General => {
     maxTroops: troops,
     skills: [createLiDeLinSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
+    quotes: {
+      skill: [
+        "掌笔裁策，以定天下。",
+        "经国大略，运筹帷幄。",
+        "文墨安邦，智衡时局。"
+      ],
+      death: ["一生秉笔，尽事三朝，功名浮沉，皆为天命。"]
+    }
   };
 };
 
@@ -178,6 +186,14 @@ export const fetchLiDeLinFromDatabase = async (API_BASE_URL: string): Promise<Ge
       maxTroops: troops,
       skills: [createLiDeLinSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
+      quotes: {
+        skill: [
+          "掌笔裁策，以定天下。",
+          "经国大略，运筹帷幄。",
+          "文墨安邦，智衡时局。"
+        ],
+        death: ["一生秉笔，尽事三朝，功名浮沉，皆为天命。"]
+      }
     };
   } catch (error) {
     console.error('从数据库获取李德林信息失败:', error);

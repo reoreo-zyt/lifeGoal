@@ -40,6 +40,10 @@ export interface General {
   skillEffects?: {
     [key: string]: any;
   };
+  quotes?: {
+    skill: string[];
+    death: string[];
+  };
 }
 
 // 速度单位接口

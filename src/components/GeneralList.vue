@@ -6,6 +6,10 @@
         <button class="close-btn" @click="$emit('close')">×</button>
       </div>
       <div class="general-items">
+        <div v-if="generals.length === 0" class="empty-message">
+          <p>暂无武将</p>
+          <p>请先抽取卡牌</p>
+        </div>
         <div
           v-for="general in generals"
           :key="general.id"
@@ -92,53 +96,46 @@ defineEmits<{
 }
 
 .general-list {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
+  background: url(/assets/ui_border.jpg) 100% / 100% no-repeat;
   width: 80%;
   max-width: 1000px;
   max-height: 80vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #667eea;
+  padding: 15px 20px;
 }
 
 .list-header h3 {
   font-size: 20px;
   font-weight: bold;
-  color: #2c3e50;
+  color: #ffffff;
   margin: 0;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .close-btn {
-  background: none;
+  background: url(/assets/btn_close_128.jpg) center/contain no-repeat;
   border: none;
-  font-size: 24px;
   cursor: pointer;
-  color: #7f8c8d;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
   transition: all 0.3s ease;
 }
 
 .close-btn:hover {
-  background: #f8f9fa;
-  color: #e74c3c;
+  transform: scale(1.1);
+  filter: brightness(1.1);
 }
 
 .general-items {
@@ -147,7 +144,7 @@ defineEmits<{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 15px;
-  padding-right: 10px;
+  padding: 0 20px 20px;
 }
 
 .general-item {
@@ -185,8 +182,8 @@ defineEmits<{
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(102, 126, 234, 0.85) 0%,
-    rgba(118, 75, 162, 0.85) 100%
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
   );
   z-index: 1;
 }
@@ -301,6 +298,32 @@ defineEmits<{
 }
 
 /* 滚动条样式 */
+.empty-message {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #ffffff;
+  font-size: 18px;
+  text-align: center;
+}
+
+.empty-message p:first-child {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #ffffff;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.empty-message p:last-child {
+  font-size: 16px;
+  color: #e0e0e0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 .general-items::-webkit-scrollbar {
   width: 8px;
 }
