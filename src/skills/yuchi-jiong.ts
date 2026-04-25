@@ -29,9 +29,12 @@ const YUCHI_JIONG_BASE = {
 // 尉迟迥的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0.25,
+  damageReductionSource: '【尉迟迥】的【危壁霸临】',
   attributeBonus: 0,
+  attributeBonusSource: '【尉迟迥】的【危壁霸临】',
   maxAttributeBonus: 4,
   damageIncrease: 0,
+  damageIncreaseSource: '【尉迟迥】的【危壁霸临】',
   hasTriggeredRecovery: false,
 };
 

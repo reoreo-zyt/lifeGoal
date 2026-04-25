@@ -114,6 +114,37 @@
                         </div>
                       </div>
                     </div>
+                    <!-- 状态标记区域 -->
+                    <div class="card-status">
+                      <div
+                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageReduction > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">减伤</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.attributeBonus > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">属性+</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageIncrease > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">增伤</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageOutputReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.damageOutputReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降攻</span>
+                      </div>
+                    </div>
                     <div class="card-middle"></div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -208,6 +239,37 @@
                             >★</span
                           >
                         </div>
+                      </div>
+                    </div>
+                    <!-- 状态标记区域 -->
+                    <div class="card-status">
+                      <div
+                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageReduction > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">减伤</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.attributeBonus > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">属性+</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageIncrease > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">增伤</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageOutputReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.damageOutputReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降攻</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -305,6 +367,37 @@
                         </div>
                       </div>
                     </div>
+                    <!-- 状态标记区域 -->
+                    <div class="card-status">
+                      <div
+                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageReduction > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">减伤</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.attributeBonus > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">属性+</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageIncrease > 0"
+                        class="status-icon"
+                        :title="`${playerFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">增伤</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageOutputReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.damageOutputReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降攻</span>
+                      </div>
+                    </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
                         <span class="card-level"
@@ -399,11 +492,43 @@
                             :key="i"
                             class="star"
                             :class="{
-                              active: i <= Math.ceil(enemyFormation.前锋.level),
+                              active:
+                                i <= Math.ceil(enemyFormation.前锋.level),
                             }"
                             >★</span
                           >
                         </div>
+                      </div>
+                    </div>
+                    <!-- 状态标记区域 -->
+                    <div class="card-status">
+                      <div
+                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageReduction > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">减伤</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.attributeBonus > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">属性+</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageIncrease > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">增伤</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageOutputReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.damageOutputReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降攻</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -491,11 +616,43 @@
                             :key="i"
                             class="star"
                             :class="{
-                              active: i <= Math.ceil(enemyFormation.中军.level),
+                              active:
+                                i <= Math.ceil(enemyFormation.中军.level),
                             }"
                             >★</span
                           >
                         </div>
+                      </div>
+                    </div>
+                    <!-- 状态标记区域 -->
+                    <div class="card-status">
+                      <div
+                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageReduction > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">减伤</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.attributeBonus > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">属性+</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageIncrease > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">增伤</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageOutputReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.damageOutputReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降攻</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -583,11 +740,43 @@
                             :key="i"
                             class="star"
                             :class="{
-                              active: i <= Math.ceil(enemyFormation.大营.level),
+                              active:
+                                i <= Math.ceil(enemyFormation.大营.level),
                             }"
                             >★</span
                           >
                         </div>
+                      </div>
+                    </div>
+                    <!-- 状态标记区域 -->
+                    <div class="card-status">
+                      <div
+                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageReduction > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">减伤</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.attributeBonus > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">属性+</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageIncrease > 0"
+                        class="status-icon"
+                        :title="`${enemyFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`"
+                      >
+                        <span class="status-icon-inner">增伤</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageOutputReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.damageOutputReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降攻</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -1006,22 +1195,40 @@ const recruitCard = () => {
 
   money.value -= recruitCost.value;
 
-  // 10%的概率招募到尉迟迥
+  // 10%的概率招募到尉迟迥或李德林
   if (Math.random() < 0.1) {
-    // 尝试从数据库获取尉迟迥的详细信息（包括头像）
-    import('../skills/yuchi-jiong').then(({ fetchYuchiJiongFromDatabase }) => {
-      fetchYuchiJiongFromDatabase(API_BASE_URL).then((yuchiJiong) => {
-        if (yuchiJiong) {
-          generals.value.push(yuchiJiong);
-          addReport(
-            `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统御:${yuchiJiong.command} 统率:${yuchiJiong.leadership} 兵种:${yuchiJiong.soldierType}`,
-          );
-          addReport(
-            `【${yuchiJiong.name}】自带战法：${yuchiJiong.skills?.[0].description}`,
-          );
-        }
+    // 50%的概率招募尉迟迥，50%的概率招募李德林
+    if (Math.random() < 0.5) {
+      // 尝试从数据库获取尉迟迥的详细信息（包括头像）
+      import('../skills/yuchi-jiong').then(({ fetchYuchiJiongFromDatabase }) => {
+        fetchYuchiJiongFromDatabase(API_BASE_URL).then((yuchiJiong) => {
+          if (yuchiJiong) {
+            generals.value.push(yuchiJiong);
+            addReport(
+              `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统御:${yuchiJiong.command} 统率:${yuchiJiong.leadership} 兵种:${yuchiJiong.soldierType}`,
+            );
+            addReport(
+              `【${yuchiJiong.name}】自带战法：${yuchiJiong.skills?.[0].description}`,
+            );
+          }
+        });
       });
-    });
+    } else {
+      // 尝试从数据库获取李德林的详细信息（包括头像）
+      import('../skills/li-de-lin').then(({ fetchLiDeLinFromDatabase }) => {
+        fetchLiDeLinFromDatabase(API_BASE_URL).then((liDeLin) => {
+          if (liDeLin) {
+            generals.value.push(liDeLin);
+            addReport(
+              `恭喜获得【${liDeLin.name}】！等级:${liDeLin.level} 攻:${liDeLin.attack} 防:${liDeLin.defense} 策:${liDeLin.strategy} 速:${liDeLin.speed} 兵:${liDeLin.troops} 距:${liDeLin.attackRange} 统御:${liDeLin.command} 统率:${liDeLin.leadership} 兵种:${liDeLin.soldierType}`,
+            );
+            addReport(
+              `【${liDeLin.name}】自带战法：${liDeLin.skills?.[0].description}`,
+            );
+          }
+        });
+      });
+    }
     return;
   }
 
@@ -1187,6 +1394,7 @@ const triggerSkillEffects = (general: General, context: any) => {
 const performAttack = (
   attacker: { general: General; side: "player" | "enemy"; position: string },
   target: { general: General; side: "player" | "enemy"; position: string },
+  attackType: "physical" | "strategy" = "physical",
 ) => {
   // 攻击前触发攻击者的战法效果
   const attackContext = {
@@ -1194,14 +1402,26 @@ const performAttack = (
     event: "beforeAttack",
     currentTroops: attacker.general.troops,
     maxTroops: attacker.general.maxTroops,
+    attackType: attackType,
   };
   const attackEffect = triggerSkillEffects(attacker.general, attackContext);
 
   // 计算基础伤害
-  let damage = Math.max(
-    0,
-    attacker.general.attack - target.general.defense / 2,
-  );
+  let damage = 0;
+  if (attackType === "physical") {
+    // 物理攻击：使用攻击和防御
+    damage = Math.max(
+      0,
+      attacker.general.attack - target.general.defense / 2,
+    );
+  } else {
+    // 策略攻击：使用攻击方谋略和防御方谋略
+    // 公式：攻击方策略值 * 系数 - 防御方策略值 / 2
+    damage = Math.max(
+      0,
+      attacker.general.strategy - target.general.strategy / 2,
+    );
+  }
 
   // 应用攻击者的增伤效果
   if (attackEffect && attackEffect.damageIncrease) {
@@ -1217,6 +1437,7 @@ const performAttack = (
     event: "beforeDamage",
     currentTroops: target.general.troops,
     maxTroops: target.general.maxTroops,
+    attackType: attackType,
   };
   const defendEffect = triggerSkillEffects(target.general, defendContext);
 
@@ -1255,6 +1476,7 @@ const performAttack = (
       event: "afterDamage",
       currentTroops: target.general.troops,
       maxTroops: target.general.maxTroops,
+      damageAmount: Math.floor(damage),
     };
     triggerSkillEffects(target.general, troopChangeContext);
   }
@@ -1265,6 +1487,7 @@ const performAttack = (
     oldTroops: oldTroops,
     newTroops: target.general.troops,
     isTargetDied: target.general.troops <= 0,
+    attackType: attackType,
   };
 
   if (target.general.troops <= 0) {
@@ -1334,12 +1557,14 @@ const showDamageText = (
 const performAttackWithAnimation = async (
   attacker: { general: General; side: "player" | "enemy"; position: string },
   target: { general: General; side: "player" | "enemy"; position: string },
+  attackType: "physical" | "strategy" = "physical",
 ) => {
   // 设置攻击中的卡牌
   attackingCard.value = `${attacker.side}-${attacker.position}`;
 
   const attackerPrefix = attacker.side === "player" ? "我方" : "敌方";
   const targetPrefix = target.side === "player" ? "我方" : "敌方";
+  const attackTypeText = attackType === "physical" ? "物理" : "策略";
 
   // 详细播报：谁开始行动
   addReport(
@@ -1353,17 +1578,17 @@ const performAttackWithAnimation = async (
 
   // 详细播报：选择攻击目标
   addReport(
-    `选择攻击${targetPrefix}${target.position}【${target.general.name}】`,
+    `选择${attackTypeText}攻击${targetPrefix}${target.position}【${target.general.name}】`,
     attacker.general,
     attacker.side,
   );
 
   // 执行攻击逻辑
-  const attackResult = performAttack(attacker, target);
+  const attackResult = performAttack(attacker, target, attackType);
 
   if (attackResult.damage > 0) {
     addReport(
-      `造成${attackResult.damage}点伤害！`,
+      `造成${attackResult.damage}点${attackTypeText}伤害！`,
       attacker.general,
       attacker.side,
     );
@@ -1386,7 +1611,7 @@ const performAttackWithAnimation = async (
       );
     }
   } else {
-    addReport(`攻击被格挡，未造成伤害！`);
+    addReport(`${attackTypeText}攻击被格挡，未造成伤害！`);
   }
 
   // 模拟动画时间
@@ -1725,26 +1950,69 @@ const startBattle = async () => {
           `兵力：${readyUnit.general.troops}，攻击：${readyUnit.general.attack}，防御：${readyUnit.general.defense}，策略：${readyUnit.general.strategy}，速度：${readyUnit.general.speed}，攻击距离：${readyUnit.general.attackRange}，攻城：${readyUnit.general.siege}`,
         );
 
-        // 执行攻击
-        const targets = getTargetsInRange({
-          general: readyUnit.general,
-          side: readyUnit.side,
-          position: readyUnit.position,
-        });
+        // 角色回合开始时触发turnStart事件（用于减少降攻等效果的持续回合数）
+        const turnStartContext = {
+          type: "turnStart",
+          event: "startOfTurn",
+          currentTroops: readyUnit.general.troops,
+          maxTroops: readyUnit.general.maxTroops,
+        };
+        triggerSkillEffects(readyUnit.general, turnStartContext);
 
-        if (targets.length > 0) {
-          addReport(`可攻击目标：${targets.length}个`);
-          const target = targets[Math.floor(Math.random() * targets.length)];
-          await performAttackWithAnimation(
-            {
-              general: readyUnit.general,
-              side: readyUnit.side,
-              position: readyUnit.position,
-            },
-            target,
-          );
-        } else {
-          addReport(`范围内没有可攻击的目标！`);
+        // 触发主动战法
+        let activeSkillTriggered = false;
+        if (readyUnit.general.skills) {
+          for (const skill of readyUnit.general.skills) {
+            if (skill.type === "active") {
+              const targets = getTargetsInRange({
+                general: readyUnit.general,
+                side: readyUnit.side,
+                position: readyUnit.position,
+              });
+              
+              if (targets.length > 0) {
+                const skillContext = {
+                  type: "activeSkill",
+                  event: "trigger",
+                  currentTroops: readyUnit.general.troops,
+                  maxTroops: readyUnit.general.maxTroops,
+                  targets: targets.map(t => t.general),
+                  addReport
+                };
+                const skillResult = skill.effect(readyUnit.general, skillContext);
+                if (skillResult && skillResult.triggered) {
+                  activeSkillTriggered = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        // 如果主动战法未触发，执行普通攻击（物理伤害）
+        if (!activeSkillTriggered) {
+          const targets = getTargetsInRange({
+            general: readyUnit.general,
+            side: readyUnit.side,
+            position: readyUnit.position,
+          });
+
+          if (targets.length > 0) {
+            addReport(`可攻击目标：${targets.length}个`);
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            // 普通攻击都是物理伤害
+            await performAttackWithAnimation(
+              {
+                general: readyUnit.general,
+                side: readyUnit.side,
+                position: readyUnit.position,
+              },
+              target,
+              "physical"
+            );
+          } else {
+            addReport(`范围内没有可攻击的目标！`);
+          }
         }
 
         resetUnitSpeed(readyUnit);
@@ -2882,5 +3150,49 @@ const nextWave = () => {
   .action-button {
     padding: 15px;
   }
+}
+
+/* 状态标记样式 */
+.card-status {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 4;
+}
+
+.status-icon {
+  background: rgba(102, 126, 234, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 10px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.status-icon:hover {
+  background: rgba(118, 75, 162, 0.9);
+  transform: scale(1.05);
+}
+
+.status-icon-inner {
+  display: block;
+  text-align: center;
+}
+
+/* Debuff状态标记 - 红色 */
+.status-icon.debuff {
+  background: rgba(220, 53, 69, 0.85);
+  border: 1px solid rgba(255, 200, 200, 0.4);
+}
+
+.status-icon.debuff:hover {
+  background: rgba(180, 40, 50, 0.9);
 }
 </style>
