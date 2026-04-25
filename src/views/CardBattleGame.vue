@@ -144,6 +144,13 @@
                       >
                         <span class="status-icon-inner">降攻</span>
                       </div>
+                      <div
+                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.skillTriggerReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.skillTriggerReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降率</span>
+                      </div>
                     </div>
                     <div class="card-middle"></div>
                     <div class="card-bottom">
@@ -271,6 +278,13 @@
                       >
                         <span class="status-icon-inner">降攻</span>
                       </div>
+                      <div
+                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.skillTriggerReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.skillTriggerReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降率</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -396,6 +410,13 @@
                         :title="`${playerFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.damageOutputReductionDuration}回合`"
                       >
                         <span class="status-icon-inner">降攻</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.skillTriggerReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降率</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -530,6 +551,13 @@
                       >
                         <span class="status-icon-inner">降攻</span>
                       </div>
+                      <div
+                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.skillTriggerReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降率</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -654,6 +682,13 @@
                       >
                         <span class="status-icon-inner">降攻</span>
                       </div>
+                      <div
+                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.skillTriggerReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.skillTriggerReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降率</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -777,6 +812,13 @@
                         :title="`${enemyFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.damageOutputReductionDuration}回合`"
                       >
                         <span class="status-icon-inner">降攻</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.skillTriggerReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.skillTriggerReductionDuration}回合`"
+                      >
+                        <span class="status-icon-inner">降率</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -1195,10 +1237,11 @@ const recruitCard = () => {
 
   money.value -= recruitCost.value;
 
-  // 10%的概率招募到尉迟迥或李德林
+  // 10%的概率招募到尉迟迥或李德林或陆彦师
   if (Math.random() < 0.1) {
-    // 50%的概率招募尉迟迥，50%的概率招募李德林
-    if (Math.random() < 0.5) {
+    // 33%的概率招募尉迟迥，33%的概率招募李德林，34%的概率招募陆彦师
+    const random = Math.random();
+    if (random < 0.33) {
       // 尝试从数据库获取尉迟迥的详细信息（包括头像）
       import('../skills/yuchi-jiong').then(({ fetchYuchiJiongFromDatabase }) => {
         fetchYuchiJiongFromDatabase(API_BASE_URL).then((yuchiJiong) => {
@@ -1213,7 +1256,7 @@ const recruitCard = () => {
           }
         });
       });
-    } else {
+    } else if (random < 0.66) {
       // 尝试从数据库获取李德林的详细信息（包括头像）
       import('../skills/li-de-lin').then(({ fetchLiDeLinFromDatabase }) => {
         fetchLiDeLinFromDatabase(API_BASE_URL).then((liDeLin) => {
@@ -1224,6 +1267,21 @@ const recruitCard = () => {
             );
             addReport(
               `【${liDeLin.name}】自带战法：${liDeLin.skills?.[0].description}`,
+            );
+          }
+        });
+      });
+    } else {
+      // 尝试从数据库获取陆彦师的详细信息（包括头像）
+      import('../skills/lu-yan-shi').then(({ fetchLuYanShiFromDatabase }) => {
+        fetchLuYanShiFromDatabase(API_BASE_URL).then((luYanShi) => {
+          if (luYanShi) {
+            generals.value.push(luYanShi);
+            addReport(
+              `恭喜获得【${luYanShi.name}】！等级:${luYanShi.level} 攻:${luYanShi.attack} 防:${luYanShi.defense} 策:${luYanShi.strategy} 速:${luYanShi.speed} 兵:${luYanShi.troops} 距:${luYanShi.attackRange} 统御:${luYanShi.command} 统率:${luYanShi.leadership} 兵种:${luYanShi.soldierType}`,
+            );
+            addReport(
+              `【${luYanShi.name}】自带战法：${luYanShi.skills?.[0].description}`,
             );
           }
         });
@@ -1964,25 +2022,61 @@ const startBattle = async () => {
         if (readyUnit.general.skills) {
           for (const skill of readyUnit.general.skills) {
             if (skill.type === "active") {
-              const targets = getTargetsInRange({
-                general: readyUnit.general,
-                side: readyUnit.side,
-                position: readyUnit.position,
-              });
+              // 触发前检查是否有战法发动概率降低效果
+              const beforeTriggerContext = {
+                type: "activeSkill",
+                event: "beforeTrigger",
+                currentTroops: readyUnit.general.troops,
+                maxTroops: readyUnit.general.maxTroops,
+                addReport
+              };
+              const beforeTriggerResult = skill.effect(readyUnit.general, beforeTriggerContext);
               
-              if (targets.length > 0) {
-                const skillContext = {
-                  type: "activeSkill",
-                  event: "trigger",
-                  currentTroops: readyUnit.general.troops,
-                  maxTroops: readyUnit.general.maxTroops,
-                  targets: targets.map(t => t.general),
-                  addReport
-                };
-                const skillResult = skill.effect(readyUnit.general, skillContext);
-                if (skillResult && skillResult.triggered) {
-                  activeSkillTriggered = true;
-                  break;
+              // 应用战法发动概率降低效果
+              let finalTriggerChance = 1;
+              if (beforeTriggerResult && beforeTriggerResult.triggerReduction) {
+                finalTriggerChance = 1 - beforeTriggerResult.triggerReduction;
+              }
+              
+              // 检查是否触发
+              if (Math.random() < finalTriggerChance) {
+                const targets = getTargetsInRange({
+                  general: readyUnit.general,
+                  side: readyUnit.side,
+                  position: readyUnit.position,
+                });
+                
+                // 找到友军目标（用于治疗效果）
+                const allies: General[] = [];
+                if (readyUnit.side === "player") {
+                  Object.values(playerFormation.value).forEach((general) => {
+                    if (general && !general.isDead) {
+                      allies.push(general);
+                    }
+                  });
+                } else {
+                  Object.values(enemyFormation.value).forEach((general) => {
+                    if (general && !general.isDead) {
+                      allies.push(general);
+                    }
+                  });
+                }
+                
+                if (targets.length > 0) {
+                  const skillContext = {
+                    type: "activeSkill",
+                    event: "trigger",
+                    currentTroops: readyUnit.general.troops,
+                    maxTroops: readyUnit.general.maxTroops,
+                    targets: targets.map(t => t.general),
+                    allies: allies,
+                    addReport
+                  };
+                  const skillResult = skill.effect(readyUnit.general, skillContext);
+                  if (skillResult && skillResult.triggered) {
+                    activeSkillTriggered = true;
+                    break;
+                  }
                 }
               }
             }

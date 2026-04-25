@@ -10,7 +10,7 @@ const LI_DE_LIN_BASE = {
   defenseGrowth: 1.15,
   strategy: 97,
   strategyGrowth: 2.92,
-  speed: 526,
+  speed: 56,
   speedGrowth: 0.73,
   attackRange: 4,
   siege: 11,
