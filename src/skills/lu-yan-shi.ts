@@ -86,6 +86,11 @@ export const createLuYanShiSkill = (): Skill => {
             // 计算策略伤害：攻击方策略值 * 110% - 防御方策略值 / 2
             const damage = Math.max(0, Math.floor(general.strategy * 1.10 - target.strategy / 2));
             target.troops = Math.max(0, target.troops - damage);
+            
+            // 兵力降为0时标记死亡
+            if (target.troops <= 0) {
+              target.isDead = true;
+            }
 
             // 使其主动战法发动概率降低 6%，持续 2 回合
             if (!target.skillEffects) {

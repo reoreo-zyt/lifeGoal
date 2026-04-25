@@ -81,6 +81,11 @@ export const createLiDeLinSkill = (): Skill => {
               // 计算策略伤害：攻击方策略值 * 152% - 防御方策略值 / 2
               const damage = Math.max(0, Math.floor(general.strategy * 1.52 - target.strategy / 2));
               target.troops = Math.max(0, target.troops - damage);
+              
+              // 兵力降为0时标记死亡
+              if (target.troops <= 0) {
+                target.isDead = true;
+              }
 
               // 降低目标 14% 伤害输出，持续 2 回合
               if (!target.skillEffects) {

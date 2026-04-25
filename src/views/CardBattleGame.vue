@@ -783,7 +783,7 @@ const hideHeaderTooltip = () => {
 
 // 游戏初始数据
 const initialGameData = {
-  money: 1000,
+  money: 10000,
   currentYear: -2070,
   currentWave: 1,
 };
@@ -2013,6 +2013,23 @@ const startBattle = async () => {
                       const skillQuote = getRandomQuote(readyUnit.general.quotes.skill);
                       showQuoteText(skillQuote, readyUnit.side, readyUnit.position);
                     }
+                    
+                    // 为技能伤害添加受击音效和动画
+                    targets.forEach((target) => {
+                      // 播放受击音效
+                      const audio = new Audio('/assets/audios/hint.mp4');
+                      audio.play().catch(e => console.error('播放音效失败:', e));
+                      
+                      // 触发受击动画
+                      const targetCard = document.querySelector(`[data-card-side="${target.side}"][data-card-position="${target.position}"]`);
+                      if (targetCard) {
+                        targetCard.classList.add('hit');
+                        setTimeout(() => {
+                          targetCard.classList.remove('hit');
+                        }, 500);
+                      }
+                    });
+                    
                     break;
                   }
                 }

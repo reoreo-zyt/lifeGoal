@@ -96,13 +96,27 @@ defineEmits<{
 }
 
 .general-list {
-  background: url(/assets/ui_border.jpg) 100% / 100% no-repeat;
+  background: url(/assets/ui_border.png) center / 100% 100% no-repeat;
   width: 80%;
   max-width: 1000px;
-  max-height: 80vh;
-  overflow: hidden;
+  max-height: 85vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+
+.general-items {
+  margin-top: 50px;
+  margin-bottom: 120px;
+  margin-left: 60px;
+  margin-right: 70px;
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  padding: 0 20px 20px;
+  min-height: 200px;
 }
 
 .list-header {
@@ -121,7 +135,7 @@ defineEmits<{
 }
 
 .close-btn {
-  background: url(/assets/btn_close_128.jpg) center/contain no-repeat;
+  background: url(/assets/btn_close_128.png) center/contain no-repeat;
   border: none;
   cursor: pointer;
   padding: 0;
@@ -136,15 +150,6 @@ defineEmits<{
 .close-btn:hover {
   transform: scale(1.1);
   filter: brightness(1.1);
-}
-
-.general-items {
-  flex: 1;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 15px;
-  padding: 0 20px 20px;
 }
 
 .general-item {
