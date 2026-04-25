@@ -9,41 +9,52 @@
       </div>
     </div>
 
+    <!-- 游戏开始界面 -->
+    <div v-else-if="!gameLoaded" class="game-start-screen">
+      <div class="game-start-bg" style="background-image: url('/assets/game_cover_bg_1920x1080.jpg');"></div>
+      <div class="game-start-content">
+        <h1 class="game-title">史策 rogue</h1>
+        <div class="progress-container">
+          <div class="progress-bar" :style="{ width: `${loadingProgress}%` }"></div>
+        </div>
+        <div class="progress-text">{{ loadingProgress }}%</div>
+      </div>
+    </div>
+
     <!-- 登录后游戏主界面 -->
     <div v-else class="game-container">
       <div class="game-header">
         <!-- 游戏顶部信息 -->
-        <div class="game-info">
-          <div class="info-item">
-            <span class="info-label">金额:</span>
-            <span class="info-value">{{ money }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">波次:</span>
-            <span class="info-value">{{ currentWave }}/{{ totalWaves }}</span>
-          </div>
-          <div
-            class="info-item"
-            :class="{ 'command-warning': currentCommand > maxCommand }"
-          >
-            <span class="info-label">统率:</span>
-            <span class="info-value"
-              >{{ currentCommand }}/{{ maxCommand }}</span
-            >
+        <!-- 顶部状态栏 -->
+        <div class="ui-top-bar-status">
+          <div class="game-info">
+            <div class="info-item" @mouseenter="showHeaderTooltip($event, 'money')" @mouseleave="hideHeaderTooltip">
+              <img src="/assets/money.webp" alt="金额" class="info-icon">
+              <span class="info-value">{{ money }}</span>
+            </div>
+            <div class="info-item" @mouseenter="showHeaderTooltip($event, 'wave')" @mouseleave="hideHeaderTooltip">
+              <img src="/assets/turn.webp" alt="波次" class="info-icon">
+              <span class="info-value">{{ currentWave }}/{{ totalWaves }}</span>
+            </div>
+            <div class="info-item" :class="{ 'command-warning': currentCommand > maxCommand }"
+              @mouseenter="showHeaderTooltip($event, 'command')" @mouseleave="hideHeaderTooltip">
+              <img src="/assets/command.webp" alt="统率" class="info-icon">
+              <span class="info-value">{{ currentCommand }}/{{ maxCommand }}</span>
+            </div>
           </div>
         </div>
 
+        <!-- 悬浮提示框 -->
+        <div v-show="tooltip.visible" class="tooltip-popup" :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }">
+          {{ tooltip.text }}
+        </div>
+
         <div class="game-area">
-          <div
-            v-for="(damageText, index) in damageTexts"
-            :key="index"
-            class="damage-text"
-            :style="{
-              left: damageText.x + 'px',
-              top: damageText.y + 'px',
-              animationDelay: damageText.delay + 's',
-            }"
-          >
+          <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text" :style="{
+            left: damageText.x + 'px',
+            top: damageText.y + 'px',
+            animationDelay: damageText.delay + 's',
+          }">
             {{ damageText.text }}
           </div>
           <div class="player-side">
@@ -51,22 +62,16 @@
             <div class="formation horizontal">
               <div class="card-slot" @click="selectSlot('player', '大营')">
                 <div class="card-container">
-                  <div
-                    class="troops-bar-container"
-                    :class="{ active: isBattleActive && playerFormation.大营 }"
-                  >
+                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.大营 }">
                     <div class="troops-bar">
-                      <div
-                        class="troops-fill"
-                        :style="{
-                          width: playerFormation.大营
-                            ? (playerFormation.大营.troops /
-                                playerFormation.大营.maxTroops) *
-                                100 +
-                              '%'
-                            : '0%',
-                        }"
-                      ></div>
+                      <div class="troops-fill" :style="{
+                        width: playerFormation.大营
+                          ? (playerFormation.大营.troops /
+                            playerFormation.大营.maxTroops) *
+                          100 +
+                          '%'
+                          : '0%',
+                      }"></div>
                     </div>
                     <div class="troops-text">
                       {{
@@ -74,22 +79,14 @@
                       }}
                     </div>
                   </div>
-                  <div
-                    v-if="playerFormation.大营"
-                    class="card player"
-                    :style="{
-                      backgroundImage: `url(${playerFormation.大营.avatar ? API_BASE_URL + playerFormation.大营.avatar : playerFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                    }"
-                    :class="{
-                      selected: selectedSlot === 'player-大营',
-                      dead: playerFormation.大营.isDead,
-                      attacking: attackingCard === 'player-大营',
-                    }"
-                    data-card-side="player"
-                    data-card-position="大营"
-                    @contextmenu="showTooltip('player-大营', $event)"
-                    @click="hideTooltip"
-                  >
+                  <div v-if="playerFormation.大营" class="card player" :style="{
+                    backgroundImage: `url(${playerFormation.大营.avatar ? API_BASE_URL + playerFormation.大营.avatar : playerFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
+                  }" :class="{
+                    selected: selectedSlot === 'player-大营',
+                    dead: playerFormation.大营.isDead,
+                    attacking: attackingCard === 'player-大营',
+                  }" data-card-side="player" data-card-position="大营" @contextmenu="showTooltip('player-大营', $event)"
+                    @click="hideTooltip">
                     <div class="card-top">
                       <div class="card-left-top">
                         <div class="card-dynasty">
@@ -101,63 +98,49 @@
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
-                          <span
-                            v-for="i in 5"
-                            :key="i"
-                            class="star"
-                            :class="{
-                              active:
-                                i <= Math.ceil(playerFormation.大营.level),
-                            }"
-                            >★</span
-                          >
+                          <span v-for="i in 5" :key="i" class="star" :class="{
+                            active:
+                              i <= Math.ceil(playerFormation.大营.level),
+                          }">★</span>
                         </div>
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
                     <div class="card-status">
-                      <div
-                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageReduction > 0"
+                      <div v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageReduction > 0"
                         class="status-icon"
-                        :title="`${playerFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">减伤</span>
                       </div>
-                      <div
-                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.attributeBonus > 0"
+                      <div v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.attributeBonus > 0"
                         class="status-icon"
-                        :title="`${playerFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`">
                         <span class="status-icon-inner">属性+</span>
                       </div>
-                      <div
-                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageIncrease > 0"
+                      <div v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageIncrease > 0"
                         class="status-icon"
-                        :title="`${playerFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
                       <div
                         v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageOutputReduction > 0"
                         class="status-icon debuff"
-                        :title="`${playerFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.damageOutputReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降攻{{ playerFormation.大营.skillEffects.damageOutputReductionDuration }}</span>
+                        :title="`${playerFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.damageOutputReductionDuration}回合`">
+                        <span class="status-icon-inner">降攻{{
+                          playerFormation.大营.skillEffects.damageOutputReductionDuration }}</span>
                       </div>
                       <div
                         v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.skillTriggerReduction > 0"
                         class="status-icon debuff"
-                        :title="`${playerFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.skillTriggerReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降率{{ playerFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
+                        :title="`${playerFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.skillTriggerReductionDuration}回合`">
+                        <span class="status-icon-inner">降率{{
+                          playerFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-middle"></div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level"
-                          >Lv.{{ playerFormation.大营.level }}</span
-                        >
+                        <span class="card-level">Lv.{{ playerFormation.大营.level }}</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
@@ -185,22 +168,16 @@
               </div>
               <div class="card-slot" @click="selectSlot('player', '中军')">
                 <div class="card-container">
-                  <div
-                    class="troops-bar-container"
-                    :class="{ active: isBattleActive && playerFormation.中军 }"
-                  >
+                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.中军 }">
                     <div class="troops-bar">
-                      <div
-                        class="troops-fill"
-                        :style="{
-                          width: playerFormation.中军
-                            ? (playerFormation.中军.troops /
-                                playerFormation.中军.maxTroops) *
-                                100 +
-                              '%'
-                            : '0%',
-                        }"
-                      ></div>
+                      <div class="troops-fill" :style="{
+                        width: playerFormation.中军
+                          ? (playerFormation.中军.troops /
+                            playerFormation.中军.maxTroops) *
+                          100 +
+                          '%'
+                          : '0%',
+                      }"></div>
                     </div>
                     <div class="troops-text">
                       {{
@@ -208,22 +185,14 @@
                       }}
                     </div>
                   </div>
-                  <div
-                    v-if="playerFormation.中军"
-                    class="card player"
-                    :style="{
-                      backgroundImage: `url(${playerFormation.中军.avatar ? API_BASE_URL + playerFormation.中军.avatar : playerFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                    }"
-                    :class="{
-                      selected: selectedSlot === 'player-中军',
-                      dead: playerFormation.中军.isDead,
-                      attacking: attackingCard === 'player-中军',
-                    }"
-                    data-card-side="player"
-                    data-card-position="中军"
-                    @contextmenu="showTooltip('player-中军', $event)"
-                    @click="hideTooltip"
-                  >
+                  <div v-if="playerFormation.中军" class="card player" :style="{
+                    backgroundImage: `url(${playerFormation.中军.avatar ? API_BASE_URL + playerFormation.中军.avatar : playerFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
+                  }" :class="{
+                    selected: selectedSlot === 'player-中军',
+                    dead: playerFormation.中军.isDead,
+                    attacking: attackingCard === 'player-中军',
+                  }" data-card-side="player" data-card-position="中军" @contextmenu="showTooltip('player-中军', $event)"
+                    @click="hideTooltip">
                     <div class="card-top">
                       <div class="card-left-top">
                         <div class="card-dynasty">
@@ -235,62 +204,48 @@
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
-                          <span
-                            v-for="i in 5"
-                            :key="i"
-                            class="star"
-                            :class="{
-                              active:
-                                i <= Math.ceil(playerFormation.中军.level),
-                            }"
-                            >★</span
-                          >
+                          <span v-for="i in 5" :key="i" class="star" :class="{
+                            active:
+                              i <= Math.ceil(playerFormation.中军.level),
+                          }">★</span>
                         </div>
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
                     <div class="card-status">
-                      <div
-                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageReduction > 0"
+                      <div v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageReduction > 0"
                         class="status-icon"
-                        :title="`${playerFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">减伤</span>
                       </div>
-                      <div
-                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.attributeBonus > 0"
+                      <div v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.attributeBonus > 0"
                         class="status-icon"
-                        :title="`${playerFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`">
                         <span class="status-icon-inner">属性+</span>
                       </div>
-                      <div
-                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageIncrease > 0"
+                      <div v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageIncrease > 0"
                         class="status-icon"
-                        :title="`${playerFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
                       <div
                         v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageOutputReduction > 0"
                         class="status-icon debuff"
-                        :title="`${playerFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.damageOutputReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降攻{{ playerFormation.中军.skillEffects.damageOutputReductionDuration }}</span>
+                        :title="`${playerFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.damageOutputReductionDuration}回合`">
+                        <span class="status-icon-inner">降攻{{
+                          playerFormation.中军.skillEffects.damageOutputReductionDuration }}</span>
                       </div>
                       <div
                         v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.skillTriggerReduction > 0"
                         class="status-icon debuff"
-                        :title="`${playerFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.skillTriggerReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降率{{ playerFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
+                        :title="`${playerFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.skillTriggerReductionDuration}回合`">
+                        <span class="status-icon-inner">降率{{
+                          playerFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level"
-                          >Lv.{{ playerFormation.中军.level }}</span
-                        >
+                        <span class="card-level">Lv.{{ playerFormation.中军.level }}</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
@@ -318,22 +273,16 @@
               </div>
               <div class="card-slot" @click="selectSlot('player', '前锋')">
                 <div class="card-container">
-                  <div
-                    class="troops-bar-container"
-                    :class="{ active: isBattleActive && playerFormation.前锋 }"
-                  >
+                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.前锋 }">
                     <div class="troops-bar">
-                      <div
-                        class="troops-fill"
-                        :style="{
-                          width: playerFormation.前锋
-                            ? (playerFormation.前锋.troops /
-                                playerFormation.前锋.maxTroops) *
-                                100 +
-                              '%'
-                            : '0%',
-                        }"
-                      ></div>
+                      <div class="troops-fill" :style="{
+                        width: playerFormation.前锋
+                          ? (playerFormation.前锋.troops /
+                            playerFormation.前锋.maxTroops) *
+                          100 +
+                          '%'
+                          : '0%',
+                      }"></div>
                     </div>
                     <div class="troops-text">
                       {{
@@ -341,22 +290,14 @@
                       }}
                     </div>
                   </div>
-                  <div
-                    v-if="playerFormation.前锋"
-                    class="card player"
-                    :style="{
-                      backgroundImage: `url(${playerFormation.前锋.avatar ? API_BASE_URL + playerFormation.前锋.avatar : playerFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                    }"
-                    :class="{
-                      selected: selectedSlot === 'player-前锋',
-                      dead: playerFormation.前锋.isDead,
-                      attacking: attackingCard === 'player-前锋',
-                    }"
-                    data-card-side="player"
-                    data-card-position="前锋"
-                    @contextmenu="showTooltip('player-前锋', $event)"
-                    @click="hideTooltip"
-                  >
+                  <div v-if="playerFormation.前锋" class="card player" :style="{
+                    backgroundImage: `url(${playerFormation.前锋.avatar ? API_BASE_URL + playerFormation.前锋.avatar : playerFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
+                  }" :class="{
+                    selected: selectedSlot === 'player-前锋',
+                    dead: playerFormation.前锋.isDead,
+                    attacking: attackingCard === 'player-前锋',
+                  }" data-card-side="player" data-card-position="前锋" @contextmenu="showTooltip('player-前锋', $event)"
+                    @click="hideTooltip">
                     <div class="card-top">
                       <div class="card-left-top">
                         <div class="card-dynasty">
@@ -368,62 +309,48 @@
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
-                          <span
-                            v-for="i in 5"
-                            :key="i"
-                            class="star"
-                            :class="{
-                              active:
-                                i <= Math.ceil(playerFormation.前锋.level),
-                            }"
-                            >★</span
-                          >
+                          <span v-for="i in 5" :key="i" class="star" :class="{
+                            active:
+                              i <= Math.ceil(playerFormation.前锋.level),
+                          }">★</span>
                         </div>
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
                     <div class="card-status">
-                      <div
-                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageReduction > 0"
+                      <div v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageReduction > 0"
                         class="status-icon"
-                        :title="`${playerFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">减伤</span>
                       </div>
-                      <div
-                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.attributeBonus > 0"
+                      <div v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.attributeBonus > 0"
                         class="status-icon"
-                        :title="`${playerFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`">
                         <span class="status-icon-inner">属性+</span>
                       </div>
-                      <div
-                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageIncrease > 0"
+                      <div v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageIncrease > 0"
                         class="status-icon"
-                        :title="`${playerFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`"
-                      >
+                        :title="`${playerFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
                       <div
                         v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageOutputReduction > 0"
                         class="status-icon debuff"
-                        :title="`${playerFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.damageOutputReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降攻{{ playerFormation.前锋.skillEffects.damageOutputReductionDuration }}</span>
+                        :title="`${playerFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.damageOutputReductionDuration}回合`">
+                        <span class="status-icon-inner">降攻{{
+                          playerFormation.前锋.skillEffects.damageOutputReductionDuration }}</span>
                       </div>
                       <div
                         v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.skillTriggerReduction > 0"
                         class="status-icon debuff"
-                        :title="`${playerFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降率{{ playerFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
+                        :title="`${playerFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`">
+                        <span class="status-icon-inner">降率{{
+                          playerFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level"
-                          >Lv.{{ playerFormation.前锋.level }}</span
-                        >
+                        <span class="card-level">Lv.{{ playerFormation.前锋.level }}</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
@@ -460,43 +387,29 @@
             <div class="formation horizontal enemy">
               <div class="card-slot" @click="selectSlot('enemy', '前锋')">
                 <div class="card-container">
-                  <div
-                    class="troops-bar-container"
-                    :class="{ active: isBattleActive && enemyFormation.前锋 }"
-                  >
+                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.前锋 }">
                     <div class="troops-bar">
-                      <div
-                        class="troops-fill"
-                        :style="{
-                          width: enemyFormation.前锋
-                            ? (enemyFormation.前锋.troops /
-                                enemyFormation.前锋.maxTroops) *
-                                100 +
-                              '%'
-                            : '0%',
-                        }"
-                      ></div>
+                      <div class="troops-fill" :style="{
+                        width: enemyFormation.前锋
+                          ? (enemyFormation.前锋.troops /
+                            enemyFormation.前锋.maxTroops) *
+                          100 +
+                          '%'
+                          : '0%',
+                      }"></div>
                     </div>
                     <div class="troops-text">
                       {{ enemyFormation.前锋 ? enemyFormation.前锋.troops : 0 }}
                     </div>
                   </div>
-                  <div
-                    v-if="enemyFormation.前锋"
-                    class="card enemy"
-                    :style="{
-                      backgroundImage: `url(${enemyFormation.前锋.avatar ? API_BASE_URL + enemyFormation.前锋.avatar : enemyFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                    }"
-                    :class="{
-                      selected: selectedSlot === 'enemy-前锋',
-                      dead: enemyFormation.前锋.isDead,
-                      attacking: attackingCard === 'enemy-前锋',
-                    }"
-                    data-card-side="enemy"
-                    data-card-position="前锋"
-                    @contextmenu="showTooltip('enemy-前锋', $event)"
-                    @click="hideTooltip"
-                  >
+                  <div v-if="enemyFormation.前锋" class="card enemy" :style="{
+                    backgroundImage: `url(${enemyFormation.前锋.avatar ? API_BASE_URL + enemyFormation.前锋.avatar : enemyFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
+                  }" :class="{
+                    selected: selectedSlot === 'enemy-前锋',
+                    dead: enemyFormation.前锋.isDead,
+                    attacking: attackingCard === 'enemy-前锋',
+                  }" data-card-side="enemy" data-card-position="前锋" @contextmenu="showTooltip('enemy-前锋', $event)"
+                    @click="hideTooltip">
                     <div class="card-top">
                       <div class="card-left-top">
                         <div class="card-dynasty">
@@ -508,62 +421,48 @@
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
-                          <span
-                            v-for="i in 5"
-                            :key="i"
-                            class="star"
-                            :class="{
-                              active:
-                                i <= Math.ceil(enemyFormation.前锋.level),
-                            }"
-                            >★</span
-                          >
+                          <span v-for="i in 5" :key="i" class="star" :class="{
+                            active:
+                              i <= Math.ceil(enemyFormation.前锋.level),
+                          }">★</span>
                         </div>
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
                     <div class="card-status">
-                      <div
-                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageReduction > 0"
+                      <div v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageReduction > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">减伤</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.attributeBonus > 0"
+                      <div v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.attributeBonus > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`">
                         <span class="status-icon-inner">属性+</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageIncrease > 0"
+                      <div v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageIncrease > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
                       <div
                         v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageOutputReduction > 0"
                         class="status-icon debuff"
-                        :title="`${enemyFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.damageOutputReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降攻{{ enemyFormation.前锋.skillEffects.damageOutputReductionDuration }}</span>
+                        :title="`${enemyFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.damageOutputReductionDuration}回合`">
+                        <span class="status-icon-inner">降攻{{
+                          enemyFormation.前锋.skillEffects.damageOutputReductionDuration }}</span>
                       </div>
                       <div
                         v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.skillTriggerReduction > 0"
                         class="status-icon debuff"
-                        :title="`${enemyFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降率{{ enemyFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
+                        :title="`${enemyFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`">
+                        <span class="status-icon-inner">降率{{
+                          enemyFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level"
-                          >Lv.{{ enemyFormation.前锋.level }}</span
-                        >
+                        <span class="card-level">Lv.{{ enemyFormation.前锋.level }}</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
@@ -591,43 +490,29 @@
               </div>
               <div class="card-slot" @click="selectSlot('enemy', '中军')">
                 <div class="card-container">
-                  <div
-                    class="troops-bar-container"
-                    :class="{ active: isBattleActive && enemyFormation.中军 }"
-                  >
+                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.中军 }">
                     <div class="troops-bar">
-                      <div
-                        class="troops-fill"
-                        :style="{
-                          width: enemyFormation.中军
-                            ? (enemyFormation.中军.troops /
-                                enemyFormation.中军.maxTroops) *
-                                100 +
-                              '%'
-                            : '0%',
-                        }"
-                      ></div>
+                      <div class="troops-fill" :style="{
+                        width: enemyFormation.中军
+                          ? (enemyFormation.中军.troops /
+                            enemyFormation.中军.maxTroops) *
+                          100 +
+                          '%'
+                          : '0%',
+                      }"></div>
                     </div>
                     <div class="troops-text">
                       {{ enemyFormation.中军 ? enemyFormation.中军.troops : 0 }}
                     </div>
                   </div>
-                  <div
-                    v-if="enemyFormation.中军"
-                    class="card enemy"
-                    :style="{
-                      backgroundImage: `url(${enemyFormation.中军.avatar ? API_BASE_URL + enemyFormation.中军.avatar : enemyFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                    }"
-                    :class="{
-                      selected: selectedSlot === 'enemy-中军',
-                      dead: enemyFormation.中军.isDead,
-                      attacking: attackingCard === 'enemy-中军',
-                    }"
-                    data-card-side="enemy"
-                    data-card-position="中军"
-                    @contextmenu="showTooltip('enemy-中军', $event)"
-                    @click="hideTooltip"
-                  >
+                  <div v-if="enemyFormation.中军" class="card enemy" :style="{
+                    backgroundImage: `url(${enemyFormation.中军.avatar ? API_BASE_URL + enemyFormation.中军.avatar : enemyFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
+                  }" :class="{
+                    selected: selectedSlot === 'enemy-中军',
+                    dead: enemyFormation.中军.isDead,
+                    attacking: attackingCard === 'enemy-中军',
+                  }" data-card-side="enemy" data-card-position="中军" @contextmenu="showTooltip('enemy-中军', $event)"
+                    @click="hideTooltip">
                     <div class="card-top">
                       <div class="card-left-top">
                         <div class="card-dynasty">
@@ -639,62 +524,48 @@
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
-                          <span
-                            v-for="i in 5"
-                            :key="i"
-                            class="star"
-                            :class="{
-                              active:
-                                i <= Math.ceil(enemyFormation.中军.level),
-                            }"
-                            >★</span
-                          >
+                          <span v-for="i in 5" :key="i" class="star" :class="{
+                            active:
+                              i <= Math.ceil(enemyFormation.中军.level),
+                          }">★</span>
                         </div>
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
                     <div class="card-status">
-                      <div
-                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageReduction > 0"
+                      <div v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageReduction > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">减伤</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.attributeBonus > 0"
+                      <div v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.attributeBonus > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`">
                         <span class="status-icon-inner">属性+</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageIncrease > 0"
+                      <div v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageIncrease > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
                       <div
                         v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageOutputReduction > 0"
                         class="status-icon debuff"
-                        :title="`${enemyFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.damageOutputReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降攻{{ enemyFormation.中军.skillEffects.damageOutputReductionDuration }}</span>
+                        :title="`${enemyFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.damageOutputReductionDuration}回合`">
+                        <span class="status-icon-inner">降攻{{
+                          enemyFormation.中军.skillEffects.damageOutputReductionDuration }}</span>
                       </div>
                       <div
                         v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.skillTriggerReduction > 0"
                         class="status-icon debuff"
-                        :title="`${enemyFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.skillTriggerReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降率{{ enemyFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
+                        :title="`${enemyFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.skillTriggerReductionDuration}回合`">
+                        <span class="status-icon-inner">降率{{
+                          enemyFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level"
-                          >Lv.{{ enemyFormation.中军.level }}</span
-                        >
+                        <span class="card-level">Lv.{{ enemyFormation.中军.level }}</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
@@ -722,43 +593,29 @@
               </div>
               <div class="card-slot" @click="selectSlot('enemy', '大营')">
                 <div class="card-container">
-                  <div
-                    class="troops-bar-container"
-                    :class="{ active: isBattleActive && enemyFormation.大营 }"
-                  >
+                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.大营 }">
                     <div class="troops-bar">
-                      <div
-                        class="troops-fill"
-                        :style="{
-                          width: enemyFormation.大营
-                            ? (enemyFormation.大营.troops /
-                                enemyFormation.大营.maxTroops) *
-                                100 +
-                              '%'
-                            : '0%',
-                        }"
-                      ></div>
+                      <div class="troops-fill" :style="{
+                        width: enemyFormation.大营
+                          ? (enemyFormation.大营.troops /
+                            enemyFormation.大营.maxTroops) *
+                          100 +
+                          '%'
+                          : '0%',
+                      }"></div>
                     </div>
                     <div class="troops-text">
                       {{ enemyFormation.大营 ? enemyFormation.大营.troops : 0 }}
                     </div>
                   </div>
-                  <div
-                    v-if="enemyFormation.大营"
-                    class="card enemy"
-                    :style="{
-                      backgroundImage: `url(${enemyFormation.大营.avatar ? API_BASE_URL + enemyFormation.大营.avatar : enemyFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                    }"
-                    :class="{
-                      selected: selectedSlot === 'enemy-大营',
-                      dead: enemyFormation.大营.isDead,
-                      attacking: attackingCard === 'enemy-大营',
-                    }"
-                    data-card-side="enemy"
-                    data-card-position="大营"
-                    @contextmenu="showTooltip('enemy-大营', $event)"
-                    @click="hideTooltip"
-                  >
+                  <div v-if="enemyFormation.大营" class="card enemy" :style="{
+                    backgroundImage: `url(${enemyFormation.大营.avatar ? API_BASE_URL + enemyFormation.大营.avatar : enemyFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
+                  }" :class="{
+                    selected: selectedSlot === 'enemy-大营',
+                    dead: enemyFormation.大营.isDead,
+                    attacking: attackingCard === 'enemy-大营',
+                  }" data-card-side="enemy" data-card-position="大营" @contextmenu="showTooltip('enemy-大营', $event)"
+                    @click="hideTooltip">
                     <div class="card-top">
                       <div class="card-left-top">
                         <div class="card-dynasty">
@@ -770,62 +627,48 @@
                       </div>
                       <div class="card-right-top">
                         <div class="card-stars">
-                          <span
-                            v-for="i in 5"
-                            :key="i"
-                            class="star"
-                            :class="{
-                              active:
-                                i <= Math.ceil(enemyFormation.大营.level),
-                            }"
-                            >★</span
-                          >
+                          <span v-for="i in 5" :key="i" class="star" :class="{
+                            active:
+                              i <= Math.ceil(enemyFormation.大营.level),
+                          }">★</span>
                         </div>
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
                     <div class="card-status">
-                      <div
-                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageReduction > 0"
+                      <div v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageReduction > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">减伤</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.attributeBonus > 0"
+                      <div v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.attributeBonus > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`">
                         <span class="status-icon-inner">属性+</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageIncrease > 0"
+                      <div v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageIncrease > 0"
                         class="status-icon"
-                        :title="`${enemyFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`"
-                      >
+                        :title="`${enemyFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
                       <div
                         v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageOutputReduction > 0"
                         class="status-icon debuff"
-                        :title="`${enemyFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.damageOutputReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降攻{{ enemyFormation.大营.skillEffects.damageOutputReductionDuration }}</span>
+                        :title="`${enemyFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.damageOutputReductionDuration}回合`">
+                        <span class="status-icon-inner">降攻{{
+                          enemyFormation.大营.skillEffects.damageOutputReductionDuration }}</span>
                       </div>
                       <div
                         v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.skillTriggerReduction > 0"
                         class="status-icon debuff"
-                        :title="`${enemyFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.skillTriggerReductionDuration}回合`"
-                      >
-                        <span class="status-icon-inner">降率{{ enemyFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
+                        :title="`${enemyFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.skillTriggerReductionDuration}回合`">
+                        <span class="status-icon-inner">降率{{
+                          enemyFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
-                        <span class="card-level"
-                          >Lv.{{ enemyFormation.大营.level }}</span
-                        >
+                        <span class="card-level">Lv.{{ enemyFormation.大营.level }}</span>
                       </div>
                       <div class="card-bottom-item">
                         <span class="card-command">{{
@@ -856,57 +699,39 @@
         </div>
 
         <!-- 选择武将界面 -->
-        <GeneralList
-          v-if="showGeneralList"
-          :generals="availableGenerals"
-          :API_BASE_URL="API_BASE_URL"
-          @close="closeGeneralList"
-          @select="(general) => {
+        <GeneralList v-if="showGeneralList" :generals="availableGenerals" :API_BASE_URL="API_BASE_URL"
+          @close="closeGeneralList" @select="(general) => {
             deployGeneral(general);
             hideTooltip();
-          }"
-          @show-tooltip="showGeneralTooltip"
-        />
+          }" @show-tooltip="showGeneralTooltip" />
 
         <!-- 武将信息 -->
-        <GeneralTooltip
-          v-if="tooltipData"
-          :general="tooltipData"
-          @close="hideTooltip"
-        />
+        <GeneralTooltip v-if="tooltipData" :general="tooltipData" @close="hideTooltip" />
 
         <!-- 底部操作按钮 -->
         <div class="game-footer">
-          <button
-            class="action-button recruit"
-            @click="recruitCard"
-            :disabled="money < recruitCost"
-          >
-            <span class="button-icon">📦</span>
-            <span class="button-text">卡包招募</span>
-            <span class="button-cost">{{ recruitCost }}金额</span>
+          <button class="action-button recruit" @click="recruitCard" :disabled="money < recruitCost"
+            @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
+            <img src="/assets/open.webp" alt="卡包招募" class="button-icon">
           </button>
-          <button class="action-button end-turn" @click="endTurn">
-            <span class="button-text">开始</span>
+          <button class="action-button end-turn" @click="endTurn" @mouseenter="showHeaderTooltip($event, 'start')"
+            @mouseleave="hideHeaderTooltip">
+            <img src="/assets/start.webp" alt="开始" class="button-icon">
           </button>
-          <button class="action-button next-wave" @click="nextWave">
-            <span class="button-text">下一轮</span>
+          <button class="action-button next-wave" @click="nextWave" @mouseenter="showHeaderTooltip($event, 'next')"
+            @mouseleave="hideHeaderTooltip">
+            <img src="/assets/next.webp" alt="下一轮" class="button-icon">
           </button>
         </div>
       </div>
 
-      <AuthModal
-        v-if="showAuthModal"
-        :is-login="isLogin"
-        @close="showAuthModal = false"
-        @login="handleLogin"
-      />
+      <AuthModal v-if="showAuthModal" :is-login="isLogin" @close="showAuthModal = false" @login="handleLogin" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import AuthModal from "../components/AuthModal.vue";
 import GeneralTooltip from "../components/GeneralTooltip.vue";
 import GeneralList from "../components/GeneralList.vue";
@@ -916,6 +741,44 @@ import type { General } from "../skills/types";
 const isLoggedIn = ref(false);
 const showAuthModal = ref(false);
 const isLogin = ref(true);
+
+// 游戏加载状态
+const gameLoaded = ref(false);
+const loadingProgress = ref(0);
+
+// 悬浮提示状态
+const tooltip = ref({
+  visible: false,
+  text: '',
+  x: 0,
+  y: 0,
+});
+
+// 悬浮提示文本映射
+const tooltipTexts: Record<string, string> = {
+  money: '当前金币数量',
+  wave: '当前波次/总波次',
+  command: '当前统率/最大统率',
+  recruit: '消耗金币招募新的武将卡牌',
+  start: '开始战斗',
+  next: '进入下一轮战斗',
+};
+
+// 显示悬浮提示
+const showHeaderTooltip = (event: MouseEvent, key: string) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  tooltip.value = {
+    visible: true,
+    text: tooltipTexts[key] || '',
+    x: rect.left + rect.width / 2,
+    y: rect.bottom + 10,
+  };
+};
+
+// 隐藏悬浮提示
+const hideHeaderTooltip = () => {
+  tooltip.value.visible = false;
+};
 
 // 游戏初始数据
 const initialGameData = {
@@ -954,6 +817,38 @@ const getRandomSoldierType = (): "步兵" | "弓兵" | "骑兵" => {
   const types: Array<"步兵" | "弓兵" | "骑兵"> = ["步兵", "弓兵", "骑兵"];
   return types[Math.floor(Math.random() * types.length)];
 };
+
+// 监听登录状态变化，登录成功后开始游戏加载
+watch(isLoggedIn, (newValue) => {
+  if (newValue) {
+    startGameLoading();
+  }
+});
+
+// 开始游戏加载
+const startGameLoading = () => {
+  loadingProgress.value = 0;
+  gameLoaded.value = false;
+
+  // 模拟游戏加载过程
+  const loadingInterval = setInterval(() => {
+    loadingProgress.value += 50;
+    if (loadingProgress.value >= 100) {
+      clearInterval(loadingInterval);
+      // 加载完成后显示游戏主界面
+      setTimeout(() => {
+        gameLoaded.value = true;
+      }, 500);
+    }
+  }, 150);
+};
+
+// 组件挂载时检查登录状态
+onMounted(() => {
+  if (isLoggedIn.value) {
+    startGameLoading();
+  }
+});
 
 // 获取人物数据
 const fetchCharacters = async () => {
@@ -1510,8 +1405,8 @@ const showDamageText = (
   // 查找对应卡牌内的troops元素
   const troopsElement = document.querySelector(
     `.${side}-side [data-card-position="${position}"] .troops, ` +
-      `.player-side.enemy [data-card-position="${position}"] .troops, ` +
-      `.enemy-side [data-card-position="${position}"] .troops`,
+    `.player-side.enemy [data-card-position="${position}"] .troops, ` +
+    `.enemy-side [data-card-position="${position}"] .troops`,
   );
 
   if (!troopsElement) {
@@ -1962,10 +1857,10 @@ const startBattle = async () => {
           currentTroops: readyUnit.general.troops,
           maxTroops: readyUnit.general.maxTroops,
         };
-        
+
         // 处理当前角色的技能效果
         triggerSkillEffects(readyUnit.general, turnStartContext);
-        
+
         // 直接处理当前角色的skillEffects中的持续效果
         if (readyUnit.general.skillEffects) {
           // 处理伤害输出降低效果
@@ -1983,7 +1878,7 @@ const startBattle = async () => {
               );
             }
           }
-          
+
           // 处理战法发动概率降低效果
           if (readyUnit.general.skillEffects.skillTriggerReductionDuration > 0) {
             readyUnit.general.skillEffects.skillTriggerReductionDuration -= 1;
@@ -2015,13 +1910,13 @@ const startBattle = async () => {
                 addReport
               };
               const beforeTriggerResult = skill.effect(readyUnit.general, beforeTriggerContext);
-              
+
               // 应用战法发动概率降低效果
               let finalTriggerChance = 1;
               if (beforeTriggerResult && beforeTriggerResult.triggerReduction) {
                 finalTriggerChance = 1 - beforeTriggerResult.triggerReduction;
               }
-              
+
               // 检查是否触发
               if (Math.random() < finalTriggerChance) {
                 const targets = getTargetsInRange({
@@ -2029,7 +1924,7 @@ const startBattle = async () => {
                   side: readyUnit.side,
                   position: readyUnit.position,
                 });
-                
+
                 // 找到友军目标（用于治疗效果）
                 const allies: General[] = [];
                 if (readyUnit.side === "player") {
@@ -2045,7 +1940,7 @@ const startBattle = async () => {
                     }
                   });
                 }
-                
+
                 if (targets.length > 0) {
                   const skillContext = {
                     type: "activeSkill",
@@ -2246,17 +2141,20 @@ const nextWave = () => {
 }
 
 .game-container {
-  max-width: 1800px;
-  margin: 0 auto;
-  padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('/assets/bg_xuanzhi_1920x1080.jpg') no-repeat center center;
+  background-size: cover;
+  overflow-y: auto;
 }
 
 .game-header {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
+  padding: 15px 20px;
 }
 
 .speed-bar-container {
@@ -2393,14 +2291,50 @@ const nextWave = () => {
 
 .game-info {
   display: flex;
-  justify-content: space-around;
+  justify-content: flex-start;
+  gap: 40px;
   align-items: center;
+  padding: 15px 20px;
+}
+
+.ui-top-bar-status {
+  width: 100%;
+  background: url('/assets/ui_top_bar_status.jpg') no-repeat center center;
+  background-size: cover;
+  padding: 15px 20px;
+  margin-bottom: 20px;
 }
 
 .info-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  transition: all 0.3s ease;
+  cursor: help;
+}
+
+.info-item:hover {
+  transform: translateY(-2px);
+}
+
+.info-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.info-item:hover .info-icon-wrapper {
+  transform: scale(1.1);
+}
+
+.info-icon {
+  width: 24px;
+  height: 24px;
 }
 
 .info-label {
@@ -2409,14 +2343,42 @@ const nextWave = () => {
   margin-bottom: 5px;
 }
 
+/* 悬浮提示框 */
+.tooltip-popup {
+  position: fixed;
+  transform: translate(-50%, 0);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tooltip-popup::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid rgba(0, 0, 0, 0.85);
+}
+
 .info-value {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
-  color: #667eea;
+  color: #ffd700;
 }
 
 .command-warning .info-value {
-  color: #e74c3c;
+  color: #ff4444;
   animation: pulse 1s infinite;
 }
 
@@ -2445,9 +2407,13 @@ const nextWave = () => {
 
 .player-side {
   flex: 1;
-  background: white;
+  min-height: 530px;
+  background-image: url('/assets/ui_frame.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: 12px;
-  padding: 20px;
+  padding: 60px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
@@ -2456,14 +2422,15 @@ const nextWave = () => {
 .side-label {
   font-size: 18px;
   font-weight: bold;
-  color: #2c3e50;
+  color: #ffd700;
   text-align: center;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #667eea;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .formation.horizontal {
+  margin-top: 65px;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -2555,20 +2522,16 @@ const nextWave = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.85) 0%,
-    rgba(118, 75, 162, 0.85) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(102, 126, 234, 0.05) 0%,
+      rgba(118, 75, 162, 0.05) 100%);
   z-index: 1;
 }
 
 .card.enemy::before {
-  background: linear-gradient(
-    135deg,
-    rgba(231, 76, 60, 0.85) 0%,
-    rgba(192, 57, 43, 0.85) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(231, 76, 60, 0.05) 0%,
+      rgba(192, 57, 43, 0.05) 100%);
 }
 
 .card:hover {
@@ -2673,11 +2636,9 @@ const nextWave = () => {
   font-weight: bold;
   color: #fff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  background: linear-gradient(
-    180deg,
-    rgba(231, 76, 60, 0.9) 0%,
-    rgba(192, 57, 43, 0.9) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(231, 76, 60, 0.9) 0%,
+      rgba(192, 57, 43, 0.9) 100%);
   padding: 8px 20px;
   border-radius: 25px;
   margin-top: auto;
@@ -3126,70 +3087,96 @@ const nextWave = () => {
 
 .game-footer {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   gap: 20px;
+  padding: 15px 20px;
+  background: url('/assets/ui_top_bar_status.jpg') no-repeat center center;
+  background-size: cover;
 }
 
 .action-button {
-  flex: 1;
-  padding: 20px;
-  border: none;
+  flex: none;
+  padding: 12px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  color: white;
+  min-width: 100px;
+}
+
+.action-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .action-button.recruit {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  background: rgba(255, 255, 255, 0.4);
   color: white;
 }
 
 .action-button.recruit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .action-button.recruit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .action-button.end-turn {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  background: rgba(255, 255, 255, 0.4);
   color: white;
 }
 
-.action-button.end-turn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+.action-button.end-turn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .action-button.next-wave {
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  background: rgba(255, 255, 255, 0.4);
   color: white;
 }
 
-.action-button.next-wave:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+.action-button.next-wave:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .button-icon {
-  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 6px;
+  transition: all 0.3s ease;
+}
+
+.action-button:hover .button-icon {
+  transform: scale(1.2);
 }
 
 .button-text {
   font-weight: bold;
+  font-size: 14px;
 }
 
 .button-cost {
-  font-size: 14px;
+  font-size: 12px;
   opacity: 0.9;
+  margin-top: 4px;
 }
 
 @media (max-width: 894px) {
@@ -3222,7 +3209,10 @@ const nextWave = () => {
   }
 
   .game-footer {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    background: url('/assets/ui_top_bar_status.jpg') no-repeat center center;
+    background-size: cover;
   }
 
   .action-button {
@@ -3272,5 +3262,92 @@ const nextWave = () => {
 
 .status-icon.debuff:hover {
   background: rgba(180, 40, 50, 0.9);
+}
+
+/* 游戏开始界面 */
+.game-start-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-start-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(0.7);
+}
+
+.game-start-content {
+  position: relative;
+  z-index: 1001;
+  text-align: center;
+  color: white;
+  padding: 40px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+  max-width: 500px;
+  width: 90%;
+}
+
+.game-title {
+  font-size: 3rem;
+  margin-bottom: 40px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.progress-container {
+  width: 100%;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #45a049);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.progress-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .game-title {
+    font-size: 2rem;
+  }
+
+  .game-start-content {
+    padding: 30px;
+  }
+
+  .progress-container {
+    height: 15px;
+  }
+
+  .progress-text {
+    font-size: 1rem;
+  }
 }
 </style>

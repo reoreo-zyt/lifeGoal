@@ -39,7 +39,9 @@ watch(
 <style scoped>
 .battle-report {
   width: 350px;
-  background: white;
+  background-image: url('/assets/bg_scroll_ink.png');
+  background-size: cover;
+  background-position: center;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -50,30 +52,34 @@ watch(
 .report-header {
   text-align: center;
   padding-bottom: 15px;
-  border-bottom: 2px solid #667eea;
   margin-bottom: 15px;
 }
 
 .report-header h3 {
   margin: 0;
   font-size: 18px;
-  color: #2c3e50;
+  color: #ffd700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .report-content {
   flex: 1;
   overflow-y: auto;
+  min-height: 600px;
   max-height: 600px;
+  padding: 0 30px;
+  margin-top: 20px;
+  margin-bottom: 60px;
 }
 
 .report-item {
   padding: 10px;
   margin-bottom: 8px;
-  background: #f8f9fa;
+  background: rgba(0, 0, 0, 0.5);
   border-radius: 8px;
   font-size: 14px;
-  color: #2c3e50;
-  border-left: 3px solid #667eea;
+  color: #ffd700;
+  border-left: 3px solid #ffd700;
 }
 
 /* 滚动条样式 */
