@@ -1,9 +1,13 @@
 import { createYuchiJiong } from "./yuchi-jiong";
+import { createLuYanShi } from "./lu-yan-shi";
+import { createWeiShiKang } from "./wei-shi-kang";
 import type { General } from "./types";
 
 // 所有可招募的特殊武将
 export const specialGenerals = {
   yuchiJiong: createYuchiJiong,
+  luYanShi: createLuYanShi,
+  weiShiKang: createWeiShiKang,
 };
 
 // 获取特殊武将

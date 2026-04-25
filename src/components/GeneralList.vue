@@ -3,7 +3,7 @@
     <div class="general-list" @click.stop>
       <div class="list-header">
         <h3>选择武将</h3>
-        <button class="close-btn" @click="$emit('close')">×</button>
+        <button class="close-btn" @click="$emit('close')"></button>
       </div>
       <div class="general-items">
         <div v-if="generals.length === 0" class="empty-message">

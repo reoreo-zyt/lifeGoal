@@ -141,6 +141,13 @@
                         <span class="status-icon-inner">降率{{
                           playerFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.defenseReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.大营.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(playerFormation.大营.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.defenseReductionDuration}回合`">
+                        <span class="status-icon-inner">降防{{
+                          playerFormation.大营.skillEffects.defenseReductionDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-middle"></div>
                     <div class="card-bottom">
@@ -245,6 +252,13 @@
                         <span class="status-icon-inner">降率{{
                           playerFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.defenseReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.中军.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(playerFormation.中军.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.defenseReductionDuration}回合`">
+                        <span class="status-icon-inner">降防{{
+                          playerFormation.中军.skillEffects.defenseReductionDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -347,6 +361,13 @@
                         :title="`${playerFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`">
                         <span class="status-icon-inner">降率{{
                           playerFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.defenseReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${playerFormation.前锋.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(playerFormation.前锋.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.defenseReductionDuration}回合`">
+                        <span class="status-icon-inner">降防{{
+                          playerFormation.前锋.skillEffects.defenseReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -460,6 +481,13 @@
                         <span class="status-icon-inner">降率{{
                           enemyFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.defenseReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.前锋.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(enemyFormation.前锋.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.defenseReductionDuration}回合`">
+                        <span class="status-icon-inner">降防{{
+                          enemyFormation.前锋.skillEffects.defenseReductionDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -562,6 +590,13 @@
                         :title="`${enemyFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.skillTriggerReductionDuration}回合`">
                         <span class="status-icon-inner">降率{{
                           enemyFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.defenseReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.中军.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(enemyFormation.中军.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.defenseReductionDuration}回合`">
+                        <span class="status-icon-inner">降防{{
+                          enemyFormation.中军.skillEffects.defenseReductionDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -666,6 +701,13 @@
                         <span class="status-icon-inner">降率{{
                           enemyFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.defenseReduction > 0"
+                        class="status-icon debuff"
+                        :title="`${enemyFormation.大营.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(enemyFormation.大营.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.defenseReductionDuration}回合`">
+                        <span class="status-icon-inner">降防{{
+                          enemyFormation.大营.skillEffects.defenseReductionDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -711,15 +753,15 @@
 
         <!-- 底部操作按钮 -->
         <div class="game-footer">
-          <button class="action-button recruit" @click="recruitCard" :disabled="money < recruitCost"
+          <button class="action-button recruit" @click="recruitCard" :disabled="money < recruitCost || isBattleActive"
             @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
             <img src="/assets/open.webp" alt="卡包招募" class="button-icon">
           </button>
-          <button class="action-button end-turn" @click="endTurn" @mouseenter="showHeaderTooltip($event, 'start')"
+          <button class="action-button end-turn" @click="endTurn" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'start')"
             @mouseleave="hideHeaderTooltip">
             <img src="/assets/start.webp" alt="开始" class="button-icon">
           </button>
-          <button class="action-button next-wave" @click="nextWave" @mouseenter="showHeaderTooltip($event, 'next')"
+          <button class="action-button next-wave" @click="nextWave" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'next')"
             @mouseleave="hideHeaderTooltip">
             <img src="/assets/next.webp" alt="下一轮" class="button-icon">
           </button>
@@ -793,7 +835,6 @@ const currentYear = ref(initialGameData.currentYear);
 const currentWave = ref(initialGameData.currentWave);
 const totalWaves = ref(300);
 const currentTurn = ref(0);
-const maxTurns = ref(8);
 const recruitCost = ref(100);
 const maxCommand = ref(100);
 const currentCommand = ref(0);
@@ -985,7 +1026,7 @@ const handleLogin = (loginData: any) => {
 };
 
 const selectSlot = (side: "player" | "enemy", position: string) => {
-  if (side === "player") {
+  if (side === "player" && !isBattleActive.value) {
     selectedSlot.value = `${side}-${position}`;
     showGeneralList.value = true;
   }
@@ -1126,6 +1167,33 @@ const generateEnemyTeam = () => {
   addReport("敌方队伍已集结完毕！");
 };
 
+// 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
+const RECRUIT_CONFIG = [
+  { id: 633, probability: 0.25 },   // 尉迟迥 25%
+  { id: 69, probability: 0.25 },    // 李德林 25%
+  { id: 71, probability: 0.25 },  // 韦世康 25%
+  { id: 70, probability: 0.25 },    // 陆彦师 25%
+];
+
+// 获取武将的fetch函数映射
+const getFetchFunction = (id: number) => {
+  const fetchMap: { [key: number]: () => Promise<General | null> } = {
+    633: () => import('../skills/yuchi-jiong').then(m => m.fetchYuchiJiongFromDatabase(API_BASE_URL)),
+    69: () => import('../skills/li-de-lin').then(m => m.fetchLiDeLinFromDatabase(API_BASE_URL)),
+    71: () => import('../skills/wei-shi-kang').then(m => m.fetchWeiShiKangFromDatabase(API_BASE_URL)),
+    70: () => import('../skills/lu-yan-shi').then(m => m.fetchLuYanShiFromDatabase(API_BASE_URL)),
+  };
+  return fetchMap[id] || null;
+};
+
+// 格式化武将信息报告
+const formatGeneralReport = (general: General) => {
+  addReport(`恭喜获得【${general.name}】！等级:${general.level} 攻:${general.attack} 防:${general.defense} 策:${general.strategy} 速:${general.speed} 兵:${general.troops} 距:${general.attackRange} 统御:${general.command} 统率:${general.leadership} 兵种:${general.soldierType}`);
+  if (general.skills && general.skills.length > 0) {
+    addReport(`【${general.name}】自带战法：${general.skills[0].description}`);
+  }
+};
+
 const recruitCard = () => {
   if (money.value < recruitCost.value) {
     addReport("金额不足，无法招募！");
@@ -1134,53 +1202,27 @@ const recruitCard = () => {
 
   money.value -= recruitCost.value;
 
-  // 100%概率招募到设计好的武将（尉迟迥、李德林、陆彦师）
-  // 33%的概率招募尉迟迥，33%的概率招募李德林，34%的概率招募陆彦师
+  // 根据概率随机选择武将
   const random = Math.random();
-  if (random < 0.33) {
-    // 尝试从数据库获取尉迟迥的详细信息（包括头像）
-    import('../skills/yuchi-jiong').then(({ fetchYuchiJiongFromDatabase }) => {
-      fetchYuchiJiongFromDatabase(API_BASE_URL).then((yuchiJiong) => {
-        if (yuchiJiong) {
-          generals.value.push(yuchiJiong);
-          addReport(
-            `恭喜获得【${yuchiJiong.name}】！等级:${yuchiJiong.level} 攻:${yuchiJiong.attack} 防:${yuchiJiong.defense} 策:${yuchiJiong.strategy} 速:${yuchiJiong.speed} 兵:${yuchiJiong.troops} 距:${yuchiJiong.attackRange} 统御:${yuchiJiong.command} 统率:${yuchiJiong.leadership} 兵种:${yuchiJiong.soldierType}`,
-          );
-          addReport(
-            `【${yuchiJiong.name}】自带战法：${yuchiJiong.skills?.[0].description}`,
-          );
-        }
-      });
-    });
-  } else if (random < 0.66) {
-    // 尝试从数据库获取李德林的详细信息（包括头像）
-    import('../skills/li-de-lin').then(({ fetchLiDeLinFromDatabase }) => {
-      fetchLiDeLinFromDatabase(API_BASE_URL).then((liDeLin) => {
-        if (liDeLin) {
-          generals.value.push(liDeLin);
-          addReport(
-            `恭喜获得【${liDeLin.name}】！等级:${liDeLin.level} 攻:${liDeLin.attack} 防:${liDeLin.defense} 策:${liDeLin.strategy} 速:${liDeLin.speed} 兵:${liDeLin.troops} 距:${liDeLin.attackRange} 统御:${liDeLin.command} 统率:${liDeLin.leadership} 兵种:${liDeLin.soldierType}`,
-          );
-          addReport(
-            `【${liDeLin.name}】自带战法：${liDeLin.skills?.[0].description}`,
-          );
-        }
-      });
-    });
-  } else {
-    // 尝试从数据库获取陆彦师的详细信息（包括头像）
-    import('../skills/lu-yan-shi').then(({ fetchLuYanShiFromDatabase }) => {
-      fetchLuYanShiFromDatabase(API_BASE_URL).then((luYanShi) => {
-        if (luYanShi) {
-          generals.value.push(luYanShi);
-          addReport(
-            `恭喜获得【${luYanShi.name}】！等级:${luYanShi.level} 攻:${luYanShi.attack} 防:${luYanShi.defense} 策:${luYanShi.strategy} 速:${luYanShi.speed} 兵:${luYanShi.troops} 距:${luYanShi.attackRange} 统御:${luYanShi.command} 统率:${luYanShi.leadership} 兵种:${luYanShi.soldierType}`,
-          );
-          addReport(
-            `【${luYanShi.name}】自带战法：${luYanShi.skills?.[0].description}`,
-          );
-        }
-      });
+  let cumulativeProbability = 0;
+  let selectedGeneralId = RECRUIT_CONFIG[0].id;
+
+  for (const config of RECRUIT_CONFIG) {
+    cumulativeProbability += config.probability;
+    if (random < cumulativeProbability) {
+      selectedGeneralId = config.id;
+      break;
+    }
+  }
+
+  // 获取对应武将的fetch函数并执行
+  const fetchFn = getFetchFunction(selectedGeneralId);
+  if (fetchFn) {
+    fetchFn().then((general) => {
+      if (general) {
+        generals.value.push(general);
+        formatGeneralReport(general);
+      }
     });
   }
 };
@@ -1310,12 +1352,23 @@ const performAttack = (
 
   // 计算基础伤害
   let damage = 0;
+  
+  // 获取目标的防御降低效果（用于物理攻击）
+  let targetDefenseReduction = 0;
+  if (target.general.skillEffects && target.general.skillEffects.defenseReduction > 0) {
+    targetDefenseReduction = target.general.skillEffects.defenseReduction;
+  }
+  
   if (attackType === "physical") {
-    // 物理攻击：使用攻击和防御
+    // 物理攻击：使用攻击和防御（考虑防御降低效果）
+    const effectiveDefense = target.general.defense * (1 - targetDefenseReduction);
     damage = Math.max(
       0,
-      attacker.general.attack - target.general.defense / 2,
+      attacker.general.attack - effectiveDefense / 2,
     );
+    if (targetDefenseReduction > 0 && addReport) {
+      addReport(`【${target.general.name}】受【${target.general.skillEffects?.defenseReductionSource}】影响，防御降低${(targetDefenseReduction * 100).toFixed(0)}%！`);
+    }
   } else {
     // 策略攻击：使用攻击方谋略和防御方谋略
     // 公式：攻击方策略值 * 系数 - 防御方策略值 / 2
@@ -1865,260 +1918,247 @@ const startBattle = async () => {
   }
 
   isBattleActive.value = true;
-  initializeSpeedUnits();
 
-  // 战斗循环
-  for (let i = 1; i <= maxTurns.value; i++) {
+  // 战斗循环 - 共8回合
+  for (let i = 1; i <= 8; i++) {
     currentTurn.value = i;
     addReport(
       `<span style="color: #667eea; font-weight: bold;">========== 第 ${i} 回合开始！ ==========</span>`,
     );
 
-    // 每回合的行动循环
-    let actionCount = 0;
-    const maxActions = 20; // 防止无限循环
+    // 收集所有存活的武将
+    const allUnits: any = [];
+    
+    // 添加我方武将
+    Object.entries(playerFormation.value).forEach(([position, general]) => {
+      if (general && !general.isDead) {
+        allUnits.push({
+          general,
+          side: "player" as const,
+          position
+        });
+      }
+    });
+    
+    // 添加敌方武将
+    Object.entries(enemyFormation.value).forEach(([position, general]) => {
+      if (general && !general.isDead) {
+        allUnits.push({
+          general,
+          side: "enemy" as const,
+          position
+        });
+      }
+    });
+    
+    // 按速度从快到慢排序
+    allUnits.sort((a: any, b: any) => b.general.speed - a.general.speed);
+    
     let unitIndex = 1;
-    let loopCount = 0; // 循环计数器
-    let actionThisRound = false; // 本轮是否有行动
+    
+    // 依次执行每个武将的行动
+    for (const unit of allUnits) {
+      if (unit.general.isDead) continue;
+      
+      // 详细播报当前行动者信息
+      const sidePrefix = unit.side === "player" ? "我方" : "敌方";
+      addReport(
+        `== ${unitIndex}. ${sidePrefix}${unit.position}【${unit.general.name}】开始行动（速度：${unit.general.speed}）==`,
+      );
+      addReport(
+        `兵力：${unit.general.troops}，攻击：${unit.general.attack}，防御：${unit.general.defense}，策略：${unit.general.strategy}，速度：${unit.general.speed}，攻击距离：${unit.general.attackRange}，攻城：${unit.general.siege}`,
+      );
 
-    while (actionCount < maxActions) {
-      loopCount++;
-      if (loopCount % 10 === 0) {
-        // 每10次循环播报一次进度
-        addReport(`回合进行中...（速度累积中，第${loopCount}轮）`);
-      }
+      // 角色回合开始时触发turnStart事件（用于减少降攻等效果的持续回合数）
+      const turnStartContext = {
+        type: "turnStart",
+        event: "startOfTurn",
+        currentTroops: unit.general.troops,
+        maxTroops: unit.general.maxTroops,
+      };
 
-      updateSpeed();
-      const readyUnit = checkSpeedThreshold();
+      // 处理当前角色的技能效果
+      triggerSkillEffects(unit.general, turnStartContext);
 
-      if (readyUnit) {
-        actionThisRound = true;
-        readyUnit.isActive = true;
-
-        // 详细播报当前行动者信息
-        const sidePrefix = readyUnit.side === "player" ? "我方" : "敌方";
-        addReport(
-          `== ${unitIndex}. ${sidePrefix}${readyUnit.position}【${readyUnit.general.name}】开始行动（速度达到100）==`,
-        );
-        addReport(
-          `兵力：${readyUnit.general.troops}，攻击：${readyUnit.general.attack}，防御：${readyUnit.general.defense}，策略：${readyUnit.general.strategy}，速度：${readyUnit.general.speed}，攻击距离：${readyUnit.general.attackRange}，攻城：${readyUnit.general.siege}`,
-        );
-
-        // 角色回合开始时触发turnStart事件（用于减少降攻等效果的持续回合数）
-        const turnStartContext = {
-          type: "turnStart",
-          event: "startOfTurn",
-          currentTroops: readyUnit.general.troops,
-          maxTroops: readyUnit.general.maxTroops,
-        };
-
-        // 处理当前角色的技能效果
-        triggerSkillEffects(readyUnit.general, turnStartContext);
-
-        // 直接处理当前角色的skillEffects中的持续效果
-        if (readyUnit.general.skillEffects) {
-          // 处理伤害输出降低效果
-          if (readyUnit.general.skillEffects.damageOutputReductionDuration > 0) {
-            readyUnit.general.skillEffects.damageOutputReductionDuration -= 1;
-            addReport(
-              `【${readyUnit.general.name}】的降攻效果剩余${readyUnit.general.skillEffects.damageOutputReductionDuration}回合`,
-            );
-            if (readyUnit.general.skillEffects.damageOutputReductionDuration === 0) {
-              const source = readyUnit.general.skillEffects.damageOutputReductionSource || "";
-              readyUnit.general.skillEffects.damageOutputReduction = 0;
-              readyUnit.general.skillEffects.damageOutputReductionSource = '';
-              addReport(
-                `【${readyUnit.general.name}】${source}的伤害输出降低效果结束！`,
-              );
-            }
-          }
-
-          // 处理战法发动概率降低效果
-          if (readyUnit.general.skillEffects.skillTriggerReductionDuration > 0) {
-            readyUnit.general.skillEffects.skillTriggerReductionDuration -= 1;
-            addReport(
-              `【${readyUnit.general.name}】的战法发动概率降低效果剩余${readyUnit.general.skillEffects.skillTriggerReductionDuration}回合`,
-            );
-            if (readyUnit.general.skillEffects.skillTriggerReductionDuration === 0) {
-              const source = readyUnit.general.skillEffects.skillTriggerReductionSource || "";
-              readyUnit.general.skillEffects.skillTriggerReduction = 0;
-              readyUnit.general.skillEffects.skillTriggerReductionSource = '';
-              addReport(
-                `【${readyUnit.general.name}】${source}的战法发动概率降低效果结束！`,
-              );
-            }
-          }
-        }
-
-        // 触发主动战法
-        let activeSkillTriggered = false;
-        if (readyUnit.general.skills) {
-          for (const skill of readyUnit.general.skills) {
-            if (skill.type === "active") {
-              // 触发前检查是否有战法发动概率降低效果
-              const beforeTriggerContext = {
-                type: "activeSkill",
-                event: "beforeTrigger",
-                currentTroops: readyUnit.general.troops,
-                maxTroops: readyUnit.general.maxTroops,
-                addReport
-              };
-              const beforeTriggerResult = skill.effect(readyUnit.general, beforeTriggerContext);
-
-              // 应用战法发动概率降低效果
-              let finalTriggerChance = 1;
-              if (beforeTriggerResult && beforeTriggerResult.triggerReduction) {
-                finalTriggerChance = 1 - beforeTriggerResult.triggerReduction;
-              }
-
-              // 检查是否触发
-              if (Math.random() < finalTriggerChance) {
-                const targets = getTargetsInRange({
-                  general: readyUnit.general,
-                  side: readyUnit.side,
-                  position: readyUnit.position,
-                });
-
-                // 找到友军目标（用于治疗效果）
-                const allies: General[] = [];
-                if (readyUnit.side === "player") {
-                  Object.values(playerFormation.value).forEach((general) => {
-                    if (general && !general.isDead) {
-                      allies.push(general);
-                    }
-                  });
-                } else {
-                  Object.values(enemyFormation.value).forEach((general) => {
-                    if (general && !general.isDead) {
-                      allies.push(general);
-                    }
-                  });
-                }
-
-                if (targets.length > 0) {
-                  const skillContext = {
-                    type: "activeSkill",
-                    event: "trigger",
-                    currentTroops: readyUnit.general.troops,
-                    maxTroops: readyUnit.general.maxTroops,
-                    targets: targets.map(t => t.general),
-                    allies: allies,
-                    addReport
-                  };
-                  const skillResult = skill.effect(readyUnit.general, skillContext);
-                  if (skillResult && skillResult.triggered) {
-                    activeSkillTriggered = true;
-                    // 显示技能释放台词
-                    if (readyUnit.general.quotes && readyUnit.general.quotes.skill && readyUnit.general.quotes.skill.length > 0) {
-                      const skillQuote = getRandomQuote(readyUnit.general.quotes.skill);
-                      showQuoteText(skillQuote, readyUnit.side, readyUnit.position);
-                    }
-                    
-                    // 为技能伤害添加受击音效和动画
-                    targets.forEach((target) => {
-                      // 播放受击音效
-                      const audio = new Audio('/assets/audios/hint.mp4');
-                      audio.play().catch(e => console.error('播放音效失败:', e));
-                      
-                      // 触发受击动画
-                      const targetCard = document.querySelector(`[data-card-side="${target.side}"][data-card-position="${target.position}"]`);
-                      if (targetCard) {
-                        targetCard.classList.add('hit');
-                        setTimeout(() => {
-                          targetCard.classList.remove('hit');
-                        }, 500);
-                      }
-                    });
-                    
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        // 如果主动战法未触发，执行普通攻击（物理伤害）
-        if (!activeSkillTriggered) {
-          const targets = getTargetsInRange({
-            general: readyUnit.general,
-            side: readyUnit.side,
-            position: readyUnit.position,
-          });
-
-          if (targets.length > 0) {
-            addReport(`可攻击目标：${targets.length}个`);
-            const target = targets[Math.floor(Math.random() * targets.length)];
-            // 普通攻击都是物理伤害
-            await performAttackWithAnimation(
-              {
-                general: readyUnit.general,
-                side: readyUnit.side,
-                position: readyUnit.position,
-              },
-              target,
-              "physical"
-            );
-          } else {
-            addReport(`范围内没有可攻击的目标！`);
-          }
-        }
-
-        resetUnitSpeed(readyUnit);
-        actionCount++;
-        unitIndex++;
-
-        // 检查游戏结束条件
-        if (checkGameOver()) {
-          isBattleActive.value = false;
-          return;
-        }
-
-        // 增加行动间隔时间，让用户能看到详细播报
-        await new Promise((resolve) => setTimeout(resolve, 400));
-      } else {
-        // 没有单位可以行动，继续下一轮增速
-        if (loopCount % 20 === 0) {
-          addReport(`回合进行中...（正在加速累积，预计还需时间）`);
-        }
-
-        // 检查是否所有单位都已达最大速度，如果是的话自动给速度最快的单位一个随机数值
-        let anyCanAct = false;
-        let maxSpeedUnit = null;
-        let maxSpeed = 0;
-
-        for (const unit of speedUnits.value) {
-          if (!unit.general.isDead && unit.speed < 100) {
-            anyCanAct = true;
-            if (unit.speed > maxSpeed) {
-              maxSpeed = unit.speed;
-              maxSpeedUnit = unit;
-            }
-          }
-        }
-
-        // 如果没有任何单位可以达到100速度，给最快单位一些额外加速
-        if (!anyCanAct && maxSpeedUnit) {
-          maxSpeedUnit.speed += 10 + Math.random() * 10;
+      // 直接处理当前角色的skillEffects中的持续效果
+      if (unit.general.skillEffects) {
+        // 处理伤害输出降低效果
+        if (unit.general.skillEffects.damageOutputReductionDuration > 0) {
+          unit.general.skillEffects.damageOutputReductionDuration -= 1;
           addReport(
-            `🔄 加速机制触发：${maxSpeedUnit.side === "player" ? "我方" : "敌方"}${maxSpeedUnit.position}【${maxSpeedUnit.general.name}】获得额外加速`,
+            `【${unit.general.name}】的降攻效果剩余${unit.general.skillEffects.damageOutputReductionDuration}回合`,
           );
+          if (unit.general.skillEffects.damageOutputReductionDuration === 0) {
+            const source = unit.general.skillEffects.damageOutputReductionSource || "";
+            unit.general.skillEffects.damageOutputReduction = 0;
+            unit.general.skillEffects.damageOutputReductionSource = '';
+            addReport(
+              `【${unit.general.name}】${source}的伤害输出降低效果结束！`,
+            );
+          }
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // 如果连续多个循环都没有行动，强制退出以避免死循环
-        if (loopCount > 50 && !actionThisRound) {
-          addReport(`回合等待超时，当前回合无有效行动，进入下一回合...`);
-          break;
+        // 处理战法发动概率降低效果
+        if (unit.general.skillEffects.skillTriggerReductionDuration > 0) {
+          unit.general.skillEffects.skillTriggerReductionDuration -= 1;
+          addReport(
+            `【${unit.general.name}】的战法发动概率降低效果剩余${unit.general.skillEffects.skillTriggerReductionDuration}回合`,
+          );
+          if (unit.general.skillEffects.skillTriggerReductionDuration === 0) {
+            const source = unit.general.skillEffects.skillTriggerReductionSource || "";
+            unit.general.skillEffects.skillTriggerReduction = 0;
+            unit.general.skillEffects.skillTriggerReductionSource = '';
+            addReport(
+              `【${unit.general.name}】${source}的战法发动概率降低效果结束！`,
+            );
+          }
         }
 
-        continue;
+        // 处理防御降低效果
+        if (unit.general.skillEffects.defenseReductionDuration > 0) {
+          unit.general.skillEffects.defenseReductionDuration -= 1;
+          addReport(
+            `【${unit.general.name}】的防御降低效果剩余${unit.general.skillEffects.defenseReductionDuration}回合`,
+          );
+          if (unit.general.skillEffects.defenseReductionDuration === 0) {
+            const source = unit.general.skillEffects.defenseReductionSource || "";
+            unit.general.skillEffects.defenseReduction = 0;
+            unit.general.skillEffects.defenseReductionSource = '';
+            addReport(
+              `【${unit.general.name}】${source}的防御降低效果结束！`,
+            );
+          }
+        }
       }
+
+      // 触发主动战法
+      let activeSkillTriggered = false;
+      if (unit.general.skills) {
+        for (const skill of unit.general.skills) {
+          if (skill.type === "active") {
+            // 触发前检查是否有战法发动概率降低效果
+            const beforeTriggerContext = {
+              type: "activeSkill",
+              event: "beforeTrigger",
+              currentTroops: unit.general.troops,
+              maxTroops: unit.general.maxTroops,
+              addReport
+            };
+            const beforeTriggerResult = skill.effect(unit.general, beforeTriggerContext);
+
+            // 应用战法发动概率降低效果
+            let finalTriggerChance = 1;
+            if (beforeTriggerResult && beforeTriggerResult.triggerReduction) {
+              finalTriggerChance = 1 - beforeTriggerResult.triggerReduction;
+            }
+
+            // 检查是否触发
+            if (Math.random() < finalTriggerChance) {
+              const targets = getTargetsInRange({
+                general: unit.general,
+                side: unit.side,
+                position: unit.position,
+              });
+
+              // 找到友军目标（用于治疗效果）
+              const allies: General[] = [];
+              if (unit.side === "player") {
+                Object.values(playerFormation.value).forEach((general) => {
+                  if (general && !general.isDead) {
+                    allies.push(general);
+                  }
+                });
+              } else {
+                Object.values(enemyFormation.value).forEach((general) => {
+                  if (general && !general.isDead) {
+                    allies.push(general);
+                  }
+                });
+              }
+
+              if (targets.length > 0) {
+                const skillContext = {
+                  type: "activeSkill",
+                  event: "trigger",
+                  currentTroops: unit.general.troops,
+                  maxTroops: unit.general.maxTroops,
+                  targets: targets.map(t => t.general),
+                  allies: allies,
+                  addReport
+                };
+                const skillResult = skill.effect(unit.general, skillContext);
+                if (skillResult && skillResult.triggered) {
+                  activeSkillTriggered = true;
+                  // 显示技能释放台词
+                  if (unit.general.quotes && unit.general.quotes.skill && unit.general.quotes.skill.length > 0) {
+                    const skillQuote = getRandomQuote(unit.general.quotes.skill);
+                    showQuoteText(skillQuote, unit.side, unit.position);
+                  }
+                  
+                  // 为技能伤害添加受击音效和动画
+                  targets.forEach((target) => {
+                    // 播放受击音效
+                    const audio = new Audio('/assets/audios/hint.mp4');
+                    audio.play().catch(e => console.error('播放音效失败:', e));
+                    
+                    // 触发受击动画
+                    const targetCard = document.querySelector(`[data-card-side="${target.side}"][data-card-position="${target.position}"]`);
+                    if (targetCard) {
+                      targetCard.classList.add('hit');
+                      setTimeout(() => {
+                        targetCard.classList.remove('hit');
+                      }, 500);
+                    }
+                  });
+                  
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 如果主动战法未触发，执行普通攻击（物理伤害）
+      if (!activeSkillTriggered) {
+        const targets = getTargetsInRange({
+          general: unit.general,
+          side: unit.side,
+          position: unit.position,
+        });
+
+        if (targets.length > 0) {
+          addReport(`可攻击目标：${targets.length}个`);
+          const target = targets[Math.floor(Math.random() * targets.length)];
+          // 普通攻击都是物理伤害
+          await performAttackWithAnimation(
+            {
+              general: unit.general,
+              side: unit.side,
+              position: unit.position,
+            },
+            target,
+            "physical"
+          );
+        } else {
+          addReport(`范围内没有可攻击的目标！`);
+        }
+      }
+
+      unitIndex++;
+
+      // 检查游戏结束条件
+      if (checkGameOver()) {
+        isBattleActive.value = false;
+        return;
+      }
+
+      // 增加行动间隔时间，让用户能看到详细播报
+      await new Promise((resolve) => setTimeout(resolve, 400));
     }
 
     // 回合统计
-    if (actionThisRound) {
+    if (allUnits.length > 0) {
       addReport(`本轮共进行了${unitIndex - 1}次有效行动`);
     } else {
       addReport(`本回合没有单位行动`);
@@ -2137,23 +2177,28 @@ const startBattle = async () => {
       triggerSkillEffects(generalData.general, turnEndContext);
     }
 
-    // 如果不是最后一回合，添加回合结束播报
-    if (i < maxTurns.value) {
-      addReport(`========== 第 ${i} 回合结束！ ==========`);
-    } else {
-      addReport(`========== 第 ${i} 回合结束！ ==========`);
-      addReport("8个回合结束！");
-    }
+    // 回合结束播报
+    addReport(`========== 第 ${i} 回合结束！ ==========`);
 
     // 回合间等待时间
-    if (i < maxTurns.value) {
+    if (i < 8) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 
   // 8回合结束后
   addReport("8回合结束！");
-  checkGameOverByTurns();
+  
+  // 检查是否和局（双方大营都存活）
+  const playerCavalryAlive = playerFormation.value.大营 && !playerFormation.value.大营.isDead;
+  const enemyCavalryAlive = enemyFormation.value.大营 && !enemyFormation.value.大营.isDead;
+  
+  if (playerCavalryAlive && enemyCavalryAlive) {
+    addReport("<span style='color: #f39c12; font-weight: bold;'>战斗结果：和局！双方大营都存活。</span>");
+  } else {
+    checkGameOverByTurns();
+  }
+  
   isBattleActive.value = false;
 };
 
