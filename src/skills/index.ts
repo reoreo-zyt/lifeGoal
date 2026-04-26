@@ -1,6 +1,12 @@
 import { createYuchiJiong } from "./yuchi-jiong";
 import { createLuYanShi } from "./lu-yan-shi";
 import { createWeiShiKang } from "./wei-shi-kang";
+import { createFengCiMing } from "./feng-ci-ming";
+import { createDiWuQi } from "./di-wu-qi";
+import { createShangGuanYi } from "./shang-guan-yi";
+import { createYangWenSi } from "./yang-wen-si";
+import { createWeiYi } from "./wei-yi";
+import { createHanQinHu } from "./han-qin-hu";
 import type { General } from "./types";
 
 // 所有可招募的特殊武将
@@ -8,6 +14,12 @@ export const specialGenerals = {
   yuchiJiong: createYuchiJiong,
   luYanShi: createLuYanShi,
   weiShiKang: createWeiShiKang,
+  fengCiMing: createFengCiMing,
+  diWuQi: createDiWuQi,
+  shangGuanYi: createShangGuanYi,
+  yangWenSi: createYangWenSi,
+  weiYi: createWeiYi,
+  hanQinHu: createHanQinHu,
 };
 
 // 获取特殊武将

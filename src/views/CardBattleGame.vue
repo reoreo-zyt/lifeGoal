@@ -127,26 +127,13 @@
                         :title="`${playerFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
-                      <div
-                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageOutputReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.damageOutputReductionDuration}回合`">
-                        <span class="status-icon-inner">降攻{{
-                          playerFormation.大营.skillEffects.damageOutputReductionDuration }}</span>
+                      <div v-for="status in getPassiveBuffStatusList(playerFormation.大营)" :key="status.key"
+                        class="status-icon buff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
-                      <div
-                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.skillTriggerReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.skillTriggerReductionDuration}回合`">
-                        <span class="status-icon-inner">降率{{
-                          playerFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
-                      </div>
-                      <div
-                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.defenseReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.大营.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(playerFormation.大营.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.defenseReductionDuration}回合`">
-                        <span class="status-icon-inner">降防{{
-                          playerFormation.大营.skillEffects.defenseReductionDuration }}</span>
+                      <div v-for="status in getDebuffStatusList(playerFormation.大营)" :key="status.key"
+                        class="status-icon debuff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
                       <div
                         v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.recoveryFromDebuff > 0"
@@ -245,26 +232,13 @@
                         :title="`${playerFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
-                      <div
-                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageOutputReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.damageOutputReductionDuration}回合`">
-                        <span class="status-icon-inner">降攻{{
-                          playerFormation.中军.skillEffects.damageOutputReductionDuration }}</span>
+                      <div v-for="status in getPassiveBuffStatusList(playerFormation.中军)" :key="status.key"
+                        class="status-icon buff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
-                      <div
-                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.skillTriggerReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.skillTriggerReductionDuration}回合`">
-                        <span class="status-icon-inner">降率{{
-                          playerFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
-                      </div>
-                      <div
-                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.defenseReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.中军.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(playerFormation.中军.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.defenseReductionDuration}回合`">
-                        <span class="status-icon-inner">降防{{
-                          playerFormation.中军.skillEffects.defenseReductionDuration }}</span>
+                      <div v-for="status in getDebuffStatusList(playerFormation.中军)" :key="status.key"
+                        class="status-icon debuff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
                       <div
                         v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.recoveryFromDebuff > 0"
@@ -362,26 +336,13 @@
                         :title="`${playerFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
-                      <div
-                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageOutputReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(playerFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.damageOutputReductionDuration}回合`">
-                        <span class="status-icon-inner">降攻{{
-                          playerFormation.前锋.skillEffects.damageOutputReductionDuration }}</span>
+                      <div v-for="status in getPassiveBuffStatusList(playerFormation.前锋)" :key="status.key"
+                        class="status-icon buff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
-                      <div
-                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.skillTriggerReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(playerFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`">
-                        <span class="status-icon-inner">降率{{
-                          playerFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
-                      </div>
-                      <div
-                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.defenseReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${playerFormation.前锋.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(playerFormation.前锋.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.defenseReductionDuration}回合`">
-                        <span class="status-icon-inner">降防{{
-                          playerFormation.前锋.skillEffects.defenseReductionDuration }}</span>
+                      <div v-for="status in getDebuffStatusList(playerFormation.前锋)" :key="status.key"
+                        class="status-icon debuff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
                       <div
                         v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.recoveryFromDebuff > 0"
@@ -488,26 +449,13 @@
                         :title="`${enemyFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageOutputReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.前锋.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.前锋.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.damageOutputReductionDuration}回合`">
-                        <span class="status-icon-inner">降攻{{
-                          enemyFormation.前锋.skillEffects.damageOutputReductionDuration }}</span>
+                      <div v-for="status in getPassiveBuffStatusList(enemyFormation.前锋)" :key="status.key"
+                        class="status-icon buff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.skillTriggerReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.前锋.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.前锋.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.skillTriggerReductionDuration}回合`">
-                        <span class="status-icon-inner">降率{{
-                          enemyFormation.前锋.skillEffects.skillTriggerReductionDuration }}</span>
-                      </div>
-                      <div
-                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.defenseReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.前锋.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(enemyFormation.前锋.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.defenseReductionDuration}回合`">
-                        <span class="status-icon-inner">降防{{
-                          enemyFormation.前锋.skillEffects.defenseReductionDuration }}</span>
+                      <div v-for="status in getDebuffStatusList(enemyFormation.前锋)" :key="status.key"
+                        class="status-icon debuff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
                       <div
                         v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.recoveryFromDebuff > 0"
@@ -605,26 +553,13 @@
                         :title="`${enemyFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageOutputReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.中军.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.中军.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.damageOutputReductionDuration}回合`">
-                        <span class="status-icon-inner">降攻{{
-                          enemyFormation.中军.skillEffects.damageOutputReductionDuration }}</span>
+                      <div v-for="status in getPassiveBuffStatusList(enemyFormation.中军)" :key="status.key"
+                        class="status-icon buff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.skillTriggerReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.中军.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.中军.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.skillTriggerReductionDuration}回合`">
-                        <span class="status-icon-inner">降率{{
-                          enemyFormation.中军.skillEffects.skillTriggerReductionDuration }}</span>
-                      </div>
-                      <div
-                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.defenseReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.中军.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(enemyFormation.中军.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.defenseReductionDuration}回合`">
-                        <span class="status-icon-inner">降防{{
-                          enemyFormation.中军.skillEffects.defenseReductionDuration }}</span>
+                      <div v-for="status in getDebuffStatusList(enemyFormation.中军)" :key="status.key"
+                        class="status-icon debuff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
                       <div
                         v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.recoveryFromDebuff > 0"
@@ -722,26 +657,13 @@
                         :title="`${enemyFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`">
                         <span class="status-icon-inner">增伤</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageOutputReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.大营.skillEffects.damageOutputReductionSource || '未知来源'}：伤害输出降低 ${(enemyFormation.大营.skillEffects.damageOutputReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.damageOutputReductionDuration}回合`">
-                        <span class="status-icon-inner">降攻{{
-                          enemyFormation.大营.skillEffects.damageOutputReductionDuration }}</span>
+                      <div v-for="status in getPassiveBuffStatusList(enemyFormation.大营)" :key="status.key"
+                        class="status-icon buff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
-                      <div
-                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.skillTriggerReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.大营.skillEffects.skillTriggerReductionSource || '未知来源'}：战法发动概率降低 ${(enemyFormation.大营.skillEffects.skillTriggerReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.skillTriggerReductionDuration}回合`">
-                        <span class="status-icon-inner">降率{{
-                          enemyFormation.大营.skillEffects.skillTriggerReductionDuration }}</span>
-                      </div>
-                      <div
-                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.defenseReduction > 0"
-                        class="status-icon debuff"
-                        :title="`${enemyFormation.大营.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(enemyFormation.大营.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.defenseReductionDuration}回合`">
-                        <span class="status-icon-inner">降防{{
-                          enemyFormation.大营.skillEffects.defenseReductionDuration }}</span>
+                      <div v-for="status in getDebuffStatusList(enemyFormation.大营)" :key="status.key"
+                        class="status-icon debuff" :title="status.title">
+                        <span class="status-icon-inner">{{ status.text }}</span>
                       </div>
                       <div
                         v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.recoveryFromDebuff > 0"
@@ -1211,11 +1133,17 @@ const generateEnemyTeam = () => {
 
 // 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
 const RECRUIT_CONFIG = [
-  { id: 633, probability: 0.20 },   // 尉迟迥 20%
-  { id: 69, probability: 0.20 },    // 李德林 20%
-  { id: 71, probability: 0.20 },    // 韦世康 20%
-  { id: 70, probability: 0.20 },    // 陆彦师 20%
-  { id: 515, probability: 0.20 },   // 元岩 20%
+  { id: 633, probability: 0.091 }, // 尉迟迥
+  { id: 69, probability: 0.091 }, // 李德林
+  { id: 71, probability: 0.091 }, // 韦世康
+  { id: 70, probability: 0.091 }, // 陆彦师
+  { id: 515, probability: 0.091 }, // 元岩
+  { id: 577, probability: 0.09 }, // 冯慈明
+  { id: 739, probability: 0.091 }, // 第五琦
+  { id: 707, probability: 0.091 }, // 上官仪
+  { id: 66, probability: 0.091 }, // 杨文思
+  { id: 73, probability: 0.091 }, // 韦艺
+  { id: 43, probability: 0.091 }, // 韩擒虎
 ];
 
 // 获取武将的fetch函数映射
@@ -1226,6 +1154,12 @@ const getFetchFunction = (id: number) => {
     71: () => import('../skills/wei-shi-kang').then(m => m.fetchWeiShiKangFromDatabase(API_BASE_URL)),
     70: () => import('../skills/lu-yan-shi').then(m => m.fetchLuYanShiFromDatabase(API_BASE_URL)),
     515: () => import('../skills/yuan-yan-shi').then(m => m.fetchYuanYanFromDatabase(API_BASE_URL)),
+    577: () => import('../skills/feng-ci-ming').then(m => m.fetchFengCiMingFromDatabase(API_BASE_URL)),
+    739: () => import('../skills/di-wu-qi').then(m => m.fetchDiWuQiFromDatabase(API_BASE_URL)),
+    707: () => import('../skills/shang-guan-yi').then(m => m.fetchShangGuanYiFromDatabase(API_BASE_URL)),
+    66: () => import('../skills/yang-wen-si').then(m => m.fetchYangWenSiFromDatabase(API_BASE_URL)),
+    73: () => import('../skills/wei-yi').then(m => m.fetchWeiYiFromDatabase(API_BASE_URL)),
+    43: () => import('../skills/han-qin-hu').then(m => m.fetchHanQinHuFromDatabase(API_BASE_URL)),
   };
   return fetchMap[id] || null;
 };
@@ -1236,6 +1170,57 @@ const formatGeneralReport = (general: General) => {
   if (general.skills && general.skills.length > 0) {
     addReport(`【${general.name}】自带战法：${general.skills[0].description}`);
   }
+};
+
+const getDebuffStatusList = (general: General | null | undefined) => {
+  const effects = general?.skillEffects || {};
+  const statuses = [
+    {
+      key: "damageOutputReduction",
+      active: !!effects.damageOutputReduction && effects.damageOutputReduction > 0,
+      text: `降攻${effects.damageOutputReductionDuration || 0}`,
+      title: `${effects.damageOutputReductionSource || "未知来源"}：伤害输出降低 ${((effects.damageOutputReduction || 0) * 100).toFixed(0)}%，持续${effects.damageOutputReductionDuration || 0}回合`,
+    },
+    {
+      key: "skillTriggerReduction",
+      active: !!effects.skillTriggerReduction && effects.skillTriggerReduction > 0,
+      text: `降率${effects.skillTriggerReductionDuration || 0}`,
+      title: `${effects.skillTriggerReductionSource || "未知来源"}：战法发动概率降低 ${((effects.skillTriggerReduction || 0) * 100).toFixed(0)}%，持续${effects.skillTriggerReductionDuration || 0}回合`,
+    },
+    {
+      key: "defenseReduction",
+      active: !!effects.defenseReduction && effects.defenseReduction > 0,
+      text: `降防${effects.defenseReductionDuration || 0}`,
+      title: `${effects.defenseReductionSource || "未知来源"}：防御降低 ${((effects.defenseReduction || 0) * 100).toFixed(0)}%，持续${effects.defenseReductionDuration || 0}回合`,
+    },
+    {
+      key: "cannotNormalAttack",
+      active: !!effects.cannotNormalAttack && (effects.cannotNormalAttackDuration || 0) > 0,
+      text: `怯战${effects.cannotNormalAttackDuration || 0}`,
+      title: `${effects.cannotNormalAttackSource || "未知来源"}：陷入怯战（无法普攻），持续${effects.cannotNormalAttackDuration || 0}回合`,
+    },
+  ];
+
+  return statuses.filter((status) => status.active);
+};
+
+const getPassiveBuffStatusList = (general: General | null | undefined) => {
+  const effects = general?.skillEffects || {};
+  const statuses = [];
+
+  if ((effects.passiveDamageTagValue || 0) > 0) {
+    const chanceText =
+      (effects.passiveDamageTagChance || 0) > 0
+        ? `，触发概率${((effects.passiveDamageTagChance || 0) * 100).toFixed(0)}%`
+        : "";
+    statuses.push({
+      key: "passiveDamageTag",
+      text: effects.passiveDamageTagLabel || "被动增伤",
+      title: `${effects.passiveDamageTagSource || "被动效果"}：增伤${((effects.passiveDamageTagValue || 0) * 100).toFixed(0)}%${chanceText}`,
+    });
+  }
+
+  return statuses;
 };
 
 const recruitCard = () => {
@@ -2115,6 +2100,22 @@ const startBattle = async () => {
             );
           }
         }
+
+        // 处理怯战（无法普攻）效果
+        if (unit.general.skillEffects.cannotNormalAttackDuration > 0) {
+          unit.general.skillEffects.cannotNormalAttackDuration -= 1;
+          addReport(
+            `【${unit.general.name}】的怯战效果剩余${unit.general.skillEffects.cannotNormalAttackDuration}回合`,
+          );
+          if (unit.general.skillEffects.cannotNormalAttackDuration === 0) {
+            const source = unit.general.skillEffects.cannotNormalAttackSource || "";
+            unit.general.skillEffects.cannotNormalAttack = false;
+            unit.general.skillEffects.cannotNormalAttackSource = '';
+            addReport(
+              `【${unit.general.name}】${source}的怯战效果结束！`,
+            );
+          }
+        }
       }
 
       // 触发指挥战法效果（每回合开始时）
@@ -2226,6 +2227,21 @@ const startBattle = async () => {
 
       // 如果主动战法未触发，执行普通攻击（物理伤害）
       if (!activeSkillTriggered) {
+        // 怯战状态下无法进行普通攻击
+        if (
+          unit.general.skillEffects?.cannotNormalAttack &&
+          unit.general.skillEffects?.cannotNormalAttackDuration > 0
+        ) {
+          addReport(`【${unit.general.name}】处于怯战状态，无法发动普通攻击！`);
+          unitIndex++;
+          if (checkGameOver()) {
+            isBattleActive.value = false;
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          continue;
+        }
+
         const targets = getTargetsInRange({
           general: unit.general,
           side: unit.side,
