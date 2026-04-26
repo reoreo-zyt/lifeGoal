@@ -17,8 +17,9 @@
           :class="{
             deployed: isDeployed(general),
             selected: isActiveSlotGeneral(general),
+            resting: isResting(general),
           }"
-          @click="$emit('select', general)"
+          @click="handleSelect(general)"
           @contextmenu="$emit('show-tooltip', general, $event)"
         >
           <div
@@ -48,6 +49,9 @@
               </div>
             </div>
             <div v-if="isDeployed(general)" class="deployed-badge">已上阵</div>
+            <div v-if="isResting(general)" class="resting-badge">
+              休整{{ getRecoveryRounds(general) }}轮
+            </div>
             <div class="card-middle"></div>
             <div class="card-bottom">
               <div class="card-bottom-item">
@@ -82,9 +86,10 @@ const props = defineProps<{
   API_BASE_URL: string;
   deployedGeneralIds: number[];
   activeSlotGeneralId: number | null;
+  restRoundsById: Record<number, number>;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "close"): void;
   (e: "select", general: General): void;
   (e: "show-tooltip", general: General, event: MouseEvent): void;
@@ -99,6 +104,15 @@ const isDeployed = (general: General) => props.deployedGeneralIds.includes(gener
 
 const isActiveSlotGeneral = (general: General) =>
   props.activeSlotGeneralId !== null && props.activeSlotGeneralId === general.id;
+
+const getRecoveryRounds = (general: General) => Math.max(0, (props.restRoundsById[general.id] || 0) - 1);
+
+const isResting = (general: General) => getRecoveryRounds(general) > 0;
+
+const handleSelect = (general: General) => {
+  if (isResting(general)) return;
+  emit("select", general);
+};
 </script>
 
 <style scoped>
@@ -187,6 +201,15 @@ const isActiveSlotGeneral = (general: General) =>
 
 .general-item.selected .card {
   box-shadow: 0 0 0 3px rgba(102, 190, 255, 0.95), 0 0 14px rgba(102, 190, 255, 0.55);
+}
+
+.general-item.resting {
+  cursor: not-allowed;
+}
+
+.general-item.resting .card {
+  filter: grayscale(35%);
+  box-shadow: 0 0 0 2px rgba(120, 130, 150, 0.85), 0 6px 18px rgba(80, 90, 110, 0.35);
 }
 
 .card {
@@ -291,6 +314,20 @@ const isActiveSlotGeneral = (general: General) =>
   font-weight: bold;
   color: #fff;
   background: rgba(255, 140, 0, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.resting-badge {
+  position: absolute;
+  top: 34px;
+  right: 8px;
+  z-index: 5;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(90, 100, 120, 0.92);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 

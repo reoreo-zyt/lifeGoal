@@ -22,7 +22,7 @@
     </div>
 
     <!-- 登录后游戏主界面 -->
-    <div v-else class="game-container">
+    <div v-else class="game-container" :class="{ 'screen-shake': isScreenShaking }">
       <div class="game-header">
         <!-- 游戏顶部信息 -->
         <!-- 顶部状态栏 -->
@@ -40,6 +40,10 @@
               @mouseenter="showHeaderTooltip($event, 'command')" @mouseleave="hideHeaderTooltip">
               <img src="/assets/command.webp" alt="统率" class="info-icon">
               <span class="info-value">{{ currentCommand }}/{{ maxCommand }}</span>
+            </div>
+            <div class="info-item" @mouseenter="showHeaderTooltip($event, 'conscript')" @mouseleave="hideHeaderTooltip">
+              <img src="/assets/command.webp" alt="征召兵" class="info-icon">
+              <span class="info-value">{{ availableConscripts }}/{{ totalConscripts }}</span>
             </div>
           </div>
         </div>
@@ -69,12 +73,34 @@
               </div>
             </div>
           </div>
-          <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text" :style="{
+          <div v-if="showVictoryRewardSelector" class="relic-selector-mask">
+            <div class="relic-selector-panel reward-panel">
+              <h3>战斗胜利 · 崔珏裁赏（三选一）</h3>
+              <div class="cui-jue-dialog">
+                <img class="cui-jue-portrait" :src="cuiJuePortrait" alt="崔珏" />
+                <div class="cui-jue-bubble">{{ cuiJueRewardDialogLine }}</div>
+              </div>
+              <div class="relic-candidate-list">
+                <div
+                  v-for="reward in victoryRewardOptions"
+                  :key="reward.id"
+                  class="relic-candidate-card reward-candidate-card"
+                  @click="selectVictoryReward(reward)"
+                >
+                  <div class="relic-candidate-icon">{{ reward.icon }}</div>
+                  <div class="relic-candidate-name">{{ reward.name }}</div>
+                  <div class="relic-candidate-effect">{{ reward.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text"
+            :class="[`damage-${damageText.kind || 'normal'}`, { crit: !!damageText.critical }]" :style="{
             left: damageText.x + 'px',
             top: damageText.y + 'px',
             animationDelay: damageText.delay + 's',
           }">
-            {{ damageText.text }}
+            <span v-if="damageText.tag" class="damage-tag">{{ damageText.tag }}</span>{{ damageText.text }}
           </div>
           <div v-for="(quoteText, index) in quoteTexts" :key="index" class="quote-text" :style="{
             left: quoteText.x + 'px',
@@ -92,11 +118,20 @@
               </div>
               <div v-else class="relic-item empty">未选择遗物</div>
             </div>
+            <div class="troop-ops-bar">
+              <button
+                class="relic-auto-btn"
+                :disabled="isBattleActive"
+                @click="autoAllocateTroopsEvenly"
+              >
+                自动分配兵力
+              </button>
+            </div>
             <div class="formation horizontal">
               <div class="card-slot" @click="selectSlot('player', '大营')">
                 <div class="card-container">
                   <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.大营 }">
-                    <div class="troops-bar">
+                    <div class="troops-bar" @mousedown.stop="handleTroopsBarMouseDown('大营', $event)">
                       <div class="troops-fill" :style="{
                         width: playerFormation.大营
                           ? (playerFormation.大营.troops /
@@ -201,7 +236,7 @@
               <div class="card-slot" @click="selectSlot('player', '中军')">
                 <div class="card-container">
                   <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.中军 }">
-                    <div class="troops-bar">
+                    <div class="troops-bar" @mousedown.stop="handleTroopsBarMouseDown('中军', $event)">
                       <div class="troops-fill" :style="{
                         width: playerFormation.中军
                           ? (playerFormation.中军.troops /
@@ -305,7 +340,7 @@
               <div class="card-slot" @click="selectSlot('player', '前锋')">
                 <div class="card-container">
                   <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.前锋 }">
-                    <div class="troops-bar">
+                    <div class="troops-bar" @mousedown.stop="handleTroopsBarMouseDown('前锋', $event)">
                       <div class="troops-fill" :style="{
                         width: playerFormation.前锋
                           ? (playerFormation.前锋.troops /
@@ -742,6 +777,7 @@
         <GeneralList v-if="showGeneralList" :generals="generals" :API_BASE_URL="API_BASE_URL"
           :deployed-general-ids="deployedGeneralIds"
           :active-slot-general-id="activeSlotGeneralId"
+          :rest-rounds-by-id="playerRecoveryRounds"
           @close="closeGeneralList" @select="(general) => {
             deployGeneral(general);
             hideTooltip();
@@ -766,10 +802,10 @@
               {{ speed }}x
             </button>
           </div>
-          <button class="action-button next-wave" @click="nextWave" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'next')"
+          <!-- <button class="action-button next-wave" @click="nextWave" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'next')"
             @mouseleave="hideHeaderTooltip">
             <img src="/assets/next.webp" alt="下一轮" class="button-icon">
-          </button>
+          </button> -->
         </div>
       </div>
 
@@ -807,6 +843,7 @@ const tooltipTexts: Record<string, string> = {
   money: '当前金币数量',
   wave: '当前波次/总波次',
   command: '当前统率/最大统率',
+  conscript: '可分配征召兵/总征召兵（开局3000）',
   recruit: '消耗金币招募新的武将卡牌',
   start: '开始战斗',
   next: '进入下一轮战斗',
@@ -858,6 +895,8 @@ const currentTurn = ref(0);
 const recruitCost = ref(100);
 const maxCommand = ref(100);
 const currentCommand = ref(0);
+const maxConscripts = 3000;
+const totalConscripts = ref(maxConscripts);
 
 // API配置
 const API_BASE_URL =
@@ -1025,33 +1064,50 @@ const captureBattleStartSnapshot = () => {
 const restoreGeneralFromSnapshot = (
   general: General | null,
   snapshot: GeneralBattleSnapshot | null,
+  options?: {
+    preserveTroops?: boolean;
+  },
 ) => {
   if (!general || !snapshot) return;
+  const preserveTroops = !!options?.preserveTroops;
+  const currentTroops = general.troops;
+  const currentIsDead = general.isDead;
+
   general.attack = snapshot.attack;
   general.defense = snapshot.defense;
   general.strategy = snapshot.strategy;
   general.speed = snapshot.speed;
   general.siege = snapshot.siege;
   general.maxTroops = snapshot.maxTroops;
-  general.troops = snapshot.maxTroops;
-  general.isDead = false;
+  if (preserveTroops) {
+    general.troops = Math.max(0, Math.min(currentTroops, snapshot.maxTroops));
+    general.isDead = currentIsDead || general.troops <= 0;
+  } else {
+    general.troops = snapshot.maxTroops;
+    general.isDead = false;
+  }
   general.skillEffects = {};
 };
 
-const restoreBattleStateToInitial = () => {
+const restoreBattleStateToInitial = (options?: {
+  preserveTroops?: boolean;
+}) => {
   (Object.keys(playerFormation.value) as FormationPosition[]).forEach((position) => {
     restoreGeneralFromSnapshot(
       playerFormation.value[position],
       battleStartSnapshot.value.player[position],
+      options,
     );
     restoreGeneralFromSnapshot(
       enemyFormation.value[position],
       battleStartSnapshot.value.enemy[position],
+      options,
     );
   });
 };
 
 const generals = ref<General[]>([]);
+const playerRecoveryRounds = ref<Record<number, number>>({});
 const selectedSlot = ref<string | null>(null);
 const showGeneralList = ref(false);
 const battleReports = ref<string[]>([]);
@@ -1069,9 +1125,183 @@ const battleControlAlt = computed(() => {
   if (!isBattleActive.value) return "开始";
   return isBattlePaused.value ? "继续" : "暂停";
 });
+const usedConscripts = computed(() => {
+  return Object.values(playerFormation.value).reduce((sum, general) => {
+    if (!general) return sum;
+    return sum + Math.max(0, general.troops || 0);
+  }, 0);
+});
+const availableConscripts = computed(() =>
+  Math.max(0, totalConscripts.value - usedConscripts.value),
+);
 const damageTexts = ref<any[]>([]);
 const quoteTexts = ref<any[]>([]);
 const attackingCard = ref<string | null>(null);
+const battleFxLevel = ref<"low" | "medium" | "high">("medium");
+const isScreenShaking = ref(false);
+
+const FX_PROFILES = {
+  low: {
+    windupMs: 60,
+    dashMs: 90,
+    recoverMs: 120,
+    hitShakeMs: 90,
+    hitFlashMs: 70,
+    hitOutlineMs: 130,
+    hitThrottleMs: 120,
+    dashDistance: 56,
+    highDamageRatio: 0.1,
+    critDamageRatio: 0.18,
+  },
+  medium: {
+    windupMs: 80,
+    dashMs: 120,
+    recoverMs: 180,
+    hitShakeMs: 140,
+    hitFlashMs: 110,
+    hitOutlineMs: 220,
+    hitThrottleMs: 80,
+    dashDistance: 96,
+    highDamageRatio: 0.08,
+    critDamageRatio: 0.16,
+  },
+  high: {
+    windupMs: 90,
+    dashMs: 140,
+    recoverMs: 220,
+    hitShakeMs: 180,
+    hitFlashMs: 140,
+    hitOutlineMs: 260,
+    hitThrottleMs: 70,
+    dashDistance: 120,
+    highDamageRatio: 0.07,
+    critDamageRatio: 0.14,
+  },
+} as const;
+
+type FxProfile = (typeof FX_PROFILES)[keyof typeof FX_PROFILES];
+
+const getFxProfile = (): FxProfile => FX_PROFILES[battleFxLevel.value];
+
+const activeFxTimers = new Map<string, number[]>();
+const targetHitLastAt = new Map<string, number>();
+
+const clearFxTimers = (key: string) => {
+  const timers = activeFxTimers.get(key);
+  if (!timers) return;
+  timers.forEach((timerId) => window.clearTimeout(timerId));
+  activeFxTimers.delete(key);
+};
+
+const clearAllBattleFx = () => {
+  for (const key of activeFxTimers.keys()) {
+    clearFxTimers(key);
+  }
+  targetHitLastAt.clear();
+  isScreenShaking.value = false;
+  attackingCard.value = null;
+  (["player", "enemy"] as const).forEach((side) => {
+    (["大营", "中军", "前锋"] as const).forEach((position) => {
+      clearAttackerPhase(side, position);
+      const card = getCardElement(side, position);
+      if (!card) return;
+      card.classList.remove(
+        "target-hit-shake",
+        "target-hit-flash",
+        "target-hit-outline",
+        "target-hit-heavy",
+      );
+    });
+  });
+};
+
+const registerFxTimer = (key: string, timerId: number) => {
+  const timers = activeFxTimers.get(key) || [];
+  timers.push(timerId);
+  activeFxTimers.set(key, timers);
+};
+
+const getCardElement = (side: "player" | "enemy", position: string) =>
+  document.querySelector(
+    `[data-card-side="${side}"][data-card-position="${position}"]`,
+  ) as HTMLElement | null;
+
+const markAttackerPhase = (
+  side: "player" | "enemy",
+  position: string,
+  phase: "windup" | "dash" | "recover",
+) => {
+  const key = `${side}-${position}`;
+  const card = getCardElement(side, position);
+  if (!card) return;
+  card.classList.remove("attacker-windup", "attacker-dash", "attacker-recover");
+  card.style.removeProperty("--dash-distance");
+  card.style.removeProperty("--dash-direction");
+  if (phase === "dash") {
+    const direction = side === "player" ? 1 : -1;
+    card.style.setProperty("--dash-distance", `${getFxProfile().dashDistance}px`);
+    card.style.setProperty("--dash-direction", `${direction}`);
+  }
+  card.classList.add(`attacker-${phase}`);
+  attackingCard.value = key;
+};
+
+const clearAttackerPhase = (side: "player" | "enemy", position: string) => {
+  const card = getCardElement(side, position);
+  if (!card) return;
+  card.classList.remove("attacker-windup", "attacker-dash", "attacker-recover");
+  card.style.removeProperty("--dash-distance");
+  card.style.removeProperty("--dash-direction");
+  attackingCard.value = null;
+};
+
+const triggerTargetHitReaction = (
+  side: "player" | "enemy",
+  position: string,
+  isHighDamage: boolean,
+) => {
+  const key = `${side}-${position}`;
+  const now = Date.now();
+  if (now - (targetHitLastAt.get(key) || 0) < getFxProfile().hitThrottleMs) {
+    return;
+  }
+  targetHitLastAt.set(key, now);
+  clearFxTimers(key);
+
+  const card = getCardElement(side, position);
+  if (!card) return;
+  card.classList.remove(
+    "target-hit-shake",
+    "target-hit-flash",
+    "target-hit-outline",
+    "target-hit-heavy",
+  );
+  void card.offsetWidth;
+  card.classList.add("target-hit-shake", "target-hit-flash", "target-hit-outline");
+  if (isHighDamage) {
+    card.classList.add("target-hit-heavy");
+  }
+
+  registerFxTimer(
+    key,
+    window.setTimeout(() => {
+      card.classList.remove("target-hit-shake", "target-hit-heavy");
+    }, getFxProfile().hitShakeMs),
+  );
+  registerFxTimer(
+    key,
+    window.setTimeout(() => {
+      card.classList.remove("target-hit-flash");
+    }, getFxProfile().hitFlashMs),
+  );
+  registerFxTimer(
+    key,
+    window.setTimeout(() => {
+      card.classList.remove("target-hit-outline");
+      clearFxTimers(key);
+    }, getFxProfile().hitOutlineMs),
+  );
+};
 
 interface SpeedUnit {
   id: string;
@@ -1111,6 +1341,15 @@ interface Relic {
   history: string;
   effectText: string;
   effects: RelicEffects;
+}
+
+interface VictoryRewardOption {
+  id: string;
+  type: "gold" | "conscript" | "promote";
+  icon: string;
+  name: string;
+  description: string;
+  value: number;
 }
 
 const xiaDynastyGenerals = [
@@ -1228,6 +1467,10 @@ const playerRelicCandidates = ref<Relic[]>([]);
 const playerSelectedRelic = ref<Relic | null>(null);
 const enemySelectedRelic = ref<Relic | null>(null);
 const showRelicSelector = ref(false);
+const showVictoryRewardSelector = ref(false);
+const victoryRewardOptions = ref<VictoryRewardOption[]>([]);
+const isResolvingVictoryReward = ref(false);
+const cuiJueRewardDialogLine = ref("此战有功，生死簿前，许你择其一赏。");
 
 const ENEMY_WAVE_RELIC_CONFIG: Record<number, string> = {
   3: "suidaibingfu",
@@ -1381,6 +1624,11 @@ const closeGeneralList = () => {
 
 const deployGeneral = (general: General) => {
   if (selectedSlot.value) {
+    const restRounds = playerRecoveryRounds.value[general.id] || 0;
+    if (restRounds > 0) {
+      addReport(`【${general.name}】正在休整，还需 ${restRounds} 轮战斗后可再次上阵。`);
+      return;
+    }
     const [, position] = selectedSlot.value.split("-");
     const targetPosition = position as keyof typeof playerFormation.value;
     const oldGeneral = playerFormation.value[position as keyof typeof playerFormation.value];
@@ -1400,13 +1648,123 @@ const deployGeneral = (general: General) => {
       playerFormation.value[existingPosition] = null;
     }
 
+    if (oldGeneral && oldGeneral.id !== general.id) {
+      oldGeneral.troops = 0;
+      oldGeneral.isDead = false;
+      oldGeneral.skillEffects = {};
+    }
+
     playerFormation.value[targetPosition] = general;
+    if (!oldGeneral || oldGeneral.id !== general.id) {
+      general.troops = Math.max(0, Math.min(general.troops || 0, general.maxTroops));
+      if (general.troops > availableConscripts.value) {
+        general.troops = availableConscripts.value;
+      }
+    }
     updateCurrentCommand();
     addReport(
       `【${general.name}】已上阵至【${targetPosition}】！统率: ${currentCommand.value}/${maxCommand.value}`,
     );
     closeGeneralList();
   }
+};
+
+const setGeneralTroops = (
+  position: keyof typeof playerFormation.value,
+  targetTroops: number,
+) => {
+  if (isBattleActive.value) return;
+  const general = playerFormation.value[position];
+  if (!general) return;
+  const maxAllowedByPool = Math.min(
+    general.maxTroops,
+    general.troops + availableConscripts.value,
+  );
+  const next = Math.max(0, Math.min(Math.floor(targetTroops), maxAllowedByPool));
+  general.troops = next;
+};
+
+const handleTroopsBarMouseDown = (
+  position: keyof typeof playerFormation.value,
+  event: MouseEvent,
+) => {
+  if (isBattleActive.value) return;
+  const bar = event.currentTarget as HTMLElement | null;
+  if (!bar) return;
+
+  const applyFromClientX = (clientX: number) => {
+    const general = playerFormation.value[position];
+    if (!general) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const requested = Math.floor(general.maxTroops * ratio);
+    setGeneralTroops(position, requested);
+  };
+
+  applyFromClientX(event.clientX);
+  const onMove = (e: MouseEvent) => applyFromClientX(e.clientX);
+  const onUp = () => {
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+  };
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+};
+
+const autoAllocateTroopsEvenly = () => {
+  if (isBattleActive.value) return;
+  const deployed = Object.values(playerFormation.value).filter(
+    (g): g is General => !!g,
+  );
+  if (deployed.length === 0) {
+    addReport("请先上阵武将，再进行自动分配。");
+    return;
+  }
+  const totalAssignable = Math.min(
+    totalConscripts.value,
+    deployed.reduce((sum, g) => sum + g.maxTroops, 0),
+  );
+  const base = Math.floor(totalAssignable / deployed.length);
+  let remainder = totalAssignable % deployed.length;
+  deployed.forEach((general) => {
+    const target = Math.min(
+      general.maxTroops,
+      base + (remainder > 0 ? 1 : 0),
+    );
+    general.troops = target;
+    if (remainder > 0) remainder--;
+  });
+  addReport("已自动均分征召兵到我方上阵武将。");
+};
+
+const applyPlayerRecoveryForDeaths = () => {
+  (Object.keys(playerFormation.value) as (keyof typeof playerFormation.value)[]).forEach(
+    (position) => {
+      const general = playerFormation.value[position];
+      if (!general || !general.isDead) return;
+      playerRecoveryRounds.value[general.id] = Math.max(
+        playerRecoveryRounds.value[general.id] || 0,
+        4,
+      );
+      playerFormation.value[position] = null;
+      addReport(`【${general.name}】阵亡，进入 3 轮休整。`);
+    },
+  );
+  updateCurrentCommand();
+};
+
+const tickPlayerRecoveryRounds = () => {
+  const next: Record<number, number> = {};
+  Object.entries(playerRecoveryRounds.value).forEach(([id, rounds]) => {
+    const left = Math.max(0, rounds - 1);
+    if (left > 0) next[Number(id)] = left;
+  });
+  playerRecoveryRounds.value = next;
+};
+
+const areAllOwnedGeneralsResting = () => {
+  if (generals.value.length === 0) return false;
+  return generals.value.every((general) => (playerRecoveryRounds.value[general.id] || 0) > 0);
 };
 
 // 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
@@ -1553,6 +1911,112 @@ const promoteExistingGeneral = (general: General) => {
     addReport(`重复招募【${general.name}】，已合成升阶至 ${nextStar} 星并恢复满兵力！`);
   } else {
     addReport(`重复招募【${general.name}】，已达满星，转换为满兵力整备。`);
+  }
+};
+
+const promoteGeneralByReward = (general: General) => {
+  const beforeStar = getSynthStar(general);
+  const nextStar = Math.min(5, beforeStar + 1);
+  if (nextStar > beforeStar) {
+    general.attack = Math.round(general.attack + (general.attackGrowth || 0));
+    general.defense = Math.round(general.defense + (general.defenseGrowth || 0));
+    general.strategy = Math.round(general.strategy + (general.strategyGrowth || 0));
+    general.speed = Math.round(general.speed + (general.speedGrowth || 0));
+    general.siege = Math.round(general.siege + (general.siegeGrowth || 0));
+    general.command = Math.round(general.command + (general.commandGrowth || 0));
+    general.maxTroops += 100;
+    setSynthStar(general, nextStar);
+    general.troops = general.maxTroops;
+    general.isDead = false;
+    general.skillEffects = {};
+    addReport(`崔珏嘉奖：【${general.name}】合成升阶至 ${nextStar} 星！`);
+  } else {
+    addReport(`崔珏嘉奖：【${general.name}】已满星，改为整备兵力。`);
+    general.troops = general.maxTroops;
+    general.skillEffects = {};
+  }
+};
+
+const buildVictoryRewardOptions = (): VictoryRewardOption[] => {
+  const goldValue = [120, 150, 180][Math.floor(Math.random() * 3)];
+  const conscriptValue = [600, 800, 1000][Math.floor(Math.random() * 3)];
+  const options: VictoryRewardOption[] = [
+    {
+      id: `gold-${Date.now()}`,
+      type: "gold",
+      icon: "💰",
+      name: "军资补给",
+      description: `获得金币 +${goldValue}`,
+      value: goldValue,
+    },
+    {
+      id: `conscript-${Date.now()}`,
+      type: "conscript",
+      icon: "🪖",
+      name: "征召补员",
+      description: `恢复固定征召兵 +${conscriptValue}`,
+      value: conscriptValue,
+    },
+    {
+      id: `promote-${Date.now()}`,
+      type: "promote",
+      icon: "⭐",
+      name: "生死簿赐阶",
+      description: "随机我方武将合成星 +1",
+      value: 1,
+    },
+  ];
+  return options;
+};
+
+const applyVictoryReward = (reward: VictoryRewardOption) => {
+  if (reward.type === "gold") {
+    money.value += reward.value;
+    addReport(`崔珏赏赐军资：金币 +${reward.value}。`);
+    return;
+  }
+  if (reward.type === "conscript") {
+    const before = totalConscripts.value;
+    totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + reward.value);
+    const actualRecovered = totalConscripts.value - before;
+    addReport(`崔珏补发兵员：征召兵 +${actualRecovered}（上限 ${maxConscripts}）。`);
+    return;
+  }
+  if (reward.type === "promote") {
+    if (generals.value.length === 0) {
+      addReport("当前无可提升武将，奖励转为金币 +120。");
+      money.value += 120;
+      return;
+    }
+    const target = generals.value[Math.floor(Math.random() * generals.value.length)];
+    promoteGeneralByReward(target);
+  }
+};
+
+const enterNextBattleAfterReward = async () => {
+  tickPlayerRecoveryRounds();
+  currentTurn.value = 0;
+  advanceTime();
+  await generateEnemyTeam();
+  addReport(`崔珏裁赏已落定，第 ${currentWave.value} 波敌军来袭。`);
+};
+
+const openVictorySettlement = () => {
+  showVictoryRewardSelector.value = true;
+  victoryRewardOptions.value = buildVictoryRewardOptions();
+  cuiJueRewardDialogLine.value = "此战有功，生死簿前，许你择其一赏。";
+  addReport("崔珏现身，进入战后裁赏。");
+};
+
+const selectVictoryReward = async (reward: VictoryRewardOption) => {
+  if (isResolvingVictoryReward.value) return;
+  isResolvingVictoryReward.value = true;
+  try {
+    showVictoryRewardSelector.value = false;
+    applyVictoryReward(reward);
+    await enterNextBattleAfterReward();
+  } finally {
+    isResolvingVictoryReward.value = false;
   }
 };
 
@@ -1778,6 +2242,9 @@ const recruitCard = () => {
           promoteExistingGeneral(existedGeneral);
         } else {
           setSynthStar(general, 0);
+          general.troops = 0;
+          general.isDead = false;
+          general.skillEffects = {};
           generals.value.push(general);
           formatGeneralReport(general);
         }
@@ -1813,6 +2280,10 @@ const toggleBattlePause = () => {
 };
 
 const handleBattleControl = async () => {
+  if (showVictoryRewardSelector.value) {
+    addReport("请先完成崔珏裁赏，再开启下一场战斗。");
+    return;
+  }
   if (isBattleStarting.value) return;
   if (isBattleActive.value) {
     toggleBattlePause();
@@ -2085,7 +2556,13 @@ const showDamageText = (
   damage: number,
   side: "player" | "enemy",
   position: string,
+  options?: {
+    kind?: "normal" | "high" | "blocked";
+    critical?: boolean;
+    tag?: string;
+  },
 ) => {
+  const text = options?.kind === "blocked" ? "0" : "-" + damage;
   // 查找对应卡牌内的troops元素
   const troopsElement = document.querySelector(
     `.${side}-side [data-card-position="${position}"] .troops, ` +
@@ -2103,7 +2580,10 @@ const showDamageText = (
     const cardRect = cardElement.getBoundingClientRect();
     const damageText = {
       id: Date.now() + Math.random(),
-      text: "-" + damage,
+      text,
+      kind: options?.kind || "normal",
+      critical: !!options?.critical,
+      tag: options?.tag || "",
       x: cardRect.left + cardRect.width / 2 - 20,
       y: cardRect.top + cardRect.height / 2,
       delay: 0,
@@ -2122,7 +2602,10 @@ const showDamageText = (
   const troopsRect = troopsElement.getBoundingClientRect();
   const damageText = {
     id: Date.now() + Math.random(),
-    text: "-" + damage,
+    text,
+    kind: options?.kind || "normal",
+    critical: !!options?.critical,
+    tag: options?.tag || "",
     x: troopsRect.left + troopsRect.width / 2 - 20,
     y: troopsRect.top - 10,
     delay: 0,
@@ -2177,12 +2660,10 @@ const performAttackWithAnimation = async (
   target: { general: General; side: "player" | "enemy"; position: string },
   attackType: "physical" | "strategy" = "physical",
 ) => {
-  // 设置攻击中的卡牌
-  attackingCard.value = `${attacker.side}-${attacker.position}`;
-
   const attackerPrefix = attacker.side === "player" ? "我方" : "敌方";
   const targetPrefix = target.side === "player" ? "我方" : "敌方";
   const attackTypeText = attackType === "physical" ? "物理" : "策略";
+  const fx = getFxProfile();
 
   // 详细播报：谁开始行动
   addReport(
@@ -2200,22 +2681,36 @@ const performAttackWithAnimation = async (
     attacker.general,
     attacker.side,
   );
+  markAttackerPhase(attacker.side, attacker.position, "windup");
+  await waitBattle(fx.windupMs);
+  markAttackerPhase(attacker.side, attacker.position, "dash");
+  await waitBattle(fx.dashMs);
 
   // 执行攻击逻辑
   const attackResult = performAttack(attacker, target, attackType);
+  const highDamageThreshold = Math.max(
+    1,
+    Math.floor(target.general.maxTroops * fx.highDamageRatio),
+  );
+  const criticalThreshold = Math.max(
+    1,
+    Math.floor(target.general.maxTroops * fx.critDamageRatio),
+  );
+  const isHighDamage = attackResult.damage >= highDamageThreshold;
+  const isCritical = attackResult.damage >= criticalThreshold;
 
   if (attackResult.damage > 0) {
     // 播放受击音效
     const audio = new Audio('/assets/audios/hint.mp4');
     audio.play().catch(e => console.error('播放音效失败:', e));
     
-    // 触发受击动画
-    const targetCard = document.querySelector(`[data-card-side="${target.side}"][data-card-position="${target.position}"]`);
-    if (targetCard) {
-      targetCard.classList.add('hit');
-      setTimeout(() => {
-        targetCard.classList.remove('hit');
-      }, 500);
+    // 触发受击动画（闪白、抖动、描边）
+    triggerTargetHitReaction(target.side, target.position, isHighDamage);
+    if (battleFxLevel.value === "high" && (isHighDamage || isCritical)) {
+      isScreenShaking.value = true;
+      window.setTimeout(() => {
+        isScreenShaking.value = false;
+      }, 140);
     }
     
     addReport(
@@ -2230,7 +2725,11 @@ const performAttackWithAnimation = async (
     );
 
     // 显示伤害数值 - 显示在目标卡牌上
-    showDamageText(attackResult.damage, target.side, target.position);
+    showDamageText(attackResult.damage, target.side, target.position, {
+      kind: isHighDamage ? "high" : "normal",
+      critical: isCritical,
+      tag: isCritical ? "CRIT" : "",
+    });
 
     if (attackResult.isTargetDied) {
       addReport(`阵亡！`, target.general, target.side);
@@ -2247,59 +2746,42 @@ const performAttackWithAnimation = async (
       );
     }
   } else {
+    triggerTargetHitReaction(target.side, target.position, false);
+    showDamageText(0, target.side, target.position, {
+      kind: "blocked",
+      tag: "格挡",
+    });
     addReport(`${attackTypeText}攻击被格挡，未造成伤害！`);
   }
 
-  // 模拟动画时间
-  await waitBattle(1200); // 增加动画时间以便用户看到播报
+  markAttackerPhase(attacker.side, attacker.position, "recover");
+  await waitBattle(fx.recoverMs + 320);
 
   addReport(
     `${attackerPrefix}${attacker.position}【${attacker.general.name}】行动结束`,
   );
-  // 清除攻击状态
-  attackingCard.value = null;
+  clearAttackerPhase(attacker.side, attacker.position);
 };
 
 const checkGameOver = () => {
   if (enemyFormation.value.大营 && enemyFormation.value.大营.isDead) {
-    // 胜利结算
-    const reward = currentWave.value * 10;
-    money.value += reward;
-    restoreBattleStateToInitial();
+    // 胜利结算：进入崔珏裁赏
+    restoreBattleStateToInitial({ preserveTroops: true });
+    applyPlayerRecoveryForDeaths();
     addCuiJueQuote("victory");
     addReport(`恭喜！你击败了敌方大营，获得胜利！`);
-    addReport(`获得奖励：${reward} 金额！`);
-    setTimeout(() => {
-      alert(`恭喜通关！获得 ${reward} 金额奖励！`);
-    }, 1000);
+    openVictorySettlement();
     return true;
   }
 
   if (playerFormation.value.大营 && playerFormation.value.大营.isDead) {
     // 失败重置
-    restoreBattleStateToInitial();
+    restoreBattleStateToInitial({ preserveTroops: true });
     addCuiJueQuote("defeat");
     addReport("我方大营阵亡，战斗失败！");
     setTimeout(() => {
       alert("战斗失败！恢复游戏初始数据！");
-      // 恢复游戏开始时的数据
-      money.value = initialGameData.money;
-      currentYear.value = initialGameData.currentYear;
-      currentWave.value = initialGameData.currentWave;
-      currentTurn.value = 0;
-      currentCommand.value = 0;
-      generals.value = [];
-      playerFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      enemyFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      battleReports.value = [];
+      resetGame();
     }, 1000);
     return true;
   }
@@ -2316,7 +2798,8 @@ const checkGameOverByTurns = () => {
 
   if (playerCampAlive && enemyCampAlive) {
     // 双方大营都存活 - 和局，保留当前状态可以重新开始
-    restoreBattleStateToInitial();
+    restoreBattleStateToInitial({ preserveTroops: true });
+    applyPlayerRecoveryForDeaths();
     addReport("回合结束！双方大营都未阵亡，和局！");
     addReport('可以再次点击"开始"重新战斗！');
     setTimeout(() => {
@@ -2342,16 +2825,12 @@ const checkGameOverByTurns = () => {
   });
 
   if (playerTroops > enemyTroops) {
-    // 胜利结算
-    const reward = currentWave.value * 10;
-    money.value += reward;
-    restoreBattleStateToInitial();
+    // 胜利结算：进入崔珏裁赏
+    restoreBattleStateToInitial({ preserveTroops: true });
+    applyPlayerRecoveryForDeaths();
     addCuiJueQuote("victory");
     addReport("回合结束！我方兵力占优，获得胜利！");
-    addReport(`获得奖励：${reward} 金额！`);
-    setTimeout(() => {
-      alert(`恭喜胜利！获得 ${reward} 金额奖励！`);
-    }, 1000);
+    openVictorySettlement();
   } else if (enemyTroops > playerTroops) {
     // 失败重置
     restoreBattleStateToInitial();
@@ -2359,24 +2838,7 @@ const checkGameOverByTurns = () => {
     addReport("回合结束！敌方兵力占优，战斗失败！");
     setTimeout(() => {
       alert("战斗失败！恢复游戏初始数据！");
-      // 恢复游戏开始时的数据
-      money.value = initialGameData.money;
-      currentYear.value = initialGameData.currentYear;
-      currentWave.value = initialGameData.currentWave;
-      currentTurn.value = 0;
-      currentCommand.value = 0;
-      generals.value = [];
-      playerFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      enemyFormation.value = {
-        大营: null,
-        中军: null,
-        前锋: null,
-      };
-      battleReports.value = [];
+      resetGame();
     }, 1000);
   }
 };
@@ -2429,12 +2891,14 @@ const addReport = (
 };
 
 const resetGame = () => {
+  clearAllBattleFx();
   // 恢复游戏开始时的数据
   money.value = initialGameData.money;
   currentYear.value = initialGameData.currentYear;
   currentWave.value = initialGameData.currentWave;
   currentTurn.value = 0;
   currentCommand.value = 0;
+  totalConscripts.value = maxConscripts;
   generals.value = [];
   playerFormation.value = {
     大营: null,
@@ -2450,8 +2914,16 @@ const resetGame = () => {
   enemySelectedRelic.value = null;
   playerRelicCandidates.value = [];
   showRelicSelector.value = false;
+  showVictoryRewardSelector.value = false;
+  victoryRewardOptions.value = [];
+  isResolvingVictoryReward.value = false;
   hasShownNewRunQuote.value = false;
   battleReports.value = [];
+  playerRecoveryRounds.value = {};
+  if (gameLoaded.value) {
+    void generateEnemyTeam().catch(() => {});
+    startRelicSelection();
+  }
 };
 
 const getAllGenerals = () => {
@@ -2578,11 +3050,23 @@ const resetUnitSpeed = (unit: SpeedUnit) => {
 };
 
 const startBattle = async () => {
-  const hasEmptySlot = Object.values(playerFormation.value).some(
-    (slot) => slot === null,
+  clearAllBattleFx();
+  if (areAllOwnedGeneralsResting()) {
+    addReport("所有武将均在休整中，战役结束，回到第一轮。");
+    alert("所有武将都在休整中，游戏结束！将重置到第一轮。");
+    resetGame();
+    return;
+  }
+
+  if (!playerFormation.value.大营) {
+    addReport("请至少在大营上阵一名武将！");
+    return;
+  }
+  const hasZeroTroops = Object.values(playerFormation.value).some(
+    (slot) => slot !== null && slot.troops <= 0,
   );
-  if (hasEmptySlot) {
-    addReport("请先将武将上阵！");
+  if (hasZeroTroops) {
+    addReport("请先为上阵武将分配兵力后再开始战斗。");
     return;
   }
 
@@ -2835,15 +3319,7 @@ const startBattle = async () => {
                     // 播放受击音效
                     const audio = new Audio('/assets/audios/hint.mp4');
                     audio.play().catch(e => console.error('播放音效失败:', e));
-                    
-                    // 触发受击动画
-                    const targetCard = document.querySelector(`[data-card-side="${target.side}"][data-card-position="${target.position}"]`);
-                    if (targetCard) {
-                      targetCard.classList.add('hit');
-                      setTimeout(() => {
-                        targetCard.classList.remove('hit');
-                      }, 500);
-                    }
+                    triggerTargetHitReaction(target.side, target.position, false);
                   });
                   
                   break;
@@ -2865,6 +3341,7 @@ const startBattle = async () => {
           unitIndex++;
           if (checkGameOver()) {
             isBattleActive.value = false;
+            clearAllBattleFx();
             return;
           }
           await waitBattle(400);
@@ -2927,6 +3404,7 @@ const startBattle = async () => {
       // 检查游戏结束条件
       if (checkGameOver()) {
         isBattleActive.value = false;
+        clearAllBattleFx();
         return;
       }
 
@@ -2972,7 +3450,8 @@ const startBattle = async () => {
   const enemyCavalryAlive = enemyFormation.value.大营 && !enemyFormation.value.大营.isDead;
   
   if (playerCavalryAlive && enemyCavalryAlive) {
-    restoreBattleStateToInitial();
+    restoreBattleStateToInitial({ preserveTroops: true });
+    applyPlayerRecoveryForDeaths();
     addReport("<span style='color: #f39c12; font-weight: bold;'>战斗结果：和局！双方大营都存活。</span>");
   } else {
     checkGameOverByTurns();
@@ -2980,14 +3459,11 @@ const startBattle = async () => {
   
   isBattleActive.value = false;
   isBattlePaused.value = false;
+  clearAllBattleFx();
 };
 
 const nextWave = async () => {
-  currentWave.value++;
-  currentTurn.value = 0;
-  advanceTime();
-  await generateEnemyTeam();
-  addReport(`第 ${currentWave.value} 波敌人出现！`);
+  await enterNextBattleAfterReward();
 };
 </script>
 
@@ -3138,11 +3614,45 @@ const nextWave = async () => {
   position: absolute;
   font-size: 24px;
   font-weight: bold;
-  color: #e74c3c;
+  color: #fff6c2;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   pointer-events: none;
   z-index: 1000;
-  animation: damagePop 2s ease-out forwards;
+  animation: damagePop 1.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.damage-text .damage-tag {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.damage-text.damage-normal {
+  color: #fff6c2;
+}
+
+.damage-text.damage-high {
+  color: #ff9d2f;
+  font-size: 30px;
+}
+
+.damage-text.damage-blocked {
+  color: #d7dee8;
+  font-size: 20px;
+}
+
+.damage-text.crit {
+  color: #ff5f3a;
+  font-size: 34px;
+  text-shadow: 0 0 14px rgba(255, 95, 58, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.damage-text.crit .damage-tag {
+  color: #ffd166;
+  text-shadow: 0 0 6px rgba(255, 209, 102, 0.8);
 }
 
 .quote-text {
@@ -3372,7 +3882,43 @@ const nextWave = async () => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
   padding: 8px 12px;
+}
+
+.relic-auto-btn {
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  background: rgba(45, 50, 60, 0.92);
+  color: #f6e7bf;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.relic-auto-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.relic-auto-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.troop-ops-bar {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  min-height: 42px;
+  border: 1px solid rgba(200, 70, 70, 0.65);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
 }
 
 .relic-item {
@@ -3481,6 +4027,10 @@ const nextWave = async () => {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.reward-panel .relic-candidate-card {
+  min-height: 180px;
+}
+
 .relic-candidate-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
@@ -3539,12 +4089,12 @@ const nextWave = async () => {
 .troops-bar-container {
   margin-bottom: 8px;
   width: 100%;
-  display: none;
+  display: block;
   position: relative;
 }
 
 .troops-bar-container.active {
-  display: block;
+  filter: brightness(1.05);
 }
 
 .troops-bar {
@@ -3554,6 +4104,7 @@ const nextWave = async () => {
   border-radius: 10px;
   overflow: hidden;
   position: relative;
+  cursor: ew-resize;
 }
 
 .troops-fill {
@@ -3623,53 +4174,109 @@ const nextWave = async () => {
   box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
 }
 
-.card.attacking {
-  animation: attackHighlight 0.5s ease-in-out;
+.card.attacker-windup {
+  animation: attackerWindup 0.09s ease-out;
 }
 
-.card.hit {
-  animation: hitAnimation 0.5s ease-in-out;
+.card.attacker-dash {
+  animation: attackerDash 0.12s ease-out forwards;
 }
 
-@keyframes attackHighlight {
+.card.attacker-recover {
+  animation: attackerRecover 0.18s ease-in forwards;
+}
+
+.card.target-hit-shake {
+  animation: targetHitShake 0.14s ease-out;
+}
+
+.card.target-hit-shake.target-hit-heavy {
+  animation-name: targetHitShakeHeavy;
+}
+
+.card.target-hit-flash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.42);
+  pointer-events: none;
+  z-index: 6;
+  animation: targetHitFlash 0.11s ease-out;
+}
+
+.card.target-hit-outline {
+  animation: targetHitOutline 0.22s ease-out;
+}
+
+.screen-shake {
+  animation: screenShake 0.14s linear;
+}
+
+@keyframes attackerWindup {
   0% {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  }
-
-  50% {
-    box-shadow: 0 0 30px rgba(255, 165, 0, 0.8);
-    transform: scale(1.05);
-  }
-
-  100% {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transform: scale(1);
+    filter: brightness(1);
+  }
+  100% {
+    transform: scale(1.04);
+    filter: brightness(1.12);
   }
 }
 
-@keyframes hitAnimation {
+@keyframes attackerDash {
   0% {
-    transform: rotate(0deg);
-    filter: brightness(1);
-  }
-  25% {
-    transform: rotate(-5deg);
-    filter: brightness(1.2) sepia(1) hue-rotate(0deg);
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
-  }
-  50% {
-    transform: rotate(5deg);
-    filter: brightness(1.3) sepia(1) hue-rotate(0deg);
-  }
-  75% {
-    transform: rotate(-2deg);
-    filter: brightness(1.1) sepia(0.5) hue-rotate(0deg);
+    transform: translateX(0) scale(1.04);
   }
   100% {
-    transform: rotate(0deg);
-    filter: brightness(1);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(calc(var(--dash-distance, 90px) * var(--dash-direction, 1))) scale(1.06);
   }
+}
+
+@keyframes attackerRecover {
+  0% {
+    transform: translateX(calc(var(--dash-distance, 90px) * var(--dash-direction, 1))) scale(1.04);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes targetHitShake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-8px) rotate(-1.2deg); }
+  50% { transform: translateX(9px) rotate(1.4deg); }
+  75% { transform: translateX(-5px) rotate(-0.8deg); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+@keyframes targetHitShakeHeavy {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-12px) rotate(-1.8deg) scale(0.985); }
+  50% { transform: translateX(14px) rotate(1.9deg) scale(0.992); }
+  75% { transform: translateX(-8px) rotate(-1deg); }
+  100% { transform: translateX(0) rotate(0deg) scale(1); }
+}
+
+@keyframes targetHitFlash {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes targetHitOutline {
+  0% { box-shadow: 0 0 0 rgba(255, 76, 76, 0); }
+  45% { box-shadow: 0 0 0 2px rgba(255, 76, 76, 0.95), 0 0 22px rgba(255, 76, 76, 0.65); }
+  100% { box-shadow: 0 0 0 rgba(255, 76, 76, 0); }
+}
+
+@keyframes screenShake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+  100% { transform: translateX(0); }
 }
 
 .card.dead {
