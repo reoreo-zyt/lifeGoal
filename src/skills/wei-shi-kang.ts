@@ -23,7 +23,7 @@ const WEI_SHI_KANG_BASE = {
   dynasty: "隋",
   soldierType: "步兵" as const,
   gender: "男",
-  avatar: "/images/wei_shi_kang.jpg",
+  avatar: "/assets/ui_frame.png",
 };
 
 // 韦世康的skillEffects默认值
@@ -211,7 +211,7 @@ export const createWeiShiKang = (): General => {
 // 从数据库获取韦世康的详细信息（包括头像）
 export const fetchWeiShiKangFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/9001`);
+    const response = await fetch(`${API_BASE_URL}/characters/71`);
     if (!response.ok) {
       throw new Error('获取人物信息失败');
     }

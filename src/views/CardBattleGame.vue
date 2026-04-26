@@ -148,6 +148,13 @@
                         <span class="status-icon-inner">降防{{
                           playerFormation.大营.skillEffects.defenseReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.recoveryFromDebuff > 0"
+                        class="status-icon buff"
+                        :title="`${playerFormation.大营.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(playerFormation.大营.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.recoveryFromDebuffDuration}回合`">
+                        <span class="status-icon-inner">回血{{
+                          playerFormation.大营.skillEffects.recoveryFromDebuffDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-middle"></div>
                     <div class="card-bottom">
@@ -259,6 +266,13 @@
                         <span class="status-icon-inner">降防{{
                           playerFormation.中军.skillEffects.defenseReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.recoveryFromDebuff > 0"
+                        class="status-icon buff"
+                        :title="`${playerFormation.中军.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(playerFormation.中军.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.recoveryFromDebuffDuration}回合`">
+                        <span class="status-icon-inner">回血{{
+                          playerFormation.中军.skillEffects.recoveryFromDebuffDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -368,6 +382,13 @@
                         :title="`${playerFormation.前锋.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(playerFormation.前锋.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.defenseReductionDuration}回合`">
                         <span class="status-icon-inner">降防{{
                           playerFormation.前锋.skillEffects.defenseReductionDuration }}</span>
+                      </div>
+                      <div
+                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.recoveryFromDebuff > 0"
+                        class="status-icon buff"
+                        :title="`${playerFormation.前锋.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(playerFormation.前锋.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.recoveryFromDebuffDuration}回合`">
+                        <span class="status-icon-inner">回血{{
+                          playerFormation.前锋.skillEffects.recoveryFromDebuffDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -488,6 +509,13 @@
                         <span class="status-icon-inner">降防{{
                           enemyFormation.前锋.skillEffects.defenseReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.recoveryFromDebuff > 0"
+                        class="status-icon buff"
+                        :title="`${enemyFormation.前锋.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(enemyFormation.前锋.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.recoveryFromDebuffDuration}回合`">
+                        <span class="status-icon-inner">回血{{
+                          enemyFormation.前锋.skillEffects.recoveryFromDebuffDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -598,6 +626,13 @@
                         <span class="status-icon-inner">降防{{
                           enemyFormation.中军.skillEffects.defenseReductionDuration }}</span>
                       </div>
+                      <div
+                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.recoveryFromDebuff > 0"
+                        class="status-icon buff"
+                        :title="`${enemyFormation.中军.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(enemyFormation.中军.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.recoveryFromDebuffDuration}回合`">
+                        <span class="status-icon-inner">回血{{
+                          enemyFormation.中军.skillEffects.recoveryFromDebuffDuration }}</span>
+                      </div>
                     </div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -707,6 +742,13 @@
                         :title="`${enemyFormation.大营.skillEffects.defenseReductionSource || '未知来源'}：防御降低 ${(enemyFormation.大营.skillEffects.defenseReduction * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.defenseReductionDuration}回合`">
                         <span class="status-icon-inner">降防{{
                           enemyFormation.大营.skillEffects.defenseReductionDuration }}</span>
+                      </div>
+                      <div
+                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.recoveryFromDebuff > 0"
+                        class="status-icon buff"
+                        :title="`${enemyFormation.大营.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(enemyFormation.大营.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.recoveryFromDebuffDuration}回合`">
+                        <span class="status-icon-inner">回血{{
+                          enemyFormation.大营.skillEffects.recoveryFromDebuffDuration }}</span>
                       </div>
                     </div>
                     <div class="card-bottom">
@@ -1169,10 +1211,11 @@ const generateEnemyTeam = () => {
 
 // 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
 const RECRUIT_CONFIG = [
-  { id: 633, probability: 0.25 },   // 尉迟迥 25%
-  { id: 69, probability: 0.25 },    // 李德林 25%
-  { id: 71, probability: 0.25 },  // 韦世康 25%
-  { id: 70, probability: 0.25 },    // 陆彦师 25%
+  { id: 633, probability: 0.20 },   // 尉迟迥 20%
+  { id: 69, probability: 0.20 },    // 李德林 20%
+  { id: 71, probability: 0.20 },    // 韦世康 20%
+  { id: 70, probability: 0.20 },    // 陆彦师 20%
+  { id: 515, probability: 0.20 },   // 元岩 20%
 ];
 
 // 获取武将的fetch函数映射
@@ -1182,6 +1225,7 @@ const getFetchFunction = (id: number) => {
     69: () => import('../skills/li-de-lin').then(m => m.fetchLiDeLinFromDatabase(API_BASE_URL)),
     71: () => import('../skills/wei-shi-kang').then(m => m.fetchWeiShiKangFromDatabase(API_BASE_URL)),
     70: () => import('../skills/lu-yan-shi').then(m => m.fetchLuYanShiFromDatabase(API_BASE_URL)),
+    515: () => import('../skills/yuan-yan-shi').then(m => m.fetchYuanYanFromDatabase(API_BASE_URL)),
   };
   return fetchMap[id] || null;
 };
@@ -1843,6 +1887,32 @@ const getAllGenerals = () => {
   return allGenerals;
 };
 
+const getAllAllies = (side: "player" | "enemy"): Array<{
+  general: General;
+  side: "player" | "enemy";
+  position: string;
+}> => {
+  const allies: Array<{
+    general: General;
+    side: "player" | "enemy";
+    position: string;
+  }> = [];
+
+  const formation = side === "player" ? playerFormation.value : enemyFormation.value;
+
+  Object.entries(formation).forEach(([position, general]) => {
+    if (general && !general.isDead) {
+      allies.push({
+        general,
+        side,
+        position,
+      });
+    }
+  });
+
+  return allies;
+};
+
 const initializeSpeedUnits = () => {
   const units: SpeedUnit[] = [];
 
@@ -2027,6 +2097,41 @@ const startBattle = async () => {
             addReport(
               `【${unit.general.name}】${source}的防御降低效果结束！`,
             );
+          }
+        }
+
+        // 处理回血增益效果
+        if (unit.general.skillEffects.recoveryFromDebuffDuration > 0) {
+          unit.general.skillEffects.recoveryFromDebuffDuration -= 1;
+          addReport(
+            `【${unit.general.name}】的回血增益效果剩余${unit.general.skillEffects.recoveryFromDebuffDuration}回合`,
+          );
+          if (unit.general.skillEffects.recoveryFromDebuffDuration === 0) {
+            const source = unit.general.skillEffects.recoveryFromDebuffSource || "";
+            unit.general.skillEffects.recoveryFromDebuff = 0;
+            unit.general.skillEffects.recoveryFromDebuffSource = '';
+            addReport(
+              `【${unit.general.name}】${source}的回血增益效果结束！`,
+            );
+          }
+        }
+      }
+
+      // 触发指挥战法效果（每回合开始时）
+      if (unit.general.skills) {
+        for (const skill of unit.general.skills) {
+          console.log(`检查单位【${unit.general.name}】的技能，类型: ${skill.type}, 名称: ${skill.name}`);
+          if (skill.type === "command") {
+            console.log(`触发【${unit.general.name}】的指挥战法【${skill.name}】！`);
+            const commandSkillContext = {
+              type: "command",
+              event: "turnStart",
+              currentTroops: unit.general.troops,
+              maxTroops: unit.general.maxTroops,
+              addReport,
+              allies: getAllAllies(unit.side)
+            };
+            skill.effect(unit.general, commandSkillContext);
           }
         }
       }
@@ -3458,6 +3563,16 @@ const nextWave = () => {
 
 .status-icon.debuff:hover {
   background: rgba(180, 40, 50, 0.9);
+}
+
+/* Buff状态标记 - 绿色 */
+.status-icon.buff {
+  background: rgba(40, 180, 80, 0.85);
+  border: 1px solid rgba(150, 255, 150, 0.4);
+}
+
+.status-icon.buff:hover {
+  background: rgba(30, 150, 60, 0.9);
 }
 
 /* 游戏开始界面 */
