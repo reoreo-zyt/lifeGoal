@@ -43,7 +43,7 @@
             </div>
             <div class="info-item" @mouseenter="showHeaderTooltip($event, 'conscript')" @mouseleave="hideHeaderTooltip">
               <img src="/assets/command.webp" alt="征召兵" class="info-icon">
-              <span class="info-value">{{ availableConscripts }}/{{ totalConscripts }}</span>
+              <span class="info-value">{{ displayAvailableConscripts }}/{{ displayTotalConscripts }}</span>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@
                 </div>
               </div>
               <div class="relic-candidate-list">
-                <div v-for="relic in playerRelicCandidates" :key="relic.id" class="relic-candidate-card"
+                <div v-for="relic in playerRelicCandidates" :key="relic.id" class="relic-candidate-card" :class="`rarity-${relic.rarity}`"
                   @click="selectPlayerRelic(relic)">
                   <div class="relic-candidate-icon">{{ relic.icon }}</div>
                   <div class="relic-candidate-name">{{ relic.name }}</div>
@@ -109,14 +109,145 @@
           }">
             {{ quoteText.text }}
           </div>
+          <div v-if="!showBattleBoard" class="middle-hub">
+            <div class="middle-hub-left">
+              <div class="event-map-panel">
+                <div class="event-map-header">
+                  <span>事件树 · 当前可选层 {{ currentMapFloor }}</span>
+                </div>
+                <div class="event-map-board">
+                  <svg class="event-map-links" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path
+                      v-for="line in mapLinkLines"
+                      :key="line.id"
+                      :d="line.path"
+                      class="event-map-link"
+                      :class="{ reachable: line.reachable, visited: line.visited }"
+                    />
+                  </svg>
+                  <button
+                    v-for="node in (runMap?.nodes || [])"
+                    :key="node.id"
+                    class="event-node-btn"
+                    :class="[
+                      `type-${node.type}`,
+                      {
+                        selectable: canSelectMapNode(node),
+                        visited: node.visited,
+                        pending: pendingNodeId === node.id,
+                        current: runMap?.currentNodeId === node.id,
+                      },
+                    ]"
+                    :style="getNodeStyle(node)"
+                    :disabled="!canSelectMapNode(node)"
+                    :title="`第${node.floor}层 · ${nodeTypeTitle[node.type]}`"
+                    @click="selectEventNode(node)"
+                  >
+                    <img class="event-node-icon" :src="mapNodeIconByType[node.type]" :alt="nodeTypeTitle[node.type]" />
+                  </button>
+                  <div class="map-legend">
+                    <div class="map-legend-header">
+                      <div class="map-legend-title">图例</div>
+                      <button class="map-legend-toggle" @click="toggleMapLegend">
+                        {{ isMapLegendCollapsed ? "展开" : "收起" }}
+                      </button>
+                    </div>
+                    <div v-if="!isMapLegendCollapsed">
+                      <div
+                        v-for="item in mapLegendItems"
+                        :key="item.type"
+                        class="map-legend-item"
+                      >
+                        <img class="map-legend-icon" :src="item.icon" :alt="item.label" />
+                        <span class="map-legend-text">{{ item.label }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="middle-hub-right">
+              <BattleReport :reports="battleReports" />
+            </div>
+          </div>
+          <button
+            v-if="showBattleBoard"
+            class="map-toggle-btn"
+            @click="showBattleMapDrawer = !showBattleMapDrawer"
+          >
+            {{ showBattleMapDrawer ? "收起事件树" : "展开事件树" }}
+          </button>
+          <div v-if="showBattleBoard" class="battle-map-drawer" :class="{ open: showBattleMapDrawer }">
+            <div class="event-map-panel">
+              <div class="event-map-header">
+                <span>事件树 · 当前可选层 {{ currentMapFloor }}</span>
+              </div>
+              <div class="event-map-board">
+                <svg class="event-map-links" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path
+                    v-for="line in mapLinkLines"
+                    :key="line.id"
+                    :d="line.path"
+                    class="event-map-link"
+                    :class="{ reachable: line.reachable, visited: line.visited }"
+                  />
+                </svg>
+                <button
+                  v-for="node in (runMap?.nodes || [])"
+                  :key="node.id"
+                  class="event-node-btn"
+                  :class="[
+                    `type-${node.type}`,
+                    {
+                      selectable: canSelectMapNode(node),
+                      visited: node.visited,
+                      pending: pendingNodeId === node.id,
+                      current: runMap?.currentNodeId === node.id,
+                    },
+                  ]"
+                  :style="getNodeStyle(node)"
+                  :disabled="!canSelectMapNode(node)"
+                  :title="`第${node.floor}层 · ${nodeTypeTitle[node.type]}`"
+                  @click="selectEventNode(node)"
+                >
+                  <img class="event-node-icon" :src="mapNodeIconByType[node.type]" :alt="nodeTypeTitle[node.type]" />
+                </button>
+                <div class="map-legend">
+                  <div class="map-legend-header">
+                    <div class="map-legend-title">图例</div>
+                    <button class="map-legend-toggle" @click="toggleMapLegend">
+                      {{ isMapLegendCollapsed ? "展开" : "收起" }}
+                    </button>
+                  </div>
+                  <div v-if="!isMapLegendCollapsed">
+                    <div
+                      v-for="item in mapLegendItems"
+                      :key="item.type"
+                      class="map-legend-item"
+                    >
+                      <img class="map-legend-icon" :src="item.icon" :alt="item.label" />
+                      <span class="map-legend-text">{{ item.label }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="showBattleBoard" class="battle-stage">
           <div class="player-side">
             <div class="side-label">我方</div>
             <div class="relic-bar">
-              <div v-if="playerSelectedRelic" class="relic-item" :title="getRelicTooltip(playerSelectedRelic)">
-                <span class="relic-icon">{{ playerSelectedRelic.icon }}</span>
-                <span class="relic-name">{{ playerSelectedRelic.name }}</span>
+              <div
+                v-for="relic in playerRelics"
+                :key="relic.id"
+                class="relic-item"
+                :class="`rarity-${relic.rarity}`"
+                :title="getRelicTooltip(relic)"
+              >
+                <span class="relic-icon">{{ relic.icon }}</span>
+                <span class="relic-name">{{ relic.name }}</span>
               </div>
-              <div v-else class="relic-item empty">未选择遗物</div>
+              <div v-if="playerRelics.length === 0" class="relic-item empty">未选择遗物</div>
             </div>
             <div class="troop-ops-bar">
               <button
@@ -443,18 +574,22 @@
               </div>
             </div>
           </div>
-
           <BattleReport :reports="battleReports" />
-
           <!-- 战斗场景 -->
           <div class="player-side enemy">
             <div class="side-label">敌方</div>
             <div class="relic-bar">
-              <div v-if="enemySelectedRelic" class="relic-item" :title="getRelicTooltip(enemySelectedRelic)">
-                <span class="relic-icon">{{ enemySelectedRelic.icon }}</span>
-                <span class="relic-name">{{ enemySelectedRelic.name }}</span>
+              <div
+                v-for="relic in enemyRelics"
+                :key="relic.id"
+                class="relic-item"
+                :class="`rarity-${relic.rarity}`"
+                :title="getRelicTooltip(relic)"
+              >
+                <span class="relic-icon">{{ relic.icon }}</span>
+                <span class="relic-name">{{ relic.name }}</span>
               </div>
-              <div v-else class="relic-item empty">未选择遗物</div>
+              <div v-if="enemyRelics.length === 0" class="relic-item empty">未选择遗物</div>
             </div>
             <div class="formation horizontal enemy">
               <div class="card-slot" @click="selectSlot('enemy', '前锋')">
@@ -771,6 +906,7 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
 
         <!-- 选择武将界面 -->
@@ -787,7 +923,7 @@
         <GeneralTooltip v-if="tooltipData" :general="tooltipData" @close="hideTooltip" />
 
         <!-- 底部操作按钮 -->
-        <div class="game-footer">
+        <div v-if="showBattleBoard" class="game-footer">
           <button class="action-button recruit" @click="recruitCard" :disabled="money < recruitCost || isBattleActive"
             @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
             <img src="/assets/open.webp" alt="卡包招募" class="button-icon">
@@ -800,6 +936,9 @@
             <button v-for="speed in speedOptions" :key="speed" class="speed-btn"
               :class="{ active: battleSpeed === speed }" @click="setBattleSpeed(speed)">
               {{ speed }}x
+            </button>
+            <button class="speed-btn skip-toggle" :class="{ active: skipBattleAnimation }" @click="toggleSkipBattle">
+              {{ skipBattleAnimation ? "跳过战斗:开" : "跳过战斗:关" }}
             </button>
           </div>
           <!-- <button class="action-button next-wave" @click="nextWave" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'next')"
@@ -1116,6 +1255,7 @@ const isBattleActive = ref(false);
 const isBattlePaused = ref(false);
 const isBattleStarting = ref(false);
 const battleSpeed = ref(1);
+const skipBattleAnimation = ref(false);
 const speedOptions = [1, 2, 4, 8];
 const battleControlIcon = computed(() => {
   if (!isBattleActive.value || isBattlePaused.value) return "/assets/start.webp";
@@ -1125,15 +1265,59 @@ const battleControlAlt = computed(() => {
   if (!isBattleActive.value) return "开始";
   return isBattlePaused.value ? "继续" : "暂停";
 });
-const usedConscripts = computed(() => {
-  return Object.values(playerFormation.value).reduce((sum, general) => {
+const committedConscripts = ref(0);
+const battleLockedUsedConscripts = ref<number | null>(null);
+const battleLockedAvailableConscripts = ref<number | null>(null);
+const battleLockedTotalConscripts = ref<number | null>(null);
+const syncCommittedConscriptsFromFormation = () => {
+  committedConscripts.value = calculateUsedConscripts();
+};
+const lockBattleConscriptSnapshot = () => {
+  const used = committedConscripts.value;
+  battleLockedUsedConscripts.value = used;
+  battleLockedAvailableConscripts.value = Math.max(0, totalConscripts.value - used);
+  battleLockedTotalConscripts.value = totalConscripts.value;
+};
+const unlockBattleConscriptSnapshot = () => {
+  battleLockedUsedConscripts.value = null;
+  battleLockedAvailableConscripts.value = null;
+  battleLockedTotalConscripts.value = null;
+};
+const calculateUsedConscripts = () =>
+  Object.values(playerFormation.value).reduce((sum, general) => {
     if (!general) return sum;
     return sum + Math.max(0, general.troops || 0);
   }, 0);
+const usedConscripts = computed(() => {
+  return Math.max(0, committedConscripts.value);
 });
-const availableConscripts = computed(() =>
-  Math.max(0, totalConscripts.value - usedConscripts.value),
-);
+const availableConscripts = computed(() => {
+  if (
+    isBattleActive.value &&
+    battleLockedAvailableConscripts.value !== null
+  ) {
+    return battleLockedAvailableConscripts.value;
+  }
+  return Math.max(0, totalConscripts.value - usedConscripts.value);
+});
+const displayAvailableConscripts = computed(() => {
+  if (
+    isBattleActive.value &&
+    battleLockedAvailableConscripts.value !== null
+  ) {
+    return battleLockedAvailableConscripts.value;
+  }
+  return availableConscripts.value;
+});
+const displayTotalConscripts = computed(() => {
+  if (
+    isBattleActive.value &&
+    battleLockedTotalConscripts.value !== null
+  ) {
+    return battleLockedTotalConscripts.value;
+  }
+  return totalConscripts.value;
+});
 const damageTexts = ref<any[]>([]);
 const quoteTexts = ref<any[]>([]);
 const attackingCard = ref<string | null>(null);
@@ -1338,6 +1522,7 @@ interface Relic {
   id: string;
   name: string;
   icon: string;
+  rarity: "common" | "uncommon" | "rare" | "legendary";
   history: string;
   effectText: string;
   effects: RelicEffects;
@@ -1352,33 +1537,40 @@ interface VictoryRewardOption {
   value: number;
 }
 
-const xiaDynastyGenerals = [
-  "大禹",
-  "启",
-  "太康",
-  "仲康",
-  "相",
-  "少康",
-  "予",
-  "槐",
-  "芒",
-  "泄",
-  "不降",
-  "扃",
-  "廑",
-  "孔甲",
-  "皋",
-  "发",
-  "癸",
-  "羿",
-  "寒浞",
-];
+type NodeType =
+  | "battle"
+  | "elite"
+  | "event"
+  | "treasure"
+  | "rest"
+  | "shop"
+  | "boss";
+type GamePhase = "map_select" | "encounter_resolve" | "reward_resolve" | "map_advance";
+
+interface MapNode {
+  id: string;
+  floor: number;
+  lane: number;
+  yOffset: number;
+  type: NodeType;
+  linksTo: string[];
+  visited: boolean;
+}
+
+interface RunMap {
+  act: number;
+  floors: number;
+  lanes: number;
+  nodes: MapNode[];
+  currentNodeId: string;
+}
 
 const relicPool: Relic[] = [
   {
     id: "kaihuanglvjian",
     name: "开皇律简",
     icon: "📜",
+    rarity: "rare",
     history:
       "隋文帝时期颁布的《开皇律》竹简残卷，是隋唐法律制度的基础，规范朝纲、安定民心。",
     effectText: "全队防御+8%，受负面概率-5%，每回合结束恢复全队3%兵力。",
@@ -1388,6 +1580,7 @@ const relicPool: Relic[] = [
     id: "suidaibingfu",
     name: "隋代兵符",
     icon: "🛡️",
+    rarity: "rare",
     history: "隋代调兵遣将兵符，象征古代军事权力。",
     effectText: "全队统御+10%，攻城+15%，物理伤害+8%。",
     effects: { commandPct: 0.1, siegePct: 0.15, physicalDamagePct: 0.08 },
@@ -1396,6 +1589,7 @@ const relicPool: Relic[] = [
     id: "lantingxumoben",
     name: "兰亭序摹本（隋唐版）",
     icon: "🖌️",
+    rarity: "rare",
     history: "隋唐时期临摹《兰亭序》珍品，体现文化繁荣。",
     effectText: "全队谋略+12%，战法发动概率+5%，谋略伤害+6%。",
     effects: { strategyPct: 0.12, activeSkillChancePct: 0.05, strategyDamagePct: 0.06 },
@@ -1404,6 +1598,7 @@ const relicPool: Relic[] = [
     id: "dayunhecaoyin",
     name: "大运河漕印",
     icon: "🚢",
+    rarity: "rare",
     history: "隋唐漕运管理官印，见证大运河贯通南北。",
     effectText: "全队攻城+12%，每回合获得资源，防御+8%。",
     effects: { siegePct: 0.12, resourcePerTurn: 18, defensePct: 0.08 },
@@ -1412,6 +1607,7 @@ const relicPool: Relic[] = [
     id: "tangsancaimayong",
     name: "唐三彩马俑",
     icon: "🐎",
+    rarity: "rare",
     history: "隋唐代表性马俑工艺，见证时代繁荣与交流。",
     effectText: "全队骑兵速度+10%，物理伤害+7%，每回合6%概率骑兵连击一次。",
     effects: { cavalrySpeedPct: 0.1, physicalDamagePct: 0.07, cavalryDoubleStrikeChance: 0.06 },
@@ -1420,6 +1616,7 @@ const relicPool: Relic[] = [
     id: "fangkongqianfan",
     name: "隋代方孔钱范",
     icon: "🪙",
+    rarity: "rare",
     history: "隋代五铢钱钱范，规范全国货币制度。",
     effectText: "全队统御+8%，资源产出效率+10%，受谋略伤害-6%。",
     effects: { commandPct: 0.08, resourceEfficiencyPct: 0.1, strategyDamageReductionPct: 0.06 },
@@ -1428,6 +1625,7 @@ const relicPool: Relic[] = [
     id: "yantabeitie",
     name: "雁塔碑帖",
     icon: "🗿",
+    rarity: "rare",
     history: "隋唐碑帖文献，见证文化鼎盛。",
     effectText: "全队谋略+10%，战法发动概率+4%，谋略属性额外+7%。",
     effects: { strategyPct: 0.17, activeSkillChancePct: 0.04 },
@@ -1436,6 +1634,7 @@ const relicPool: Relic[] = [
     id: "suidaikaijiacanpian",
     name: "隋代铠甲残片",
     icon: "🧱",
+    rarity: "rare",
     history: "隋代军用铠甲残片，体现军事装备水平。",
     effectText: "全队防御+11%，受物理伤害-7%，兵力低于60%额外防御+5%。",
     effects: {
@@ -1449,6 +1648,7 @@ const relicPool: Relic[] = [
     id: "tangdaichajingchaoben",
     name: "唐代茶经抄本",
     icon: "🍵",
+    rarity: "rare",
     history: "唐代《茶经》手抄本，见证茶文化兴起。",
     effectText: "全队谋略+9%，治疗效果+10%，每回合恢复全队4%兵力。",
     effects: { strategyPct: 0.09, healEffectPct: 0.1, turnEndHealPct: 0.04 },
@@ -1457,20 +1657,179 @@ const relicPool: Relic[] = [
     id: "suitangfenghuotailingpai",
     name: "隋唐烽火台令牌",
     icon: "🔥",
+    rarity: "rare",
     history: "隋唐烽火台军情令牌，见证边防通讯体系。",
     effectText: "全队速度+8%，物理伤害+6%，强化侦查能力。",
     effects: { speedPct: 0.08, physicalDamagePct: 0.06 },
   },
+  {
+    id: "white_copper_tally",
+    name: "铜节残符",
+    icon: "🪙",
+    rarity: "common",
+    history: "旧军营遗落的铜节，虽不起眼，却能稳住军心。",
+    effectText: "全队防御+2%。",
+    effects: { defensePct: 0.02 },
+  },
+  {
+    id: "white_oil_lamp",
+    name: "行营油灯",
+    icon: "🪔",
+    rarity: "common",
+    history: "夜行点灯，照路亦照心。",
+    effectText: "全队速度+2%。",
+    effects: { speedPct: 0.02 },
+  },
+  {
+    id: "white_worn_sheath",
+    name: "旧鞘",
+    icon: "🗡️",
+    rarity: "common",
+    history: "磨损严重的刀鞘，仍能提醒武人守序。",
+    effectText: "全队物理伤害+2%。",
+    effects: { physicalDamagePct: 0.02 },
+  },
+  {
+    id: "white_bamboo_abacus",
+    name: "竹算筹",
+    icon: "🧮",
+    rarity: "common",
+    history: "军需官常备小器，精打细算。",
+    effectText: "每回合获得金币+6。",
+    effects: { resourcePerTurn: 6 },
+  },
+  {
+    id: "white_horse_bell",
+    name: "驿马铃",
+    icon: "🔔",
+    rarity: "common",
+    history: "驿卒铃响，队列更易齐步。",
+    effectText: "骑兵速度+3%。",
+    effects: { cavalrySpeedPct: 0.03 },
+  },
+  {
+    id: "white_herb_bag",
+    name: "草药囊",
+    icon: "🌿",
+    rarity: "common",
+    history: "行军常备，聊胜于无。",
+    effectText: "每回合结束恢复全队1%兵力。",
+    effects: { turnEndHealPct: 0.01 },
+  },
+  {
+    id: "white_small_banner",
+    name: "小纛旗",
+    icon: "🚩",
+    rarity: "common",
+    history: "伍长所持，鼓舞邻队。",
+    effectText: "全队统率+2%。",
+    effects: { commandPct: 0.02 },
+  },
+  {
+    id: "white_old_manual",
+    name: "旧操典",
+    icon: "📘",
+    rarity: "common",
+    history: "残卷犹在，仍可习阵。",
+    effectText: "全队攻城+3%。",
+    effects: { siegePct: 0.03 },
+  },
+  {
+    id: "green_war_drum",
+    name: "行军战鼓",
+    icon: "🥁",
+    rarity: "uncommon",
+    history: "鼓点稳阵，前后呼应。",
+    effectText: "全队速度+4%，统率+3%。",
+    effects: { speedPct: 0.04, commandPct: 0.03 },
+  },
+  {
+    id: "green_quiver",
+    name: "鹰羽箭囊",
+    icon: "🏹",
+    rarity: "uncommon",
+    history: "精选箭羽，破甲更稳。",
+    effectText: "全队物理伤害+4%。",
+    effects: { physicalDamagePct: 0.04 },
+  },
+  {
+    id: "green_tactic_slip",
+    name: "战术简牍",
+    icon: "📗",
+    rarity: "uncommon",
+    history: "简明战术，强调协同。",
+    effectText: "全队谋略+5%。",
+    effects: { strategyPct: 0.05 },
+  },
+  {
+    id: "green_supply_cart",
+    name: "补给车契",
+    icon: "🛒",
+    rarity: "uncommon",
+    history: "登记军需，减少浪费。",
+    effectText: "每回合获得金币+10，资源效率+4%。",
+    effects: { resourcePerTurn: 10, resourceEfficiencyPct: 0.04 },
+  },
+  {
+    id: "green_guard_plate",
+    name: "护心铜片",
+    icon: "🛡",
+    rarity: "uncommon",
+    history: "贴甲于胸，聊增生机。",
+    effectText: "全队防御+5%，受物理伤害-2%。",
+    effects: { defensePct: 0.05, physicalDamageReductionPct: 0.02 },
+  },
+  {
+    id: "green_signal_fire",
+    name: "烽火引",
+    icon: "🔥",
+    rarity: "uncommon",
+    history: "边烽传令，军情更快。",
+    effectText: "战法发动概率+2%。",
+    effects: { activeSkillChancePct: 0.02 },
+  },
+  {
+    id: "green_horse_hoof",
+    name: "铁蹄钉",
+    icon: "🐴",
+    rarity: "uncommon",
+    history: "稳蹄易行，利于追击。",
+    effectText: "骑兵速度+6%，骑兵连击率+2%。",
+    effects: { cavalrySpeedPct: 0.06, cavalryDoubleStrikeChance: 0.02 },
+  },
+  {
+    id: "green_medical_scroll",
+    name: "军医札记",
+    icon: "📙",
+    rarity: "uncommon",
+    history: "营中急救要诀，重在止损。",
+    effectText: "治疗效果+5%，每回合结束恢复全队2%兵力。",
+    effects: { healEffectPct: 0.05, turnEndHealPct: 0.02 },
+  },
 ];
 
 const playerRelicCandidates = ref<Relic[]>([]);
-const playerSelectedRelic = ref<Relic | null>(null);
-const enemySelectedRelic = ref<Relic | null>(null);
+const playerRelics = ref<Relic[]>([]);
+const enemyRelics = ref<Relic[]>([]);
 const showRelicSelector = ref(false);
 const showVictoryRewardSelector = ref(false);
 const victoryRewardOptions = ref<VictoryRewardOption[]>([]);
 const isResolvingVictoryReward = ref(false);
 const cuiJueRewardDialogLine = ref("此战有功，生死簿前，许你择其一赏。");
+const gamePhase = ref<GamePhase>("map_select");
+const showEventMap = ref(true);
+const runMap = ref<RunMap | null>(null);
+const pendingNodeId = ref<string | null>(null);
+const pendingBattleNodeType = ref<NodeType | null>(null);
+
+const MAP_CONFIG = {
+  minFloors: 8,
+  maxFloors: 10,
+  minNodesPerFloor: 2,
+  maxNodesPerFloor: 4,
+  maxConnectionsPerNode: 2,
+  defaultNodePool: ["battle", "event", "treasure", "rest", "shop"] as NodeType[],
+} as const;
 
 const ENEMY_WAVE_RELIC_CONFIG: Record<number, string> = {
   3: "suidaibingfu",
@@ -1507,6 +1866,489 @@ const hasShownNewRunQuote = ref(false);
 const cuiJuePortrait = "/assets/cui_jue.webp";
 const cuiJueRelicDialogLine = ref("这些是前人留下的痕迹。有的带着荣耀，有的染着遗憾——你选哪个？");
 
+const mapNodeIconByType: Record<NodeType, string> = {
+  event: "/assets/icon_event.png",
+  battle: "/assets/icon_sword.png",
+  treasure: "/assets/icon_treasure.png",
+  shop: "/assets/wallet_icon.png",
+  rest: "/assets/campfire_single.png",
+  elite: "/assets/emenry_load.png",
+  boss: "/assets/crown_icon.png",
+};
+
+const nodeTypeTitle: Record<NodeType, string> = {
+  battle: "普通战斗",
+  elite: "精英战斗",
+  event: "随机事件",
+  treasure: "宝物节点",
+  rest: "休整节点",
+  shop: "商店节点",
+  boss: "Boss战",
+};
+
+const hashSeed = (seed: number) => {
+  let h = seed >>> 0;
+  return () => {
+    h += 0x6d2b79f5;
+    let t = h;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const randInt = (rng: () => number, min: number, max: number) =>
+  Math.floor(rng() * (max - min + 1)) + min;
+
+const pickWeightedNodeType = (rng: () => number, floor: number, totalFloors: number): NodeType => {
+  if (floor === totalFloors) return "boss";
+  const eliteWeight = floor >= 3 && floor <= totalFloors - 2 ? 0.2 : 0.08;
+  const roll = rng();
+  if (roll < eliteWeight) return "elite";
+  const pool = MAP_CONFIG.defaultNodePool;
+  return pool[Math.floor(rng() * pool.length)];
+};
+
+const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => number) => {
+  const edges = new Set<string>();
+  const leftCount = left.length;
+  const rightCount = right.length;
+  const addEdge = (fromIdx: number, toIdx: number) => {
+    if (fromIdx < 0 || fromIdx >= leftCount || toIdx < 0 || toIdx >= rightCount) return;
+    edges.add(`${fromIdx}-${toIdx}`);
+  };
+  const parseEdge = (edge: string) => edge.split("-").map(Number) as [number, number];
+
+  for (let i = 0; i < leftCount; i++) {
+    const j =
+      leftCount === 1
+        ? Math.floor((rightCount - 1) / 2)
+        : Math.round((i * (rightCount - 1)) / (leftCount - 1));
+    addEdge(i, j);
+  }
+
+  for (let j = 0; j < rightCount; j++) {
+    const i =
+      rightCount === 1
+        ? Math.floor((leftCount - 1) / 2)
+        : Math.round((j * (leftCount - 1)) / (rightCount - 1));
+    addEdge(i, j);
+  }
+
+  for (let i = 0; i < leftCount; i++) {
+    const currentTargets = [...edges]
+      .map(parseEdge)
+      .filter(([fromIdx]) => fromIdx === i)
+      .map(([, toIdx]) => toIdx);
+    if (currentTargets.length >= MAP_CONFIG.maxConnectionsPerNode) continue;
+    if (rng() > 0.45) continue;
+    const primary = currentTargets.length
+      ? currentTargets[0]
+      : Math.round((i * (rightCount - 1)) / Math.max(1, leftCount - 1));
+    const candidates = [primary - 1, primary + 1].filter((toIdx) => toIdx >= 0 && toIdx < rightCount);
+    const safeCandidates = candidates.filter((cand) => {
+      for (const edge of edges) {
+        const [existingFrom, existingTo] = parseEdge(edge);
+        if (existingFrom === i) continue;
+        if ((existingFrom < i && existingTo > cand) || (existingFrom > i && existingTo < cand)) {
+          return false;
+        }
+      }
+      return true;
+    });
+    if (safeCandidates.length > 0) {
+      const pick = safeCandidates[randInt(rng, 0, safeCandidates.length - 1)];
+      addEdge(i, pick);
+    }
+  }
+
+  for (const edge of edges) {
+    const [fromIdx, toIdx] = parseEdge(edge);
+    left[fromIdx].linksTo.push(right[toIdx].id);
+  }
+};
+
+const generateRunMap = (seed?: number): RunMap => {
+  const baseSeed = typeof seed === "number" ? seed : Date.now();
+  const rng = hashSeed(baseSeed);
+  const floorCount = randInt(rng, MAP_CONFIG.minFloors, MAP_CONFIG.maxFloors);
+  const nodes: MapNode[] = [];
+  const floorNodes: MapNode[][] = [];
+
+  for (let floor = 1; floor <= floorCount; floor++) {
+    const isBossFloor = floor === floorCount;
+    const nodeCount = isBossFloor
+      ? 1
+      : randInt(rng, MAP_CONFIG.minNodesPerFloor, MAP_CONFIG.maxNodesPerFloor);
+    const thisFloorNodes: MapNode[] = [];
+    for (let lane = 0; lane < nodeCount; lane++) {
+      const node: MapNode = {
+        id: `f${floor}-l${lane}`,
+        floor,
+        lane,
+        yOffset: (rng() - 0.5) * 8,
+        type: pickWeightedNodeType(rng, floor, floorCount),
+        linksTo: [],
+        visited: false,
+      };
+      thisFloorNodes.push(node);
+      nodes.push(node);
+    }
+    floorNodes.push(thisFloorNodes);
+  }
+
+  for (let floor = 0; floor < floorNodes.length - 1; floor++) {
+    connectTwoFloorsNoCross(floorNodes[floor], floorNodes[floor + 1], rng);
+  }
+
+  const map: RunMap = {
+    act: 1,
+    floors: floorCount,
+    lanes: MAP_CONFIG.maxNodesPerFloor,
+    nodes,
+    currentNodeId: "start",
+  };
+  return map;
+};
+
+const resetRunProgress = () => {
+  runMap.value = generateRunMap(Date.now());
+  gamePhase.value = "map_select";
+  showEventMap.value = true;
+  pendingNodeId.value = null;
+  pendingBattleNodeType.value = null;
+  if (battleReports.value.length === 0) {
+    addReport("请选择事件树中的节点开始旅程。");
+  }
+};
+
+const getNodeById = (id: string) =>
+  runMap.value?.nodes.find((node) => node.id === id) || null;
+
+const currentMapFloor = computed(() => {
+  if (!runMap.value) return 1;
+  if (runMap.value.currentNodeId === "start") return 1;
+  const node = getNodeById(runMap.value.currentNodeId);
+  return node ? Math.min(runMap.value.floors, node.floor + 1) : 1;
+});
+
+const currentFloorNodes = computed(() => {
+  if (!runMap.value) return [] as MapNode[];
+  return runMap.value.nodes.filter((node) => node.floor === currentMapFloor.value);
+});
+
+const allowedNextNodeIds = computed(() => {
+  if (!runMap.value) return [] as string[];
+  if (runMap.value.currentNodeId === "start") {
+    return currentFloorNodes.value.map((node) => node.id);
+  }
+  const node = getNodeById(runMap.value.currentNodeId);
+  return node ? node.linksTo : [];
+});
+
+const canSelectMapNode = (node: MapNode) =>
+  gamePhase.value === "map_select" &&
+  allowedNextNodeIds.value.includes(node.id);
+
+const showBattleBoard = computed(
+  () => !!pendingBattleNodeType.value || isBattleActive.value || isBattleStarting.value,
+);
+const showBattleMapDrawer = ref(false);
+const isMapLegendCollapsed = ref(false);
+
+const toggleMapLegend = () => {
+  isMapLegendCollapsed.value = !isMapLegendCollapsed.value;
+};
+
+watch(showBattleBoard, (active, prevActive) => {
+  if (active && !prevActive) {
+    showBattleMapDrawer.value = false;
+  }
+  if (!active) {
+    showBattleMapDrawer.value = false;
+  }
+});
+
+watch(isBattleActive, (active) => {
+  if (active) {
+    lockBattleConscriptSnapshot();
+    return;
+  }
+  unlockBattleConscriptSnapshot();
+});
+
+const mapFloors = computed(() => {
+  if (!runMap.value) return [] as Array<{ floor: number; nodes: MapNode[] }>;
+  const floors: Array<{ floor: number; nodes: MapNode[] }> = [];
+  for (let floor = 1; floor <= runMap.value.floors; floor++) {
+    floors.push({
+      floor,
+      nodes: runMap.value.nodes.filter((node) => node.floor === floor),
+    });
+  }
+  return floors;
+});
+
+const getNodePoint = (node: MapNode) => {
+  const floors = runMap.value?.floors || MAP_CONFIG.maxFloors;
+  const nodesOnFloor =
+    runMap.value?.nodes.filter((item) => item.floor === node.floor).length || MAP_CONFIG.maxNodesPerFloor;
+  const xMin = 8;
+  const xMax = 82;
+  const yMin = 10;
+  const yMax = 92;
+  const x = floors <= 1 ? xMin : xMin + ((node.floor - 1) / (floors - 1)) * (xMax - xMin);
+  const baseY = yMin + ((node.lane + 1) / (nodesOnFloor + 1)) * (yMax - yMin);
+  const y = Math.min(yMax, Math.max(yMin, baseY + node.yOffset));
+  return { x, y };
+};
+
+const mapLinkLines = computed(() => {
+  if (!runMap.value)
+    return [] as Array<{
+      id: string;
+      fromId: string;
+      toId: string;
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      path: string;
+      reachable: boolean;
+      visited: boolean;
+    }>;
+  const lines: Array<{
+    id: string;
+    fromId: string;
+    toId: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    path: string;
+    reachable: boolean;
+    visited: boolean;
+  }> = [];
+  for (const node of runMap.value.nodes) {
+    const from = getNodePoint(node);
+    node.linksTo.forEach((targetId) => {
+      const target = getNodeById(targetId);
+      if (!target) return;
+      const to = getNodePoint(target);
+      lines.push({
+        id: `${node.id}-${targetId}`,
+        fromId: node.id,
+        toId: targetId,
+        x1: from.x,
+        y1: from.y,
+        x2: to.x,
+        y2: to.y,
+        path: `M ${from.x} ${from.y} C ${from.x + (to.x - from.x) * 0.38} ${from.y + (to.y > from.y ? 3.6 : -3.6)} ${from.x + (to.x - from.x) * 0.62} ${to.y + (to.y > from.y ? -3.6 : 3.6)} ${to.x} ${to.y}`,
+        reachable:
+          runMap.value?.currentNodeId === node.id &&
+          allowedNextNodeIds.value.includes(targetId),
+        visited: node.visited && target.visited,
+      });
+    });
+  }
+  return lines;
+});
+
+const getNodeStyle = (node: MapNode) => {
+  const point = getNodePoint(node);
+  return {
+    left: `${point.x}%`,
+    top: `${point.y}%`,
+  };
+};
+
+const mapLegendItems = computed(() => [
+  { type: "event" as NodeType, label: "事件", icon: mapNodeIconByType.event },
+  { type: "battle" as NodeType, label: "战斗", icon: mapNodeIconByType.battle },
+  { type: "treasure" as NodeType, label: "宝箱", icon: mapNodeIconByType.treasure },
+  { type: "shop" as NodeType, label: "商店", icon: mapNodeIconByType.shop },
+  { type: "rest" as NodeType, label: "休息", icon: mapNodeIconByType.rest },
+  { type: "elite" as NodeType, label: "精英", icon: mapNodeIconByType.elite },
+  { type: "boss" as NodeType, label: "Boss", icon: mapNodeIconByType.boss },
+]);
+
+const mapEventPool = [
+  {
+    id: "event-gold-for-star",
+    title: "判官借火",
+    description: "支付 200 金币，随机一名武将升星 +1。",
+    apply: () => {
+      if (money.value < 200) {
+        addReport("金币不足，事件转化为征召兵 +300。");
+        totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 300);
+        return;
+      }
+      money.value -= 200;
+      if (generals.value.length === 0) {
+        addReport("暂无武将可强化，返还金币并补征召兵 +200。");
+        money.value += 200;
+        totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 200);
+        return;
+      }
+      const target = generals.value[Math.floor(Math.random() * generals.value.length)];
+      promoteGeneralByReward(target);
+      addReport("事件结算：支付 200 金币，完成一次升星。");
+    },
+  },
+  {
+    id: "event-recover-rest",
+    title: "旧部归营",
+    description: "随机两名休整武将减少 1 轮休整。",
+    apply: () => {
+      const ids = Object.keys(playerRecoveryRounds.value)
+        .map((id) => Number(id))
+        .filter((id) => (playerRecoveryRounds.value[id] || 0) > 0);
+      if (ids.length === 0) {
+        addReport("当前无休整武将，改为获得金币 +120。");
+        money.value += 120;
+        return;
+      }
+      let changed = 0;
+      const shuffled = [...ids].sort(() => Math.random() - 0.5);
+      shuffled.slice(0, 2).forEach((id) => {
+        playerRecoveryRounds.value[id] = Math.max(0, playerRecoveryRounds.value[id] - 1);
+        if (playerRecoveryRounds.value[id] === 0) {
+          delete playerRecoveryRounds.value[id];
+        }
+        changed++;
+      });
+      addReport(`事件结算：${changed} 名武将休整轮次 -1。`);
+    },
+  },
+  {
+    id: "event-conscript",
+    title: "军械整补",
+    description: "恢复征召兵 +700（不超上限）。",
+    apply: () => {
+      const before = totalConscripts.value;
+      totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 700);
+      addReport(`事件结算：征召兵 +${totalConscripts.value - before}。`);
+    },
+  },
+] as const;
+
+const resolveBattleNode = async (type: NodeType) => {
+  pendingBattleNodeType.value = type;
+  showEventMap.value = true;
+  gamePhase.value = "encounter_resolve";
+  if (type === "elite") {
+    addReport("遭遇精英战！敌军士气高涨。");
+  } else if (type === "boss") {
+    addReport("Boss 战开启！敌军主帅亲临。");
+  } else {
+    addReport("遭遇普通战斗。");
+  }
+  await generateEnemyTeam();
+  if (type === "elite" || type === "boss") {
+    const ratio = type === "elite" ? 1.18 : 1.35;
+    (Object.keys(enemyFormation.value) as (keyof typeof enemyFormation.value)[]).forEach(
+      (position) => {
+        const general = enemyFormation.value[position];
+        if (!general) return;
+        general.attack = Math.floor(general.attack * ratio);
+        general.defense = Math.floor(general.defense * ratio);
+        general.strategy = Math.floor(general.strategy * ratio);
+        general.maxTroops = Math.floor(general.maxTroops * ratio);
+        general.troops = Math.min(general.maxTroops, Math.floor(general.troops * ratio));
+      },
+    );
+    addReport(type === "elite" ? "精英敌军获得属性强化！" : "Boss 敌军获得高额强化！");
+  }
+};
+
+const resolveEventNode = () => {
+  const event = mapEventPool[Math.floor(Math.random() * mapEventPool.length)];
+  addReport(`事件【${event.title}】：${event.description}`);
+  event.apply();
+  gamePhase.value = "map_select";
+  showEventMap.value = true;
+};
+
+const resolveTreasureNode = () => {
+  if (relicPool.length > 0) {
+    const relic = pickWeightedRelics(1)[0];
+    if (!relic) {
+      money.value += 150;
+      addReport("宝物节点：获得金币 +150。");
+      gamePhase.value = "map_select";
+      showEventMap.value = true;
+      return;
+    }
+    playerRelicCandidates.value = [relic];
+    if (!playerRelics.value.some((item) => item.id === relic.id)) {
+      playerRelics.value.push(relic);
+    }
+    addReport(`宝物节点：获得遗物【${relic.name}】。`);
+  } else {
+    money.value += 150;
+    addReport("宝物节点：获得金币 +150。");
+  }
+  gamePhase.value = "map_select";
+  showEventMap.value = true;
+};
+
+const resolveRestNode = () => {
+  const before = totalConscripts.value;
+  totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 600);
+  const recovered = totalConscripts.value - before;
+  const ids = Object.keys(playerRecoveryRounds.value)
+    .map((id) => Number(id))
+    .filter((id) => (playerRecoveryRounds.value[id] || 0) > 0);
+  if (ids.length > 0) {
+    const targetId = ids[Math.floor(Math.random() * ids.length)];
+    playerRecoveryRounds.value[targetId] = Math.max(0, playerRecoveryRounds.value[targetId] - 1);
+    if (playerRecoveryRounds.value[targetId] === 0) {
+      delete playerRecoveryRounds.value[targetId];
+    }
+    addReport(`营地休整：征召兵 +${recovered}，并减少 1 名武将休整轮次。`);
+  } else {
+    addReport(`营地休整：征召兵 +${recovered}。`);
+  }
+  gamePhase.value = "map_select";
+  showEventMap.value = true;
+};
+
+const resolveShopNode = () => {
+  if (money.value >= 180) {
+    money.value -= 180;
+    totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 500);
+    addReport("商店交易：花费 180 金币，恢复征召兵 +500。");
+  } else {
+    addReport("商店节点：金币不足，仅获得征召兵 +220。");
+    totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 220);
+  }
+  gamePhase.value = "map_select";
+  showEventMap.value = true;
+};
+
+const resolveNode = async (node: MapNode) => {
+  if (!runMap.value) return;
+  runMap.value.currentNodeId = node.id;
+  currentWave.value = node.floor;
+  node.visited = true;
+  pendingNodeId.value = node.id;
+  if (node.type === "battle" || node.type === "elite" || node.type === "boss") {
+    await resolveBattleNode(node.type);
+    return;
+  }
+  gamePhase.value = "encounter_resolve";
+  if (node.type === "event") resolveEventNode();
+  else if (node.type === "treasure") resolveTreasureNode();
+  else if (node.type === "rest") resolveRestNode();
+  else if (node.type === "shop") resolveShopNode();
+};
+
+const selectEventNode = async (node: MapNode) => {
+  if (!canSelectMapNode(node)) return;
+  await resolveNode(node);
+};
+
+
 
 
 const deployedGeneralIds = computed(() =>
@@ -1530,7 +2372,7 @@ const updateCurrentCommand = () => {
 };
 
 watch(gameLoaded, (loaded) => {
-  if (loaded && !playerSelectedRelic.value) {
+  if (loaded && playerRelics.value.length === 0) {
     startRelicSelection();
   }
 });
@@ -1542,7 +2384,7 @@ onMounted(() => {
   }
   // 先获取人物数据，再生成敌方队伍
   fetchCharacters().then(() => {
-    void generateEnemyTeam().catch(() => {});
+    resetRunProgress();
   });
 });
 
@@ -1632,6 +2474,7 @@ const deployGeneral = (general: General) => {
     const [, position] = selectedSlot.value.split("-");
     const targetPosition = position as keyof typeof playerFormation.value;
     const oldGeneral = playerFormation.value[position as keyof typeof playerFormation.value];
+    const oldTroopsInSlot = oldGeneral ? Math.max(0, oldGeneral.troops || 0) : 0;
     const oldCommand = oldGeneral ? oldGeneral.leadership : 0;
     const newTotalCommand = currentCommand.value - oldCommand + general.leadership;
 
@@ -1656,9 +2499,13 @@ const deployGeneral = (general: General) => {
 
     playerFormation.value[targetPosition] = general;
     if (!oldGeneral || oldGeneral.id !== general.id) {
-      general.troops = Math.max(0, Math.min(general.troops || 0, general.maxTroops));
-      if (general.troops > availableConscripts.value) {
-        general.troops = availableConscripts.value;
+      const desiredTroops = Math.max(0, Math.min(general.troops || 0, general.maxTroops));
+      const budgetByPool = oldTroopsInSlot + availableConscripts.value;
+      general.troops = Math.min(desiredTroops, budgetByPool);
+      if (!isBattleActive.value && !isBattleStarting.value) {
+        const nextCommitted =
+          committedConscripts.value - oldTroopsInSlot + Math.max(0, general.troops || 0);
+        committedConscripts.value = Math.max(0, Math.min(totalConscripts.value, nextCommitted));
       }
     }
     updateCurrentCommand();
@@ -1682,6 +2529,7 @@ const setGeneralTroops = (
   );
   const next = Math.max(0, Math.min(Math.floor(targetTroops), maxAllowedByPool));
   general.troops = next;
+  syncCommittedConscriptsFromFormation();
 };
 
 const handleTroopsBarMouseDown = (
@@ -1720,20 +2568,36 @@ const autoAllocateTroopsEvenly = () => {
     addReport("请先上阵武将，再进行自动分配。");
     return;
   }
-  const totalAssignable = Math.min(
-    totalConscripts.value,
-    deployed.reduce((sum, g) => sum + g.maxTroops, 0),
+  let remaining = Math.max(0, availableConscripts.value);
+  if (remaining <= 0) {
+    addReport("当前没有可分配征召兵。");
+    return;
+  }
+  const totalNeedToFull = deployed.reduce(
+    (sum, g) => sum + Math.max(0, g.maxTroops - (g.troops || 0)),
+    0,
   );
-  const base = Math.floor(totalAssignable / deployed.length);
-  let remainder = totalAssignable % deployed.length;
-  deployed.forEach((general) => {
-    const target = Math.min(
-      general.maxTroops,
-      base + (remainder > 0 ? 1 : 0),
-    );
-    general.troops = target;
-    if (remainder > 0) remainder--;
-  });
+  if (remaining >= totalNeedToFull) {
+    deployed.forEach((general) => {
+      general.troops = general.maxTroops;
+    });
+    committedConscripts.value += totalNeedToFull;
+    addReport("征召兵充足，已将我方上阵武将全部补至满兵。");
+    return;
+  }
+  const canReceive = deployed.filter((g) => g.troops < g.maxTroops);
+  while (remaining > 0 && canReceive.length > 0) {
+    let progressed = false;
+    for (const general of canReceive) {
+      if (remaining <= 0) break;
+      if (general.troops >= general.maxTroops) continue;
+      general.troops += 1;
+      remaining -= 1;
+      progressed = true;
+    }
+    if (!progressed) break;
+  }
+  committedConscripts.value += Math.max(0, availableConscripts.value - remaining);
   addReport("已自动均分征召兵到我方上阵武将。");
 };
 
@@ -1860,9 +2724,10 @@ const generateEnemyTeam = async () => {
   }
 
   const relicId = ENEMY_WAVE_RELIC_CONFIG[currentWave.value];
-  enemySelectedRelic.value = relicPool.find((r) => r.id === relicId) || null;
-  if (enemySelectedRelic.value) {
-    addReport(`本波敌军携带遗物【${enemySelectedRelic.value.name}】。`);
+  const enemyRelic = relicPool.find((r) => r.id === relicId) || null;
+  enemyRelics.value = enemyRelic ? [enemyRelic] : [];
+  if (enemyRelic) {
+    addReport(`本波敌军携带遗物【${enemyRelic.name}】。`);
   } else {
     addReport("本波敌军未配置遗物。");
   }
@@ -1976,10 +2841,71 @@ const applyVictoryReward = (reward: VictoryRewardOption) => {
     return;
   }
   if (reward.type === "conscript") {
+    const beforeAvailable = availableConscripts.value;
     const before = totalConscripts.value;
     totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + reward.value);
     const actualRecovered = totalConscripts.value - before;
-    addReport(`崔珏补发兵员：征召兵 +${actualRecovered}（上限 ${maxConscripts}）。`);
+    if (actualRecovered > 0) {
+      const afterAvailable = availableConscripts.value;
+      addReport(
+        `崔珏补发兵员：征召兵 +${actualRecovered}（上限 ${maxConscripts}），可分配由 ${beforeAvailable} 提升至 ${afterAvailable}。`,
+      );
+      return;
+    }
+    const getPlayerBattleStartTroops = (general: General) => {
+      const positions = Object.keys(playerFormation.value) as FormationPosition[];
+      for (const position of positions) {
+        if (playerFormation.value[position]?.id !== general.id) continue;
+        const snapshot = battleStartSnapshot.value.player[position];
+        if (!snapshot) return general.troops;
+        return Math.max(0, Math.min(snapshot.troops, general.maxTroops));
+      }
+      return general.troops;
+    };
+    const healTargets = (Object.keys(playerFormation.value) as FormationPosition[])
+      .map((position) => playerFormation.value[position])
+      .filter((general): general is General => !!general && !general.isDead && general.troops < general.maxTroops)
+      .map((general) => {
+        const currentTroops = Math.max(0, general.troops);
+        // 回血上限：不超过本场开战时的当前兵力值
+        const battleStartTroopsCap = getPlayerBattleStartTroops(general);
+        const healCap = Math.max(0, battleStartTroopsCap - currentTroops);
+        return {
+          general,
+          healCap,
+          healed: 0,
+        };
+      })
+      .filter((item) => item.healCap > 0);
+    let healRemaining = reward.value;
+    let healedTotal = 0;
+    while (healRemaining > 0 && healTargets.length > 0) {
+      let progressed = false;
+      for (const item of healTargets) {
+        if (healRemaining <= 0) break;
+        if (item.healed >= item.healCap) continue;
+        item.general.troops += 1;
+        item.healed += 1;
+        healRemaining -= 1;
+        healedTotal += 1;
+        progressed = true;
+      }
+      if (!progressed) break;
+    }
+    if (healedTotal > 0) {
+      addReport(`征召兵已达上限，崔珏改为直接回血：我方上阵武将兵力恢复 ${healedTotal}。`);
+      return;
+    }
+    const reclaimed = Math.min(reward.value, committedConscripts.value);
+    if (reclaimed > 0) {
+      committedConscripts.value = Math.max(0, committedConscripts.value - reclaimed);
+      const afterAvailable = availableConscripts.value;
+      addReport(
+        `征召兵已达上限且无可恢复目标，崔珏改为回补可分配额度 +${reclaimed}，当前可分配 ${afterAvailable}。`,
+      );
+      return;
+    }
+    addReport(`崔珏补发兵员：征召兵 +0（上限 ${maxConscripts}），且当前无可回补额度。`);
     return;
   }
   if (reward.type === "promote") {
@@ -1994,15 +2920,17 @@ const applyVictoryReward = (reward: VictoryRewardOption) => {
 };
 
 const enterNextBattleAfterReward = async () => {
-  tickPlayerRecoveryRounds();
-  currentTurn.value = 0;
-  advanceTime();
-  await generateEnemyTeam();
-  addReport(`崔珏裁赏已落定，第 ${currentWave.value} 波敌军来袭。`);
+  gamePhase.value = "map_advance";
+  pendingBattleNodeType.value = null;
+  pendingNodeId.value = null;
+  showEventMap.value = true;
+  addReport("崔珏裁赏已落定，返回事件树继续前进。");
 };
 
 const openVictorySettlement = () => {
+  unlockBattleConscriptSnapshot();
   showVictoryRewardSelector.value = true;
+  gamePhase.value = "reward_resolve";
   victoryRewardOptions.value = buildVictoryRewardOptions();
   cuiJueRewardDialogLine.value = "此战有功，生死簿前，许你择其一赏。";
   addReport("崔珏现身，进入战后裁赏。");
@@ -2015,6 +2943,7 @@ const selectVictoryReward = async (reward: VictoryRewardOption) => {
     showVictoryRewardSelector.value = false;
     applyVictoryReward(reward);
     await enterNextBattleAfterReward();
+    gamePhase.value = "map_select";
   } finally {
     isResolvingVictoryReward.value = false;
   }
@@ -2088,34 +3017,59 @@ const addCuiJueQuote = (
   return line;
 };
 
-const shuffleRelics = (list: Relic[]) => {
-  const arr = [...list];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
+const RELIC_RARITY_WEIGHT: Record<Relic["rarity"], number> = {
+  common: 55,
+  uncommon: 33,
+  rare: 12,
+  legendary: 0,
 };
 
-const getRelicBySide = (side: "player" | "enemy"): Relic | null =>
-  side === "player" ? playerSelectedRelic.value : enemySelectedRelic.value;
+const pickRarityByWeight = (): Relic["rarity"] => {
+  const roll = Math.random() * 100;
+  let cursor = 0;
+  for (const rarity of ["common", "uncommon", "rare", "legendary"] as Relic["rarity"][]) {
+    cursor += RELIC_RARITY_WEIGHT[rarity];
+    if (roll <= cursor) return rarity;
+  }
+  return "common";
+};
+
+const pickWeightedRelics = (count: number): Relic[] => {
+  const available = [...relicPool];
+  const picked: Relic[] = [];
+  while (picked.length < count && available.length > 0) {
+    const rarity = pickRarityByWeight();
+    const sameRarity = available.filter((relic) => relic.rarity === rarity);
+    const pool = sameRarity.length > 0 ? sameRarity : available;
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    picked.push(chosen);
+    const idx = available.findIndex((item) => item.id === chosen.id);
+    if (idx >= 0) {
+      available.splice(idx, 1);
+    }
+  }
+  return picked;
+};
+
+const getRelicsBySide = (side: "player" | "enemy"): Relic[] =>
+  side === "player" ? playerRelics.value : enemyRelics.value;
 
 const getRelicEffectValue = (
   side: "player" | "enemy",
   key: keyof RelicEffects,
 ): number => {
-  const relic = getRelicBySide(side);
-  if (!relic) return 0;
-  return Number(relic.effects[key] || 0);
+  const relics = getRelicsBySide(side);
+  if (relics.length === 0) return 0;
+  return relics.reduce((sum, relic) => sum + Number(relic.effects[key] || 0), 0);
 };
 
 const hasLowTroopsDefenseBonus = (
   side: "player" | "enemy",
   general: General,
 ): boolean => {
-  const relic = getRelicBySide(side);
-  if (!relic) return false;
-  const threshold = Number(relic.effects.lowTroopsThreshold || 0);
+  const relics = getRelicsBySide(side);
+  if (relics.length === 0) return false;
+  const threshold = Math.max(...relics.map((relic) => Number(relic.effects.lowTroopsThreshold || 0)));
   if (threshold <= 0) return false;
   return general.maxTroops > 0 && general.troops / general.maxTroops < threshold;
 };
@@ -2194,19 +3148,21 @@ const applyEndTurnRelicEffects = () => {
 };
 
 const startRelicSelection = () => {
-  if (playerSelectedRelic.value) return;
+  if (playerRelics.value.length > 0) return;
   if (!hasShownNewRunQuote.value) {
     addCuiJueQuote("newRun");
     hasShownNewRunQuote.value = true;
   }
   cuiJueRelicDialogLine.value = addCuiJueQuote("relic");
-  const playerCandidates = shuffleRelics(relicPool).slice(0, 3);
+  const playerCandidates = pickWeightedRelics(3);
   playerRelicCandidates.value = playerCandidates;
   showRelicSelector.value = true;
 };
 
 const selectPlayerRelic = (relic: Relic) => {
-  playerSelectedRelic.value = relic;
+  if (!playerRelics.value.some((item) => item.id === relic.id)) {
+    playerRelics.value.push(relic);
+  }
   showRelicSelector.value = false;
   addReport(`我方选择遗物【${relic.name}】。`);
 };
@@ -2256,6 +3212,7 @@ const recruitCard = () => {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const waitBattle = async (baseMs: number) => {
+  if (skipBattleAnimation.value) return;
   let progressed = 0;
   const tick = 80;
   while (progressed < baseMs && isBattleActive.value) {
@@ -2273,6 +3230,15 @@ const setBattleSpeed = (speed: number) => {
   addReport(`战斗速度已切换为 ${speed}x`);
 };
 
+const toggleSkipBattle = () => {
+  if (isBattleActive.value) {
+    addReport("战斗进行中不可切换跳过状态。");
+    return;
+  }
+  skipBattleAnimation.value = !skipBattleAnimation.value;
+  addReport(skipBattleAnimation.value ? "已开启跳过战斗动画。" : "已关闭跳过战斗动画。");
+};
+
 const toggleBattlePause = () => {
   if (!isBattleActive.value) return;
   isBattlePaused.value = !isBattlePaused.value;
@@ -2282,6 +3248,11 @@ const toggleBattlePause = () => {
 const handleBattleControl = async () => {
   if (showVictoryRewardSelector.value) {
     addReport("请先完成崔珏裁赏，再开启下一场战斗。");
+    return;
+  }
+  if (!pendingBattleNodeType.value && !isBattleActive.value) {
+    addReport("请先在事件树中选择一个战斗节点。");
+    showEventMap.value = true;
     return;
   }
   if (isBattleStarting.value) return;
@@ -2388,15 +3359,61 @@ const getTargetsInRange = (attacker: {
   return targets;
 };
 
+const playHealSound = () => {
+  const audio = new Audio("/assets/audios/heal.mp3");
+  audio.play().catch((e) => console.error("播放治疗音效失败:", e));
+};
+
+const triggerHealCardFx = (side: "player" | "enemy", position: string) => {
+  const card = getCardElement(side, position);
+  if (!card) return;
+  card.classList.remove("target-heal-pulse");
+  void card.offsetWidth;
+  card.classList.add("target-heal-pulse");
+  window.setTimeout(() => {
+    card.classList.remove("target-heal-pulse");
+  }, 680);
+};
+
+const executeSkillEffectWithHealFx = <T>(effectRunner: () => T): T => {
+  const allUnits = getAllGenerals()
+    .filter((item) => !item.general.isDead)
+    .map((item) => ({
+      general: item.general,
+      side: item.side,
+      position: item.position,
+      troops: item.general.troops,
+    }));
+  const result = effectRunner();
+  let hasHeal = false;
+  allUnits.forEach((unit) => {
+    const healed = unit.general.troops - unit.troops;
+    if (healed > 0) {
+      hasHeal = true;
+      triggerHealCardFx(unit.side, unit.position);
+      showDamageText(healed, unit.side, unit.position, {
+        kind: "heal",
+        tag: "恢复",
+      });
+    }
+  });
+  if (hasHeal) {
+    playHealSound();
+  }
+  return result;
+};
+
 const triggerSkillEffects = (general: General, context: any) => {
   if (general.skills) {
     for (const skill of general.skills) {
       // 处理所有类型的技能（包括active和passive）
       // 传递addReport函数给技能效果
-      const result: any = skill.effect(general, {
+      const result: any = executeSkillEffectWithHealFx(() =>
+        skill.effect(general, {
         ...context,
         addReport
-      });
+        }),
+      );
       if (result) {
         return result;
       }
@@ -2557,12 +3574,17 @@ const showDamageText = (
   side: "player" | "enemy",
   position: string,
   options?: {
-    kind?: "normal" | "high" | "blocked";
+    kind?: "normal" | "high" | "blocked" | "heal" | "healSpark";
     critical?: boolean;
     tag?: string;
   },
 ) => {
-  const text = options?.kind === "blocked" ? "0" : "-" + damage;
+  const text =
+    options?.kind === "blocked"
+      ? "0"
+      : options?.kind === "heal"
+        ? "+" + damage
+        : "-" + damage;
   // 查找对应卡牌内的troops元素
   const troopsElement = document.querySelector(
     `.${side}-side [data-card-position="${position}"] .troops, ` +
@@ -2590,6 +3612,21 @@ const showDamageText = (
     };
 
     damageTexts.value.push(damageText);
+    if (options?.kind === "heal") {
+      for (let i = 0; i < 3; i++) {
+        const spark = {
+          id: Date.now() + Math.random() + i,
+          text: "✦",
+          kind: "healSpark",
+          critical: false,
+          tag: "",
+          x: cardRect.left + cardRect.width / 2 - 24 + (Math.random() * 34 - 17),
+          y: cardRect.top + cardRect.height / 2 + (Math.random() * 16 - 8),
+          delay: i * 0.05,
+        };
+        damageTexts.value.push(spark);
+      }
+    }
 
     setTimeout(() => {
       damageTexts.value = damageTexts.value.filter(
@@ -2612,6 +3649,21 @@ const showDamageText = (
   };
 
   damageTexts.value.push(damageText);
+  if (options?.kind === "heal") {
+    for (let i = 0; i < 3; i++) {
+      const spark = {
+        id: Date.now() + Math.random() + i,
+        text: "✦",
+        kind: "healSpark",
+        critical: false,
+        tag: "",
+        x: troopsRect.left + troopsRect.width / 2 - 24 + (Math.random() * 34 - 17),
+        y: troopsRect.top - 12 + (Math.random() * 10 - 5),
+        delay: i * 0.05,
+      };
+      damageTexts.value.push(spark);
+    }
+  }
 
   // 2秒后移除伤害文本
   setTimeout(() => {
@@ -2681,10 +3733,12 @@ const performAttackWithAnimation = async (
     attacker.general,
     attacker.side,
   );
-  markAttackerPhase(attacker.side, attacker.position, "windup");
-  await waitBattle(fx.windupMs);
-  markAttackerPhase(attacker.side, attacker.position, "dash");
-  await waitBattle(fx.dashMs);
+  if (!skipBattleAnimation.value) {
+    markAttackerPhase(attacker.side, attacker.position, "windup");
+    await waitBattle(fx.windupMs);
+    markAttackerPhase(attacker.side, attacker.position, "dash");
+    await waitBattle(fx.dashMs);
+  }
 
   // 执行攻击逻辑
   const attackResult = performAttack(attacker, target, attackType);
@@ -2701,12 +3755,16 @@ const performAttackWithAnimation = async (
 
   if (attackResult.damage > 0) {
     // 播放受击音效
-    const audio = new Audio('/assets/audios/hint.mp4');
-    audio.play().catch(e => console.error('播放音效失败:', e));
+    if (!skipBattleAnimation.value) {
+      const audio = new Audio('/assets/audios/hint.mp4');
+      audio.play().catch(e => console.error('播放音效失败:', e));
+    }
     
     // 触发受击动画（闪白、抖动、描边）
-    triggerTargetHitReaction(target.side, target.position, isHighDamage);
-    if (battleFxLevel.value === "high" && (isHighDamage || isCritical)) {
+    if (!skipBattleAnimation.value) {
+      triggerTargetHitReaction(target.side, target.position, isHighDamage);
+    }
+    if (!skipBattleAnimation.value && battleFxLevel.value === "high" && (isHighDamage || isCritical)) {
       isScreenShaking.value = true;
       window.setTimeout(() => {
         isScreenShaking.value = false;
@@ -2746,7 +3804,9 @@ const performAttackWithAnimation = async (
       );
     }
   } else {
-    triggerTargetHitReaction(target.side, target.position, false);
+    if (!skipBattleAnimation.value) {
+      triggerTargetHitReaction(target.side, target.position, false);
+    }
     showDamageText(0, target.side, target.position, {
       kind: "blocked",
       tag: "格挡",
@@ -2754,13 +3814,18 @@ const performAttackWithAnimation = async (
     addReport(`${attackTypeText}攻击被格挡，未造成伤害！`);
   }
 
-  markAttackerPhase(attacker.side, attacker.position, "recover");
-  await waitBattle(fx.recoverMs + 320);
+  if (!skipBattleAnimation.value) {
+    markAttackerPhase(attacker.side, attacker.position, "recover");
+    await waitBattle(fx.recoverMs + 320);
+  }
 
   addReport(
     `${attackerPrefix}${attacker.position}【${attacker.general.name}】行动结束`,
   );
-  clearAttackerPhase(attacker.side, attacker.position);
+  if (!skipBattleAnimation.value) {
+    clearAttackerPhase(attacker.side, attacker.position);
+  }
+  attackingCard.value = null;
 };
 
 const checkGameOver = () => {
@@ -2910,8 +3975,8 @@ const resetGame = () => {
     中军: null,
     前锋: null,
   };
-  playerSelectedRelic.value = null;
-  enemySelectedRelic.value = null;
+  playerRelics.value = [];
+  enemyRelics.value = [];
   playerRelicCandidates.value = [];
   showRelicSelector.value = false;
   showVictoryRewardSelector.value = false;
@@ -2920,8 +3985,13 @@ const resetGame = () => {
   hasShownNewRunQuote.value = false;
   battleReports.value = [];
   playerRecoveryRounds.value = {};
+  committedConscripts.value = 0;
+  gamePhase.value = "map_select";
+  showEventMap.value = true;
+  pendingNodeId.value = null;
+  pendingBattleNodeType.value = null;
   if (gameLoaded.value) {
-    void generateEnemyTeam().catch(() => {});
+    resetRunProgress();
     startRelicSelection();
   }
 };
@@ -3051,6 +4121,11 @@ const resetUnitSpeed = (unit: SpeedUnit) => {
 
 const startBattle = async () => {
   clearAllBattleFx();
+  if (!pendingBattleNodeType.value) {
+    addReport("当前没有待处理的战斗节点。");
+    showEventMap.value = true;
+    return;
+  }
   if (areAllOwnedGeneralsResting()) {
     addReport("所有武将均在休整中，战役结束，回到第一轮。");
     alert("所有武将都在休整中，游戏结束！将重置到第一轮。");
@@ -3070,13 +4145,15 @@ const startBattle = async () => {
     return;
   }
 
-  if (!playerSelectedRelic.value) {
+  if (playerRelics.value.length === 0) {
     startRelicSelection();
     addReport("请先选择我方遗物，再开始战斗。");
     return;
   }
   addCuiJueQuote("battle");
+  showEventMap.value = true;
   isBattlePaused.value = false;
+  lockBattleConscriptSnapshot();
   isBattleActive.value = true;
   captureBattleStartSnapshot();
 
@@ -3243,7 +4320,7 @@ const startBattle = async () => {
               addReport,
               allies: getAllAllies(unit.side)
             };
-            skill.effect(unit.general, commandSkillContext);
+            executeSkillEffectWithHealFx(() => skill.effect(unit.general, commandSkillContext));
           }
         }
       }
@@ -3261,7 +4338,9 @@ const startBattle = async () => {
               maxTroops: unit.general.maxTroops,
               addReport
             };
-            const beforeTriggerResult = skill.effect(unit.general, beforeTriggerContext);
+            const beforeTriggerResult = executeSkillEffectWithHealFx(() =>
+              skill.effect(unit.general, beforeTriggerContext),
+            );
 
             // 应用战法发动概率降低效果
             let finalTriggerChance = 1;
@@ -3305,7 +4384,9 @@ const startBattle = async () => {
                   allies: allies,
                   addReport
                 };
-                const skillResult = skill.effect(unit.general, skillContext);
+                const skillResult = executeSkillEffectWithHealFx(() =>
+                  skill.effect(unit.general, skillContext),
+                );
                 if (skillResult && skillResult.triggered) {
                   activeSkillTriggered = true;
                   // 显示技能释放台词
@@ -3644,6 +4725,30 @@ const nextWave = async () => {
   font-size: 20px;
 }
 
+.damage-text.damage-heal {
+  color: #67f3a8;
+  font-size: 34px;
+  font-weight: 900;
+  text-shadow:
+    0 0 18px rgba(103, 243, 168, 0.85),
+    0 0 34px rgba(128, 255, 195, 0.45),
+    2px 2px 4px rgba(0, 0, 0, 0.45);
+  animation: healPop 1.05s cubic-bezier(0.18, 0.85, 0.28, 1) forwards;
+}
+
+.damage-text.damage-heal .damage-tag {
+  color: #d4ffe9;
+  text-shadow: 0 0 10px rgba(103, 243, 168, 0.85);
+  letter-spacing: 1.2px;
+}
+
+.damage-text.damage-healSpark {
+  color: #87ffd0;
+  font-size: 18px;
+  text-shadow: 0 0 8px rgba(135, 255, 208, 0.85);
+  animation: healSpark 0.72s ease-out forwards;
+}
+
 .damage-text.crit {
   color: #ff5f3a;
   font-size: 34px;
@@ -3731,6 +4836,59 @@ const nextWave = async () => {
   100% {
     opacity: 0;
     transform: translateY(-50px) scale(1.5);
+  }
+}
+
+@keyframes healPop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.68);
+  }
+  24% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.2);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(-26px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-52px) scale(0.94);
+  }
+}
+
+@keyframes healSpark {
+  0% {
+    opacity: 0.95;
+    transform: translateY(0) scale(0.7) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1.3) rotate(35deg);
+  }
+}
+
+.card.target-heal-pulse {
+  animation: cardHealPulse 0.65s ease-out;
+  box-shadow:
+    0 0 0 2px rgba(120, 255, 191, 0.72),
+    0 0 26px rgba(120, 255, 191, 0.52),
+    0 0 38px rgba(120, 255, 191, 0.25);
+}
+
+@keyframes cardHealPulse {
+  0% {
+    filter: brightness(1) saturate(1);
+    transform: scale(1);
+  }
+  28% {
+    filter: brightness(1.24) saturate(1.3);
+    transform: scale(1.018);
+  }
+  100% {
+    filter: brightness(1) saturate(1);
+    transform: scale(1);
   }
 }
 
@@ -3842,12 +5000,65 @@ const nextWave = async () => {
 }
 
 .game-area {
+  position: relative;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: stretch;
   gap: 20px;
   margin-bottom: 30px;
-  min-height: 400px;
+  min-height: 520px;
+}
+
+.middle-hub {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.middle-hub-left,
+.middle-hub-right {
+  min-width: 0;
+}
+
+.map-toggle-btn {
+  position: absolute;
+  left: 10px;
+  top: 120px;
+  z-index: 25;
+  border: 1px solid rgba(88, 64, 35, 0.65);
+  background: rgba(255, 248, 232, 0.95);
+  color: #5b4124;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.battle-map-drawer {
+  position: absolute;
+  left: 10px;
+  top: 160px;
+  width: min(980px, calc(100% - 20px));
+  max-height: calc(100% - 200px);
+  z-index: 24;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-105%);
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.battle-map-drawer.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.battle-map-drawer .event-map-board {
+  min-height: 420px;
 }
 
 .player-side {
@@ -3931,6 +5142,23 @@ const nextWave = async () => {
   color: #f6e7bf;
   border: 1px solid rgba(255, 215, 0, 0.35);
   font-size: 13px;
+}
+
+.relic-item.rarity-common {
+  border-color: rgba(226, 232, 240, 0.85);
+}
+
+.relic-item.rarity-uncommon {
+  border-color: rgba(94, 203, 115, 0.9);
+}
+
+.relic-item.rarity-rare {
+  border-color: rgba(141, 109, 247, 0.9);
+}
+
+.relic-item.rarity-legendary {
+  border-color: rgba(245, 191, 79, 0.95);
+  box-shadow: 0 0 10px rgba(245, 191, 79, 0.2);
 }
 
 .relic-item.empty {
@@ -4027,8 +5255,200 @@ const nextWave = async () => {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.relic-candidate-card.rarity-common {
+  border-color: #d9dee6;
+  box-shadow: inset 0 0 0 1px rgba(217, 222, 230, 0.35);
+}
+
+.relic-candidate-card.rarity-uncommon {
+  border-color: #5ecb73;
+  box-shadow: inset 0 0 0 1px rgba(94, 203, 115, 0.3);
+}
+
+.relic-candidate-card.rarity-rare {
+  border-color: #8d6df7;
+  box-shadow: inset 0 0 0 1px rgba(141, 109, 247, 0.35);
+}
+
+.relic-candidate-card.rarity-legendary {
+  border-color: #f5bf4f;
+  box-shadow: inset 0 0 0 1px rgba(245, 191, 79, 0.45);
+}
+
 .reward-panel .relic-candidate-card {
   min-height: 180px;
+}
+
+.event-map-panel {
+  height: 100%;
+  border: 1px solid rgba(120, 80, 40, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 248, 232, 0.9);
+  padding: 12px;
+}
+
+.event-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #5b4124;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.event-map-board {
+  position: relative;
+  min-height: 520px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(245, 238, 224, 0.78));
+  border: 1px solid rgba(120, 80, 40, 0.25);
+  overflow: hidden;
+  padding-right: 140px;
+}
+
+.event-map-links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.event-map-link {
+  fill: none;
+  stroke: rgba(110, 132, 152, 0.46);
+  stroke-width: 0.92;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 1.5px rgba(125, 154, 180, 0.2));
+  transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
+}
+
+.event-map-link.visited {
+  stroke: rgba(138, 156, 171, 0.62);
+  opacity: 0.98;
+}
+
+.event-map-link.reachable {
+  stroke: rgba(188, 216, 235, 0.92);
+  stroke-width: 1.22;
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(176, 210, 233, 0.35));
+}
+
+.event-node-btn {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(96, 70, 40, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #5b4124;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  opacity: 0.5;
+  z-index: 2;
+}
+
+.event-node-btn.selectable {
+  cursor: pointer;
+  opacity: 1;
+}
+
+.event-node-btn.selectable:hover {
+  transform: translate(-50%, calc(-50% - 2px));
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.event-node-btn.pending {
+  border-color: #e09b42;
+  box-shadow: 0 0 0 2px rgba(224, 155, 66, 0.35);
+}
+
+.event-node-btn.current {
+  border-color: #6fbbff;
+  box-shadow: 0 0 0 2px rgba(111, 187, 255, 0.35);
+}
+
+.event-node-btn.visited {
+  background: rgba(232, 232, 232, 0.9);
+}
+
+.event-node-icon {
+  width: 51px;
+  height: 51px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1.5px rgba(20, 20, 20, 0.35));
+}
+
+.map-legend {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 3;
+  width: 220px;
+  border: 1px solid rgba(123, 90, 52, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 250, 241, 0.9);
+  padding: 8px;
+}
+
+.map-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.map-legend-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #6a4b28;
+  margin-bottom: 0;
+}
+
+.map-legend-toggle {
+  border: 1px solid rgba(123, 90, 52, 0.45);
+  background: rgba(255, 255, 255, 0.75);
+  color: #6a4b28;
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.map-legend-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 0 2px rgba(20, 20, 20, 0.25));
+}
+
+.map-legend-text {
+  color: #5b4124;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.battle-stage {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 20px;
+  flex: 1;
 }
 
 .relic-candidate-card:hover {
@@ -4426,6 +5846,41 @@ const nextWave = async () => {
   .game-area {
     flex-direction: column;
     gap: 20px;
+  }
+
+  .middle-hub {
+    grid-template-columns: 1fr;
+  }
+
+  .map-toggle-btn {
+    top: 96px;
+    left: 8px;
+  }
+
+  .battle-map-drawer {
+    left: 8px;
+    top: 136px;
+    max-height: calc(100% - 170px);
+  }
+
+  .event-map-board {
+    min-height: 440px;
+    padding-right: 12px;
+    padding-bottom: 150px;
+  }
+
+  .map-legend {
+    top: auto;
+    bottom: 10px;
+    right: 10px;
+    width: calc(100% - 20px);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 8px;
+  }
+
+  .map-legend-title {
+    grid-column: 1 / -1;
   }
 
   .formation.horizontal {
@@ -4846,6 +6301,12 @@ const nextWave = async () => {
   border-color: rgba(255, 255, 255, 0.8);
 }
 
+.speed-btn.skip-toggle {
+  min-width: 96px;
+  font-size: 11px;
+  padding: 8px 8px;
+}
+
 .action-button {
   flex: none;
   padding: 12px 24px;
@@ -4935,6 +6396,22 @@ const nextWave = async () => {
   .game-area {
     flex-direction: column;
     gap: 20px;
+  }
+
+  .middle-hub {
+    grid-template-columns: 1fr;
+  }
+
+  .map-toggle-btn {
+    top: 88px;
+  }
+
+  .battle-map-drawer {
+    top: 128px;
+  }
+
+  .battle-stage {
+    flex-direction: column;
   }
 
   .battle-report {
