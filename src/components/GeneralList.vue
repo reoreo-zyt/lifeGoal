@@ -14,6 +14,10 @@
           v-for="general in generals"
           :key="general.id"
           class="general-item"
+          :class="{
+            deployed: isDeployed(general),
+            selected: isActiveSlotGeneral(general),
+          }"
           @click="$emit('select', general)"
           @contextmenu="$emit('show-tooltip', general, $event)"
         >
@@ -34,12 +38,16 @@
                     v-for="i in 5"
                     :key="i"
                     class="star"
-                    :class="{ active: i <= Math.ceil(general.level) }"
+                    :class="{
+                      active: i <= getSynthStar(general),
+                      enhanced: getSynthStar(general) > 0,
+                    }"
                     >★</span
                   >
                 </div>
               </div>
             </div>
+            <div v-if="isDeployed(general)" class="deployed-badge">已上阵</div>
             <div class="card-middle"></div>
             <div class="card-bottom">
               <div class="card-bottom-item">
@@ -69,9 +77,11 @@
 <script setup lang="ts">
 import type { General } from "../skills/types";
 
-defineProps<{
+const props = defineProps<{
   generals: General[];
   API_BASE_URL: string;
+  deployedGeneralIds: number[];
+  activeSlotGeneralId: number | null;
 }>();
 
 defineEmits<{
@@ -79,6 +89,16 @@ defineEmits<{
   (e: "select", general: General): void;
   (e: "show-tooltip", general: General, event: MouseEvent): void;
 }>();
+
+const getSynthStar = (general: General) => {
+  const star = (general as General & { synthStar?: number }).synthStar;
+  return typeof star === "number" ? Math.max(0, Math.min(5, star)) : 0;
+};
+
+const isDeployed = (general: General) => props.deployedGeneralIds.includes(general.id);
+
+const isActiveSlotGeneral = (general: General) =>
+  props.activeSlotGeneralId !== null && props.activeSlotGeneralId === general.id;
 </script>
 
 <style scoped>
@@ -159,6 +179,14 @@ defineEmits<{
 
 .general-item:hover {
   transform: scale(1.05);
+}
+
+.general-item.deployed .card {
+  box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.85), 0 8px 25px rgba(255, 140, 0, 0.4);
+}
+
+.general-item.selected .card {
+  box-shadow: 0 0 0 3px rgba(102, 190, 255, 0.95), 0 0 14px rgba(102, 190, 255, 0.55);
 }
 
 .card {
@@ -245,6 +273,25 @@ defineEmits<{
 .star.active {
   color: #ffd700;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.star.active.enhanced {
+  color: #ff8c00;
+  text-shadow: 0 0 6px rgba(255, 140, 0, 0.7), 1px 1px 2px rgba(0, 0, 0, 0.65);
+}
+
+.deployed-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(255, 140, 0, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .card-middle {

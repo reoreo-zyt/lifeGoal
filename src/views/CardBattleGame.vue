@@ -50,6 +50,25 @@
         </div>
 
         <div class="game-area">
+          <div v-if="showRelicSelector" class="relic-selector-mask">
+            <div class="relic-selector-panel">
+              <h3>请选择本局遗物（3选1）</h3>
+              <div class="cui-jue-dialog">
+                <img class="cui-jue-portrait" :src="cuiJuePortrait" alt="崔珏" />
+                <div class="cui-jue-bubble">
+                  {{ cuiJueRelicDialogLine }}
+                </div>
+              </div>
+              <div class="relic-candidate-list">
+                <div v-for="relic in playerRelicCandidates" :key="relic.id" class="relic-candidate-card"
+                  @click="selectPlayerRelic(relic)">
+                  <div class="relic-candidate-icon">{{ relic.icon }}</div>
+                  <div class="relic-candidate-name">{{ relic.name }}</div>
+                  <div class="relic-candidate-effect">{{ relic.effectText }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text" :style="{
             left: damageText.x + 'px',
             top: damageText.y + 'px',
@@ -66,6 +85,13 @@
           </div>
           <div class="player-side">
             <div class="side-label">我方</div>
+            <div class="relic-bar">
+              <div v-if="playerSelectedRelic" class="relic-item" :title="getRelicTooltip(playerSelectedRelic)">
+                <span class="relic-icon">{{ playerSelectedRelic.icon }}</span>
+                <span class="relic-name">{{ playerSelectedRelic.name }}</span>
+              </div>
+              <div v-else class="relic-item empty">未选择遗物</div>
+            </div>
             <div class="formation horizontal">
               <div class="card-slot" @click="selectSlot('player', '大营')">
                 <div class="card-container">
@@ -104,8 +130,8 @@
                       <div class="card-right-top">
                         <div class="card-stars">
                           <span v-for="i in 5" :key="i" class="star" :class="{
-                            active:
-                              i <= Math.ceil(playerFormation.大营.level),
+                            active: i <= getSynthStar(playerFormation.大营),
+                            enhanced: getSynthStar(playerFormation.大营) > 0,
                           }">★</span>
                         </div>
                       </div>
@@ -209,8 +235,8 @@
                       <div class="card-right-top">
                         <div class="card-stars">
                           <span v-for="i in 5" :key="i" class="star" :class="{
-                            active:
-                              i <= Math.ceil(playerFormation.中军.level),
+                            active: i <= getSynthStar(playerFormation.中军),
+                            enhanced: getSynthStar(playerFormation.中军) > 0,
                           }">★</span>
                         </div>
                       </div>
@@ -313,8 +339,8 @@
                       <div class="card-right-top">
                         <div class="card-stars">
                           <span v-for="i in 5" :key="i" class="star" :class="{
-                            active:
-                              i <= Math.ceil(playerFormation.前锋.level),
+                            active: i <= getSynthStar(playerFormation.前锋),
+                            enhanced: getSynthStar(playerFormation.前锋) > 0,
                           }">★</span>
                         </div>
                       </div>
@@ -388,6 +414,13 @@
           <!-- 战斗场景 -->
           <div class="player-side enemy">
             <div class="side-label">敌方</div>
+            <div class="relic-bar">
+              <div v-if="enemySelectedRelic" class="relic-item" :title="getRelicTooltip(enemySelectedRelic)">
+                <span class="relic-icon">{{ enemySelectedRelic.icon }}</span>
+                <span class="relic-name">{{ enemySelectedRelic.name }}</span>
+              </div>
+              <div v-else class="relic-item empty">未选择遗物</div>
+            </div>
             <div class="formation horizontal enemy">
               <div class="card-slot" @click="selectSlot('enemy', '前锋')">
                 <div class="card-container">
@@ -426,8 +459,8 @@
                       <div class="card-right-top">
                         <div class="card-stars">
                           <span v-for="i in 5" :key="i" class="star" :class="{
-                            active:
-                              i <= Math.ceil(enemyFormation.前锋.level),
+                            active: i <= getSynthStar(enemyFormation.前锋),
+                            enhanced: getSynthStar(enemyFormation.前锋) > 0,
                           }">★</span>
                         </div>
                       </div>
@@ -530,8 +563,8 @@
                       <div class="card-right-top">
                         <div class="card-stars">
                           <span v-for="i in 5" :key="i" class="star" :class="{
-                            active:
-                              i <= Math.ceil(enemyFormation.中军.level),
+                            active: i <= getSynthStar(enemyFormation.中军),
+                            enhanced: getSynthStar(enemyFormation.中军) > 0,
                           }">★</span>
                         </div>
                       </div>
@@ -634,8 +667,8 @@
                       <div class="card-right-top">
                         <div class="card-stars">
                           <span v-for="i in 5" :key="i" class="star" :class="{
-                            active:
-                              i <= Math.ceil(enemyFormation.大营.level),
+                            active: i <= getSynthStar(enemyFormation.大营),
+                            enhanced: getSynthStar(enemyFormation.大营) > 0,
                           }">★</span>
                         </div>
                       </div>
@@ -706,7 +739,9 @@
         </div>
 
         <!-- 选择武将界面 -->
-        <GeneralList v-if="showGeneralList" :generals="availableGenerals" :API_BASE_URL="API_BASE_URL"
+        <GeneralList v-if="showGeneralList" :generals="generals" :API_BASE_URL="API_BASE_URL"
+          :deployed-general-ids="deployedGeneralIds"
+          :active-slot-general-id="activeSlotGeneralId"
           @close="closeGeneralList" @select="(general) => {
             deployGeneral(general);
             hideTooltip();
@@ -721,10 +756,16 @@
             @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
             <img src="/assets/open.webp" alt="卡包招募" class="button-icon">
           </button>
-          <button class="action-button end-turn" @click="endTurn" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'start')"
-            @mouseleave="hideHeaderTooltip">
-            <img src="/assets/start.webp" alt="开始" class="button-icon">
+          <button class="action-button end-turn" @click="endTurn"
+            @mouseenter="showBattleControlTooltip($event)" @mouseleave="hideHeaderTooltip">
+            <img :src="battleControlIcon" :alt="battleControlAlt" class="button-icon">
           </button>
+          <div class="speed-controls">
+            <button v-for="speed in speedOptions" :key="speed" class="speed-btn"
+              :class="{ active: battleSpeed === speed }" @click="setBattleSpeed(speed)">
+              {{ speed }}x
+            </button>
+          </div>
           <button class="action-button next-wave" @click="nextWave" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'next')"
             @mouseleave="hideHeaderTooltip">
             <img src="/assets/next.webp" alt="下一轮" class="button-icon">
@@ -785,6 +826,21 @@ const showHeaderTooltip = (event: MouseEvent, key: string) => {
 // 隐藏悬浮提示
 const hideHeaderTooltip = () => {
   tooltip.value.visible = false;
+};
+
+const showBattleControlTooltip = (event: MouseEvent) => {
+  const text = !isBattleActive.value
+    ? "开始战斗"
+    : isBattlePaused.value
+      ? "继续战斗"
+      : "暂停战斗";
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  tooltip.value = {
+    visible: true,
+    text,
+    x: rect.left + rect.width / 2,
+    y: rect.bottom + 10,
+  };
 };
 
 // 游戏初始数据
@@ -909,12 +965,110 @@ const enemyFormation = ref({
   前锋: null as General | null,
 });
 
+type FormationPosition = keyof typeof playerFormation.value;
+type GeneralBattleSnapshot = {
+  attack: number;
+  defense: number;
+  strategy: number;
+  speed: number;
+  siege: number;
+  troops: number;
+  maxTroops: number;
+  isDead: boolean;
+  skillEffects: Record<string, any>;
+};
+
+const battleStartSnapshot = ref<{
+  player: Record<FormationPosition, GeneralBattleSnapshot | null>;
+  enemy: Record<FormationPosition, GeneralBattleSnapshot | null>;
+}>({
+  player: {
+    大营: null,
+    中军: null,
+    前锋: null,
+  },
+  enemy: {
+    大营: null,
+    中军: null,
+    前锋: null,
+  },
+});
+
+const createGeneralSnapshot = (
+  general: General | null,
+): GeneralBattleSnapshot | null => {
+  if (!general) return null;
+  return {
+    attack: general.attack,
+    defense: general.defense,
+    strategy: general.strategy,
+    speed: general.speed,
+    siege: general.siege,
+    troops: general.troops,
+    maxTroops: general.maxTroops,
+    isDead: general.isDead,
+    skillEffects: { ...(general.skillEffects || {}) },
+  };
+};
+
+const captureBattleStartSnapshot = () => {
+  (Object.keys(playerFormation.value) as FormationPosition[]).forEach((position) => {
+    battleStartSnapshot.value.player[position] = createGeneralSnapshot(
+      playerFormation.value[position],
+    );
+    battleStartSnapshot.value.enemy[position] = createGeneralSnapshot(
+      enemyFormation.value[position],
+    );
+  });
+};
+
+const restoreGeneralFromSnapshot = (
+  general: General | null,
+  snapshot: GeneralBattleSnapshot | null,
+) => {
+  if (!general || !snapshot) return;
+  general.attack = snapshot.attack;
+  general.defense = snapshot.defense;
+  general.strategy = snapshot.strategy;
+  general.speed = snapshot.speed;
+  general.siege = snapshot.siege;
+  general.maxTroops = snapshot.maxTroops;
+  general.troops = snapshot.maxTroops;
+  general.isDead = false;
+  general.skillEffects = {};
+};
+
+const restoreBattleStateToInitial = () => {
+  (Object.keys(playerFormation.value) as FormationPosition[]).forEach((position) => {
+    restoreGeneralFromSnapshot(
+      playerFormation.value[position],
+      battleStartSnapshot.value.player[position],
+    );
+    restoreGeneralFromSnapshot(
+      enemyFormation.value[position],
+      battleStartSnapshot.value.enemy[position],
+    );
+  });
+};
+
 const generals = ref<General[]>([]);
 const selectedSlot = ref<string | null>(null);
 const showGeneralList = ref(false);
 const battleReports = ref<string[]>([]);
 const speedUnits = ref<any[]>([]);
 const isBattleActive = ref(false);
+const isBattlePaused = ref(false);
+const isBattleStarting = ref(false);
+const battleSpeed = ref(1);
+const speedOptions = [1, 2, 4, 8];
+const battleControlIcon = computed(() => {
+  if (!isBattleActive.value || isBattlePaused.value) return "/assets/start.webp";
+  return "/assets/pause_btn.png";
+});
+const battleControlAlt = computed(() => {
+  if (!isBattleActive.value) return "开始";
+  return isBattlePaused.value ? "继续" : "暂停";
+});
 const damageTexts = ref<any[]>([]);
 const quoteTexts = ref<any[]>([]);
 const attackingCard = ref<string | null>(null);
@@ -926,6 +1080,37 @@ interface SpeedUnit {
   position: string;
   speed: number;
   isActive: boolean;
+}
+
+interface RelicEffects {
+  defensePct?: number;
+  debuffResistChance?: number;
+  turnEndHealPct?: number;
+  commandPct?: number;
+  siegePct?: number;
+  physicalDamagePct?: number;
+  strategyPct?: number;
+  activeSkillChancePct?: number;
+  strategyDamagePct?: number;
+  resourcePerTurn?: number;
+  resourceEfficiencyPct?: number;
+  cavalrySpeedPct?: number;
+  cavalryDoubleStrikeChance?: number;
+  strategyDamageReductionPct?: number;
+  speedPct?: number;
+  physicalDamageReductionPct?: number;
+  lowTroopsDefenseBonusPct?: number;
+  lowTroopsThreshold?: number;
+  healEffectPct?: number;
+}
+
+interface Relic {
+  id: string;
+  name: string;
+  icon: string;
+  history: string;
+  effectText: string;
+  effects: RelicEffects;
 }
 
 const xiaDynastyGenerals = [
@@ -950,12 +1135,147 @@ const xiaDynastyGenerals = [
   "寒浞",
 ];
 
+const relicPool: Relic[] = [
+  {
+    id: "kaihuanglvjian",
+    name: "开皇律简",
+    icon: "📜",
+    history:
+      "隋文帝时期颁布的《开皇律》竹简残卷，是隋唐法律制度的基础，规范朝纲、安定民心。",
+    effectText: "全队防御+8%，受负面概率-5%，每回合结束恢复全队3%兵力。",
+    effects: { defensePct: 0.08, debuffResistChance: 0.05, turnEndHealPct: 0.03 },
+  },
+  {
+    id: "suidaibingfu",
+    name: "隋代兵符",
+    icon: "🛡️",
+    history: "隋代调兵遣将兵符，象征古代军事权力。",
+    effectText: "全队统御+10%，攻城+15%，物理伤害+8%。",
+    effects: { commandPct: 0.1, siegePct: 0.15, physicalDamagePct: 0.08 },
+  },
+  {
+    id: "lantingxumoben",
+    name: "兰亭序摹本（隋唐版）",
+    icon: "🖌️",
+    history: "隋唐时期临摹《兰亭序》珍品，体现文化繁荣。",
+    effectText: "全队谋略+12%，战法发动概率+5%，谋略伤害+6%。",
+    effects: { strategyPct: 0.12, activeSkillChancePct: 0.05, strategyDamagePct: 0.06 },
+  },
+  {
+    id: "dayunhecaoyin",
+    name: "大运河漕印",
+    icon: "🚢",
+    history: "隋唐漕运管理官印，见证大运河贯通南北。",
+    effectText: "全队攻城+12%，每回合获得资源，防御+8%。",
+    effects: { siegePct: 0.12, resourcePerTurn: 18, defensePct: 0.08 },
+  },
+  {
+    id: "tangsancaimayong",
+    name: "唐三彩马俑",
+    icon: "🐎",
+    history: "隋唐代表性马俑工艺，见证时代繁荣与交流。",
+    effectText: "全队骑兵速度+10%，物理伤害+7%，每回合6%概率骑兵连击一次。",
+    effects: { cavalrySpeedPct: 0.1, physicalDamagePct: 0.07, cavalryDoubleStrikeChance: 0.06 },
+  },
+  {
+    id: "fangkongqianfan",
+    name: "隋代方孔钱范",
+    icon: "🪙",
+    history: "隋代五铢钱钱范，规范全国货币制度。",
+    effectText: "全队统御+8%，资源产出效率+10%，受谋略伤害-6%。",
+    effects: { commandPct: 0.08, resourceEfficiencyPct: 0.1, strategyDamageReductionPct: 0.06 },
+  },
+  {
+    id: "yantabeitie",
+    name: "雁塔碑帖",
+    icon: "🗿",
+    history: "隋唐碑帖文献，见证文化鼎盛。",
+    effectText: "全队谋略+10%，战法发动概率+4%，谋略属性额外+7%。",
+    effects: { strategyPct: 0.17, activeSkillChancePct: 0.04 },
+  },
+  {
+    id: "suidaikaijiacanpian",
+    name: "隋代铠甲残片",
+    icon: "🧱",
+    history: "隋代军用铠甲残片，体现军事装备水平。",
+    effectText: "全队防御+11%，受物理伤害-7%，兵力低于60%额外防御+5%。",
+    effects: {
+      defensePct: 0.11,
+      physicalDamageReductionPct: 0.07,
+      lowTroopsDefenseBonusPct: 0.05,
+      lowTroopsThreshold: 0.6,
+    },
+  },
+  {
+    id: "tangdaichajingchaoben",
+    name: "唐代茶经抄本",
+    icon: "🍵",
+    history: "唐代《茶经》手抄本，见证茶文化兴起。",
+    effectText: "全队谋略+9%，治疗效果+10%，每回合恢复全队4%兵力。",
+    effects: { strategyPct: 0.09, healEffectPct: 0.1, turnEndHealPct: 0.04 },
+  },
+  {
+    id: "suitangfenghuotailingpai",
+    name: "隋唐烽火台令牌",
+    icon: "🔥",
+    history: "隋唐烽火台军情令牌，见证边防通讯体系。",
+    effectText: "全队速度+8%，物理伤害+6%，强化侦查能力。",
+    effects: { speedPct: 0.08, physicalDamagePct: 0.06 },
+  },
+];
+
+const playerRelicCandidates = ref<Relic[]>([]);
+const playerSelectedRelic = ref<Relic | null>(null);
+const enemySelectedRelic = ref<Relic | null>(null);
+const showRelicSelector = ref(false);
+
+const ENEMY_WAVE_RELIC_CONFIG: Record<number, string> = {
+  3: "suidaibingfu",
+  5: "kaihuanglvjian",
+  8: "suitangfenghuotailingpai",
+  12: "suidaikaijiacanpian",
+};
+
+const cuiJueQuotes = {
+  newRun: [
+    "生死簿上，名字又添一笔。这一世，你打算如何书写？",
+    "我见过无数魂魄来来去去，却少有人能真正改写命数。你，会是例外吗？",
+    "又回到起点了。记住，每一步选择，都在命运的天平上。",
+  ],
+  relic: [
+    "这些是前人留下的痕迹。有的带着荣耀，有的染着遗憾——你选哪个？",
+    "命运从不免费馈赠，每一次获得，背后都有代价。想清楚了吗？",
+  ],
+  battle: [
+    "前方凶险，但你心中自有明灯。去吧，判官看着你呢。",
+    "我判过无数善恶，却判不出你的命数——因为那在你自己手中。",
+  ],
+  defeat: [
+    "又一个轮回落幕……但故事未完。休息片刻，再重新开始吧。",
+    "虚负凌云万丈才，一生襟抱未曾开——你还有机会，别让这句话成真。",
+  ],
+  victory: [
+    "这一局，你赢了。生死簿上，又多了一个传奇。",
+    "判官见证过无数成败，而你——值得被记住。",
+  ],
+};
+
+const hasShownNewRunQuote = ref(false);
+const cuiJuePortrait = "/assets/cui_jue.webp";
+const cuiJueRelicDialogLine = ref("这些是前人留下的痕迹。有的带着荣耀，有的染着遗憾——你选哪个？");
 
 
-const availableGenerals = computed(() => {
-  return generals.value.filter((g) => {
-    return !Object.values(playerFormation.value).some((p) => p?.id === g.id);
-  });
+
+const deployedGeneralIds = computed(() =>
+  Object.values(playerFormation.value)
+    .filter((g): g is General => !!g)
+    .map((g) => g.id),
+);
+
+const activeSlotGeneralId = computed(() => {
+  if (!selectedSlot.value) return null;
+  const [, position] = selectedSlot.value.split("-");
+  return playerFormation.value[position as keyof typeof playerFormation.value]?.id ?? null;
 });
 
 const updateCurrentCommand = () => {
@@ -966,6 +1286,12 @@ const updateCurrentCommand = () => {
   currentCommand.value = total;
 };
 
+watch(gameLoaded, (loaded) => {
+  if (loaded && !playerSelectedRelic.value) {
+    startRelicSelection();
+  }
+});
+
 onMounted(() => {
   const storedUser = localStorage.getItem("user");
   if (storedUser) {
@@ -973,7 +1299,7 @@ onMounted(() => {
   }
   // 先获取人物数据，再生成敌方队伍
   fetchCharacters().then(() => {
-    generateEnemyTeam();
+    void generateEnemyTeam().catch(() => {});
   });
 });
 
@@ -1056,6 +1382,7 @@ const closeGeneralList = () => {
 const deployGeneral = (general: General) => {
   if (selectedSlot.value) {
     const [, position] = selectedSlot.value.split("-");
+    const targetPosition = position as keyof typeof playerFormation.value;
     const oldGeneral = playerFormation.value[position as keyof typeof playerFormation.value];
     const oldCommand = oldGeneral ? oldGeneral.leadership : 0;
     const newTotalCommand = currentCommand.value - oldCommand + general.leadership;
@@ -1067,68 +1394,19 @@ const deployGeneral = (general: General) => {
       return;
     }
 
-    playerFormation.value[position as keyof typeof playerFormation.value] =
-      general;
+    const existingPosition = (Object.keys(playerFormation.value) as (keyof typeof playerFormation.value)[])
+      .find((key) => playerFormation.value[key]?.id === general.id);
+    if (existingPosition && existingPosition !== targetPosition) {
+      playerFormation.value[existingPosition] = null;
+    }
+
+    playerFormation.value[targetPosition] = general;
     updateCurrentCommand();
     addReport(
-      `【${general.name}】已上阵至【${position}】！统率: ${currentCommand.value}/${maxCommand.value}`,
+      `【${general.name}】已上阵至【${targetPosition}】！统率: ${currentCommand.value}/${maxCommand.value}`,
     );
     closeGeneralList();
   }
-};
-
-const generateEnemyTeam = () => {
-  const positions: (keyof typeof enemyFormation.value)[] = [
-    "大营",
-    "中军",
-    "前锋",
-  ];
-  positions.forEach((position) => {
-    const level = Math.floor(Math.random() * 5) + 1;
-    const leadershipValues = [2, 2.5, 3, 3.5];
-    const leadership = leadershipValues[Math.floor(Math.random() * leadershipValues.length)];
-    const commandValue = Math.floor(Math.random() * 100) + 1; // 统御值 1-100
-    const troops = Math.floor(commandValue * 10);
-
-    // 从API获取的人物中随机选择，或者使用默认人物
-    let character = null;
-    if (characters.value.length > 0) {
-      character =
-        characters.value[Math.floor(Math.random() * characters.value.length)];
-    }
-
-    const generalName =
-      character?.name ||
-      xiaDynastyGenerals[Math.floor(Math.random() * xiaDynastyGenerals.length)];
-
-    enemyFormation.value[position] = {
-      id: character?.id || Date.now() + Math.random(),
-      name: generalName,
-      attack: Math.floor(Math.random() * 100) + 50,
-      attackGrowth: Math.round(Math.random() * 3 * 100) / 100,
-      defense: Math.floor(Math.random() * 100) + 50,
-      defenseGrowth: Math.round(Math.random() * 3 * 100) / 100,
-      strategy: Math.floor(Math.random() * 100) + 50,
-      strategyGrowth: Math.round(Math.random() * 3 * 100) / 100,
-      speed: Math.floor(Math.random() * 100) + 50,
-      speedGrowth: Math.round(Math.random() * 3 * 100) / 100,
-      attackRange: Math.floor(Math.random() * 3) + 1,
-      siege: Math.floor(Math.random() * 100) + 50,
-      siegeGrowth: Math.round(Math.random() * 3 * 100) / 100,
-      troops: troops,
-      maxTroops: troops,
-      level: level,
-      command: commandValue, // 统御值 1-100
-      commandGrowth: Math.round(Math.random() * 3 * 100) / 100,
-      leadership: leadership, // 统率值，用于组建队伍
-      isDead: false,
-      dynasty: "夏朝",
-      soldierType: getRandomSoldierType(),
-      avatar: character?.avatar,
-      gender: character?.gender,
-    };
-  });
-  addReport("敌方队伍已集结完毕！");
 };
 
 // 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
@@ -1164,11 +1442,117 @@ const getFetchFunction = (id: number) => {
   return fetchMap[id] || null;
 };
 
+const designedGeneralIds = () => RECRUIT_CONFIG.map((c) => c.id);
+
+const cloneGeneralForEnemy = (g: General): General => ({
+  ...g,
+  skills: g.skills?.map((s) => ({ ...s })),
+  skillEffects: g.skillEffects ? { ...g.skillEffects } : undefined,
+  quotes: g.quotes
+    ? { skill: [...g.quotes.skill], death: [...g.quotes.death] }
+    : undefined,
+});
+
+const shuffleDesignedGeneralIds = (): number[] => {
+  const ids = [...designedGeneralIds()];
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+  return ids;
+};
+
+const generateEnemyTeam = async () => {
+  const positions: (keyof typeof enemyFormation.value)[] = [
+    "大营",
+    "中军",
+    "前锋",
+  ];
+  const idPool = shuffleDesignedGeneralIds();
+  let poolIndex = 0;
+
+  for (const position of positions) {
+    let placed: General | null = null;
+    while (poolIndex < idPool.length && !placed) {
+      const id = idPool[poolIndex++];
+      const fetchFn = getFetchFunction(id);
+      let general: General | null = null;
+      if (fetchFn) {
+        try {
+          general = await fetchFn();
+        } catch {
+          general = null;
+        }
+      }
+      if (general) {
+        const copy = cloneGeneralForEnemy(general);
+        copy.isDead = false;
+        setSynthStar(copy, 0);
+        placed = copy;
+      }
+    }
+
+    if (placed) {
+      enemyFormation.value[position] = placed;
+      addReport(`敌方${position}：【${placed.name}】`);
+    } else {
+      addReport(`敌方${position}：未能从已设计武将中生成，请检查网络或配置。`);
+      enemyFormation.value[position] = null;
+    }
+  }
+
+  const relicId = ENEMY_WAVE_RELIC_CONFIG[currentWave.value];
+  enemySelectedRelic.value = relicPool.find((r) => r.id === relicId) || null;
+  if (enemySelectedRelic.value) {
+    addReport(`本波敌军携带遗物【${enemySelectedRelic.value.name}】。`);
+  } else {
+    addReport("本波敌军未配置遗物。");
+  }
+  addReport("敌方队伍已集结完毕！");
+};
+
 // 格式化武将信息报告
 const formatGeneralReport = (general: General) => {
   addReport(`恭喜获得【${general.name}】！等级:${general.level} 攻:${general.attack} 防:${general.defense} 策:${general.strategy} 速:${general.speed} 兵:${general.troops} 距:${general.attackRange} 统御:${general.command} 统率:${general.leadership} 兵种:${general.soldierType}`);
   if (general.skills && general.skills.length > 0) {
     addReport(`【${general.name}】自带战法：${general.skills[0].description}`);
+  }
+};
+
+const getSynthStar = (general: General | null | undefined) => {
+  if (!general) return 0;
+  const star = (general as General & { synthStar?: number }).synthStar;
+  return typeof star === "number" ? Math.max(0, Math.min(5, star)) : 0;
+};
+
+const setSynthStar = (general: General, value: number) => {
+  (general as General & { synthStar?: number }).synthStar = Math.max(
+    0,
+    Math.min(5, value),
+  );
+};
+
+const promoteExistingGeneral = (general: General) => {
+  const beforeStar = getSynthStar(general);
+  const nextStar = Math.min(5, beforeStar + 1);
+  if (nextStar > beforeStar) {
+    general.attack = Math.round(general.attack + (general.attackGrowth || 0));
+    general.defense = Math.round(general.defense + (general.defenseGrowth || 0));
+    general.strategy = Math.round(general.strategy + (general.strategyGrowth || 0));
+    general.speed = Math.round(general.speed + (general.speedGrowth || 0));
+    general.siege = Math.round(general.siege + (general.siegeGrowth || 0));
+    general.command = Math.round(general.command + (general.commandGrowth || 0));
+    general.maxTroops += 100;
+  }
+  setSynthStar(general, nextStar);
+  general.troops = general.maxTroops;
+  general.isDead = false;
+  general.skillEffects = {};
+
+  if (nextStar > beforeStar) {
+    addReport(`重复招募【${general.name}】，已合成升阶至 ${nextStar} 星并恢复满兵力！`);
+  } else {
+    addReport(`重复招募【${general.name}】，已达满星，转换为满兵力整备。`);
   }
 };
 
@@ -1223,6 +1607,146 @@ const getPassiveBuffStatusList = (general: General | null | undefined) => {
   return statuses;
 };
 
+const getRelicTooltip = (relic: Relic | null) => {
+  if (!relic) return "";
+  return `${relic.name}\n${relic.history}\n效果：${relic.effectText}`;
+};
+
+const getRandomLine = (lines: string[]) =>
+  lines[Math.floor(Math.random() * lines.length)];
+
+const addCuiJueQuote = (
+  scene: keyof typeof cuiJueQuotes,
+  extraPrefix = "",
+) => {
+  const line = getRandomLine(cuiJueQuotes[scene]);
+  addReport(`${extraPrefix}【崔珏】${line}`);
+  return line;
+};
+
+const shuffleRelics = (list: Relic[]) => {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+const getRelicBySide = (side: "player" | "enemy"): Relic | null =>
+  side === "player" ? playerSelectedRelic.value : enemySelectedRelic.value;
+
+const getRelicEffectValue = (
+  side: "player" | "enemy",
+  key: keyof RelicEffects,
+): number => {
+  const relic = getRelicBySide(side);
+  if (!relic) return 0;
+  return Number(relic.effects[key] || 0);
+};
+
+const hasLowTroopsDefenseBonus = (
+  side: "player" | "enemy",
+  general: General,
+): boolean => {
+  const relic = getRelicBySide(side);
+  if (!relic) return false;
+  const threshold = Number(relic.effects.lowTroopsThreshold || 0);
+  if (threshold <= 0) return false;
+  return general.maxTroops > 0 && general.troops / general.maxTroops < threshold;
+};
+
+const getAdjustedSpeed = (general: General, side: "player" | "enemy") => {
+  let speed = general.speed;
+  speed *= 1 + getRelicEffectValue(side, "speedPct");
+  if (general.soldierType === "骑兵") {
+    speed *= 1 + getRelicEffectValue(side, "cavalrySpeedPct");
+  }
+  return speed;
+};
+
+const applyRelicDebuffResist = (unit: {
+  general: General;
+  side: "player" | "enemy";
+}) => {
+  const resistChance = getRelicEffectValue(unit.side, "debuffResistChance");
+  if (resistChance <= 0 || !unit.general.skillEffects) return;
+  if (Math.random() >= resistChance) return;
+
+  const effects = unit.general.skillEffects;
+  if (effects.damageOutputReductionDuration > 0) {
+    effects.damageOutputReductionDuration = 0;
+    effects.damageOutputReduction = 0;
+    addReport(`【${unit.general.name}】受遗物庇佑，抵消了降攻效果！`);
+    return;
+  }
+  if (effects.skillTriggerReductionDuration > 0) {
+    effects.skillTriggerReductionDuration = 0;
+    effects.skillTriggerReduction = 0;
+    addReport(`【${unit.general.name}】受遗物庇佑，抵消了降率效果！`);
+    return;
+  }
+  if (effects.defenseReductionDuration > 0) {
+    effects.defenseReductionDuration = 0;
+    effects.defenseReduction = 0;
+    addReport(`【${unit.general.name}】受遗物庇佑，抵消了降防效果！`);
+    return;
+  }
+  if (effects.cannotNormalAttackDuration > 0) {
+    effects.cannotNormalAttackDuration = 0;
+    effects.cannotNormalAttack = false;
+    addReport(`【${unit.general.name}】受遗物庇佑，摆脱了怯战效果！`);
+  }
+};
+
+const applyEndTurnRelicEffects = () => {
+  const allAliveGenerals = getAllGenerals().filter((g) => !g.general.isDead);
+  allAliveGenerals.forEach((generalData) => {
+    const healPct = getRelicEffectValue(generalData.side, "turnEndHealPct");
+    if (healPct > 0) {
+      const healAmount = Math.max(
+        1,
+        Math.floor(generalData.general.maxTroops * healPct),
+      );
+      const oldTroops = generalData.general.troops;
+      generalData.general.troops = Math.min(
+        generalData.general.maxTroops,
+        generalData.general.troops + healAmount,
+      );
+      const actualHeal = generalData.general.troops - oldTroops;
+      if (actualHeal > 0) {
+        addReport(`【${generalData.general.name}】受到遗物效果恢复${actualHeal}点兵力。`);
+      }
+    }
+  });
+
+  const playerResource = getRelicEffectValue("player", "resourcePerTurn");
+  if (playerResource > 0) {
+    const efficiency = 1 + getRelicEffectValue("player", "resourceEfficiencyPct");
+    const gain = Math.max(1, Math.floor(playerResource * efficiency));
+    money.value += gain;
+    addReport(`我方遗物带来资源收益：+${gain} 金币。`);
+  }
+};
+
+const startRelicSelection = () => {
+  if (playerSelectedRelic.value) return;
+  if (!hasShownNewRunQuote.value) {
+    addCuiJueQuote("newRun");
+    hasShownNewRunQuote.value = true;
+  }
+  cuiJueRelicDialogLine.value = addCuiJueQuote("relic");
+  const playerCandidates = shuffleRelics(relicPool).slice(0, 3);
+  playerRelicCandidates.value = playerCandidates;
+  showRelicSelector.value = true;
+};
+
+const selectPlayerRelic = (relic: Relic) => {
+  playerSelectedRelic.value = relic;
+  showRelicSelector.value = false;
+  addReport(`我方选择遗物【${relic.name}】。`);
+};
+
 const recruitCard = () => {
   if (money.value < recruitCost.value) {
     addReport("金额不足，无法招募！");
@@ -1249,15 +1773,61 @@ const recruitCard = () => {
   if (fetchFn) {
     fetchFn().then((general) => {
       if (general) {
-        generals.value.push(general);
-        formatGeneralReport(general);
+        const existedGeneral = generals.value.find((item) => item.id === general.id);
+        if (existedGeneral) {
+          promoteExistingGeneral(existedGeneral);
+        } else {
+          setSynthStar(general, 0);
+          generals.value.push(general);
+          formatGeneralReport(general);
+        }
       }
     });
   }
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitBattle = async (baseMs: number) => {
+  let progressed = 0;
+  const tick = 80;
+  while (progressed < baseMs && isBattleActive.value) {
+    if (isBattlePaused.value) {
+      await sleep(tick);
+      continue;
+    }
+    await sleep(tick);
+    progressed += tick * battleSpeed.value;
+  }
+};
+
+const setBattleSpeed = (speed: number) => {
+  battleSpeed.value = speed;
+  addReport(`战斗速度已切换为 ${speed}x`);
+};
+
+const toggleBattlePause = () => {
+  if (!isBattleActive.value) return;
+  isBattlePaused.value = !isBattlePaused.value;
+  addReport(isBattlePaused.value ? "战斗已暂停" : "战斗继续");
+};
+
+const handleBattleControl = async () => {
+  if (isBattleStarting.value) return;
+  if (isBattleActive.value) {
+    toggleBattlePause();
+    return;
+  }
+  isBattleStarting.value = true;
+  try {
+    await startBattle();
+  } finally {
+    isBattleStarting.value = false;
+  }
+};
+
 const endTurn = () => {
-  startBattle();
+  handleBattleControl();
 };
 
 const getTargetsInRange = (attacker: {
@@ -1390,7 +1960,12 @@ const performAttack = (
   
   if (attackType === "physical") {
     // 物理攻击：使用攻击和防御（考虑防御降低效果）
-    const effectiveDefense = target.general.defense * (1 - targetDefenseReduction);
+    let defenseBonus = getRelicEffectValue(target.side, "defensePct");
+    if (hasLowTroopsDefenseBonus(target.side, target.general)) {
+      defenseBonus += getRelicEffectValue(target.side, "lowTroopsDefenseBonusPct");
+    }
+    const effectiveDefense =
+      target.general.defense * (1 + defenseBonus) * (1 - targetDefenseReduction);
     damage = Math.max(
       0,
       attacker.general.attack - effectiveDefense / 2,
@@ -1401,10 +1976,23 @@ const performAttack = (
   } else {
     // 策略攻击：使用攻击方谋略和防御方谋略
     // 公式：攻击方策略值 * 系数 - 防御方策略值 / 2
+    const strategyBonus = getRelicEffectValue(attacker.side, "strategyPct");
     damage = Math.max(
       0,
-      attacker.general.strategy - target.general.strategy / 2,
+      attacker.general.strategy * (1 + strategyBonus) - target.general.strategy / 2,
     );
+  }
+
+  if (attackType === "physical") {
+    const physicalBonus = getRelicEffectValue(attacker.side, "physicalDamagePct");
+    if (physicalBonus > 0) {
+      damage *= 1 + physicalBonus;
+    }
+  } else {
+    const strategyDamageBonus = getRelicEffectValue(attacker.side, "strategyDamagePct");
+    if (strategyDamageBonus > 0) {
+      damage *= 1 + strategyDamageBonus;
+    }
   }
 
   // 应用攻击者的增伤效果
@@ -1431,6 +2019,18 @@ const performAttack = (
     addReport(
       `【${target.general.name}】触发战法效果，受到伤害降低${(defendEffect.damageReduction * 100).toFixed(0)}%！`,
     );
+  }
+
+  if (attackType === "physical") {
+    const relicReduce = getRelicEffectValue(target.side, "physicalDamageReductionPct");
+    if (relicReduce > 0) {
+      damage *= 1 - relicReduce;
+    }
+  } else {
+    const relicReduce = getRelicEffectValue(target.side, "strategyDamageReductionPct");
+    if (relicReduce > 0) {
+      damage *= 1 - relicReduce;
+    }
   }
 
   // 兵种克制逻辑
@@ -1651,7 +2251,7 @@ const performAttackWithAnimation = async (
   }
 
   // 模拟动画时间
-  await new Promise((resolve) => setTimeout(resolve, 1200)); // 增加动画时间以便用户看到播报
+  await waitBattle(1200); // 增加动画时间以便用户看到播报
 
   addReport(
     `${attackerPrefix}${attacker.position}【${attacker.general.name}】行动结束`,
@@ -1665,6 +2265,8 @@ const checkGameOver = () => {
     // 胜利结算
     const reward = currentWave.value * 10;
     money.value += reward;
+    restoreBattleStateToInitial();
+    addCuiJueQuote("victory");
     addReport(`恭喜！你击败了敌方大营，获得胜利！`);
     addReport(`获得奖励：${reward} 金额！`);
     setTimeout(() => {
@@ -1675,6 +2277,8 @@ const checkGameOver = () => {
 
   if (playerFormation.value.大营 && playerFormation.value.大营.isDead) {
     // 失败重置
+    restoreBattleStateToInitial();
+    addCuiJueQuote("defeat");
     addReport("我方大营阵亡，战斗失败！");
     setTimeout(() => {
       alert("战斗失败！恢复游戏初始数据！");
@@ -1712,6 +2316,7 @@ const checkGameOverByTurns = () => {
 
   if (playerCampAlive && enemyCampAlive) {
     // 双方大营都存活 - 和局，保留当前状态可以重新开始
+    restoreBattleStateToInitial();
     addReport("回合结束！双方大营都未阵亡，和局！");
     addReport('可以再次点击"开始"重新战斗！');
     setTimeout(() => {
@@ -1740,6 +2345,8 @@ const checkGameOverByTurns = () => {
     // 胜利结算
     const reward = currentWave.value * 10;
     money.value += reward;
+    restoreBattleStateToInitial();
+    addCuiJueQuote("victory");
     addReport("回合结束！我方兵力占优，获得胜利！");
     addReport(`获得奖励：${reward} 金额！`);
     setTimeout(() => {
@@ -1747,6 +2354,8 @@ const checkGameOverByTurns = () => {
     }, 1000);
   } else if (enemyTroops > playerTroops) {
     // 失败重置
+    restoreBattleStateToInitial();
+    addCuiJueQuote("defeat");
     addReport("回合结束！敌方兵力占优，战斗失败！");
     setTimeout(() => {
       alert("战斗失败！恢复游戏初始数据！");
@@ -1837,6 +2446,11 @@ const resetGame = () => {
     中军: null,
     前锋: null,
   };
+  playerSelectedRelic.value = null;
+  enemySelectedRelic.value = null;
+  playerRelicCandidates.value = [];
+  showRelicSelector.value = false;
+  hasShownNewRunQuote.value = false;
   battleReports.value = [];
 };
 
@@ -1972,7 +2586,15 @@ const startBattle = async () => {
     return;
   }
 
+  if (!playerSelectedRelic.value) {
+    startRelicSelection();
+    addReport("请先选择我方遗物，再开始战斗。");
+    return;
+  }
+  addCuiJueQuote("battle");
+  isBattlePaused.value = false;
   isBattleActive.value = true;
+  captureBattleStartSnapshot();
 
   // 战斗循环 - 共8回合
   for (let i = 1; i <= 8; i++) {
@@ -2006,8 +2628,11 @@ const startBattle = async () => {
       }
     });
     
-    // 按速度从快到慢排序
-    allUnits.sort((a: any, b: any) => b.general.speed - a.general.speed);
+    // 按速度从快到慢排序（叠加遗物速度效果）
+    allUnits.sort(
+      (a: any, b: any) =>
+        getAdjustedSpeed(b.general, b.side) - getAdjustedSpeed(a.general, a.side),
+    );
     
     let unitIndex = 1;
     
@@ -2017,8 +2642,9 @@ const startBattle = async () => {
       
       // 详细播报当前行动者信息
       const sidePrefix = unit.side === "player" ? "我方" : "敌方";
+      const effectiveSpeed = getAdjustedSpeed(unit.general, unit.side);
       addReport(
-        `== ${unitIndex}. ${sidePrefix}${unit.position}【${unit.general.name}】开始行动（速度：${unit.general.speed}）==`,
+        `== ${unitIndex}. ${sidePrefix}${unit.position}【${unit.general.name}】开始行动（速度：${Math.floor(effectiveSpeed)}）==`,
       );
       addReport(
         `兵力：${unit.general.troops}，攻击：${unit.general.attack}，防御：${unit.general.defense}，策略：${unit.general.strategy}，速度：${unit.general.speed}，攻击距离：${unit.general.attackRange}，攻城：${unit.general.siege}`,
@@ -2034,6 +2660,7 @@ const startBattle = async () => {
 
       // 处理当前角色的技能效果
       triggerSkillEffects(unit.general, turnStartContext);
+      applyRelicDebuffResist(unit);
 
       // 直接处理当前角色的skillEffects中的持续效果
       if (unit.general.skillEffects) {
@@ -2157,6 +2784,8 @@ const startBattle = async () => {
             if (beforeTriggerResult && beforeTriggerResult.triggerReduction) {
               finalTriggerChance = 1 - beforeTriggerResult.triggerReduction;
             }
+            finalTriggerChance += getRelicEffectValue(unit.side, "activeSkillChancePct");
+            finalTriggerChance = Math.max(0, Math.min(1, finalTriggerChance));
 
             // 检查是否触发
             if (Math.random() < finalTriggerChance) {
@@ -2238,7 +2867,7 @@ const startBattle = async () => {
             isBattleActive.value = false;
             return;
           }
-          await new Promise((resolve) => setTimeout(resolve, 400));
+          await waitBattle(400);
           continue;
         }
 
@@ -2261,6 +2890,33 @@ const startBattle = async () => {
             target,
             "physical"
           );
+
+          // 骑兵连击（遗物）
+          if (
+            unit.general.soldierType === "骑兵" &&
+            getRelicEffectValue(unit.side, "cavalryDoubleStrikeChance") > 0 &&
+            Math.random() < getRelicEffectValue(unit.side, "cavalryDoubleStrikeChance")
+          ) {
+            const extraTargets = getTargetsInRange({
+              general: unit.general,
+              side: unit.side,
+              position: unit.position,
+            });
+            if (extraTargets.length > 0) {
+              const extraTarget =
+                extraTargets[Math.floor(Math.random() * extraTargets.length)];
+              addReport(`【${unit.general.name}】触发遗物连击，追加一次攻击！`);
+              await performAttackWithAnimation(
+                {
+                  general: unit.general,
+                  side: unit.side,
+                  position: unit.position,
+                },
+                extraTarget,
+                "physical",
+              );
+            }
+          }
         } else {
           addReport(`范围内没有可攻击的目标！`);
         }
@@ -2275,7 +2931,7 @@ const startBattle = async () => {
       }
 
       // 增加行动间隔时间，让用户能看到详细播报
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await waitBattle(400);
     }
 
     // 回合统计
@@ -2297,13 +2953,14 @@ const startBattle = async () => {
       };
       triggerSkillEffects(generalData.general, turnEndContext);
     }
+    applyEndTurnRelicEffects();
 
     // 回合结束播报
     addReport(`========== 第 ${i} 回合结束！ ==========`);
 
     // 回合间等待时间
     if (i < 8) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await waitBattle(500);
     }
   }
 
@@ -2315,19 +2972,21 @@ const startBattle = async () => {
   const enemyCavalryAlive = enemyFormation.value.大营 && !enemyFormation.value.大营.isDead;
   
   if (playerCavalryAlive && enemyCavalryAlive) {
+    restoreBattleStateToInitial();
     addReport("<span style='color: #f39c12; font-weight: bold;'>战斗结果：和局！双方大营都存活。</span>");
   } else {
     checkGameOverByTurns();
   }
   
   isBattleActive.value = false;
+  isBattlePaused.value = false;
 };
 
-const nextWave = () => {
+const nextWave = async () => {
   currentWave.value++;
   currentTurn.value = 0;
   advanceTime();
-  generateEnemyTeam();
+  await generateEnemyTeam();
   addReport(`第 ${currentWave.value} 波敌人出现！`);
 };
 </script>
@@ -2705,13 +3364,145 @@ const nextWave = () => {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
+.relic-bar {
+  min-height: 60px;
+  border: 1px solid rgba(200, 70, 70, 0.65);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 12px;
+}
+
+.relic-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(35, 40, 45, 0.92);
+  color: #f6e7bf;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  font-size: 13px;
+}
+
+.relic-item.empty {
+  background: rgba(40, 40, 40, 0.55);
+  color: #ddd;
+  border-style: dashed;
+}
+
+.relic-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.relic-name {
+  font-weight: 700;
+}
+
 .formation.horizontal {
-  margin-top: 65px;
+  margin-top: 18px;
   display: flex;
   justify-content: space-around;
   align-items: center;
   flex: 1;
   gap: 10px;
+}
+
+.relic-selector-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.relic-selector-panel {
+  width: min(980px, 92vw);
+  background: #f6f1e6;
+  border-radius: 12px;
+  border: 2px solid #b98d52;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.relic-selector-panel h3 {
+  margin: 0 0 14px;
+  text-align: center;
+  color: #6b4b1e;
+}
+
+.cui-jue-dialog {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(34, 24, 12, 0.08);
+}
+
+.cui-jue-portrait {
+  width: 88px;
+  height: 118px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #8b6a3f;
+  background: #eee;
+}
+
+.cui-jue-bubble {
+  flex: 1;
+  line-height: 1.6;
+  color: #4b3921;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cfb17f;
+  background: #fffaf0;
+}
+
+.relic-candidate-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.relic-candidate-card {
+  border: 1px solid #c9a56a;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fffdf7;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.relic-candidate-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.relic-candidate-icon {
+  font-size: 28px;
+  text-align: center;
+}
+
+.relic-candidate-name {
+  margin-top: 6px;
+  font-weight: 700;
+  color: #43311b;
+  text-align: center;
+}
+
+.relic-candidate-effect {
+  margin-top: 6px;
+  color: #5a4b34;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .card-slot {
@@ -2938,6 +3729,11 @@ const nextWave = () => {
 .star.active {
   color: #ffd700;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.star.active.enhanced {
+  color: #ff8c00;
+  text-shadow: 0 0 6px rgba(255, 140, 0, 0.7), 1px 1px 2px rgba(0, 0, 0, 0.65);
 }
 
 .card-middle {
@@ -3405,10 +4201,42 @@ const nextWave = () => {
 .game-footer {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 20px;
   padding: 15px 20px;
   background: url('/assets/ui_top_bar_status.jpg') no-repeat center center;
   background-size: cover;
+}
+
+.speed-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.speed-btn {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.speed-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.speed-btn.active {
+  background: rgba(255, 255, 255, 0.75);
+  color: #6a1f1f;
+  font-weight: 700;
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 .action-button {
@@ -3530,6 +4358,11 @@ const nextWave = () => {
     flex-wrap: wrap;
     background: url('/assets/ui_top_bar_status.jpg') no-repeat center center;
     background-size: cover;
+  }
+
+  .speed-controls {
+    width: 100%;
+    justify-content: center;
   }
 
   .action-button {
