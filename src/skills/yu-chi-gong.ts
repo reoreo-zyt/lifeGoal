@@ -59,7 +59,7 @@ export const createYuChiGongSkill = (): Skill => {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
       }
 
-      const { type, event, addReport, attacker, allies } = context;
+      const { type, event, addReport, attacker, allies: _allies } = context;
 
       // 战斗开始时触发指挥战法
       if (type === "battleStart" && event === "init") {

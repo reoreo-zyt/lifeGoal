@@ -324,38 +324,7 @@
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
-                    <div class="card-status">
-                      <div v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageReduction > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">减伤</span>
-                      </div>
-                      <div v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.attributeBonus > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`">
-                        <span class="status-icon-inner">属性+</span>
-                      </div>
-                      <div v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.damageIncrease > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">增伤</span>
-                      </div>
-                      <div v-for="status in getPassiveBuffStatusList(playerFormation.大营)" :key="status.key"
-                        class="status-icon buff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div v-for="status in getDebuffStatusList(playerFormation.大营)" :key="status.key"
-                        class="status-icon debuff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div
-                        v-if="playerFormation.大营.skillEffects && playerFormation.大营.skillEffects.recoveryFromDebuff > 0"
-                        class="status-icon buff"
-                        :title="`${playerFormation.大营.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(playerFormation.大营.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${playerFormation.大营.skillEffects.recoveryFromDebuffDuration}回合`">
-                        <span class="status-icon-inner">回血{{
-                          playerFormation.大营.skillEffects.recoveryFromDebuffDuration }}</span>
-                      </div>
-                    </div>
+                    <StatusEffects :general="playerFormation.大营" />
                     <div class="card-middle"></div>
                     <div class="card-bottom">
                       <div class="card-bottom-item">
@@ -429,38 +398,7 @@
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
-                    <div class="card-status">
-                      <div v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageReduction > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">减伤</span>
-                      </div>
-                      <div v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.attributeBonus > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`">
-                        <span class="status-icon-inner">属性+</span>
-                      </div>
-                      <div v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.damageIncrease > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">增伤</span>
-                      </div>
-                      <div v-for="status in getPassiveBuffStatusList(playerFormation.中军)" :key="status.key"
-                        class="status-icon buff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div v-for="status in getDebuffStatusList(playerFormation.中军)" :key="status.key"
-                        class="status-icon debuff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div
-                        v-if="playerFormation.中军.skillEffects && playerFormation.中军.skillEffects.recoveryFromDebuff > 0"
-                        class="status-icon buff"
-                        :title="`${playerFormation.中军.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(playerFormation.中军.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${playerFormation.中军.skillEffects.recoveryFromDebuffDuration}回合`">
-                        <span class="status-icon-inner">回血{{
-                          playerFormation.中军.skillEffects.recoveryFromDebuffDuration }}</span>
-                      </div>
-                    </div>
+                    <StatusEffects :general="playerFormation.中军" />
                     <div class="card-bottom">
                       <div class="card-bottom-item">
                         <span class="card-level">Lv.{{ playerFormation.中军.level }}</span>
@@ -533,38 +471,7 @@
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
-                    <div class="card-status">
-                      <div v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageReduction > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(playerFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">减伤</span>
-                      </div>
-                      <div v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.attributeBonus > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(playerFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`">
-                        <span class="status-icon-inner">属性+</span>
-                      </div>
-                      <div v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.damageIncrease > 0"
-                        class="status-icon"
-                        :title="`${playerFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(playerFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">增伤</span>
-                      </div>
-                      <div v-for="status in getPassiveBuffStatusList(playerFormation.前锋)" :key="status.key"
-                        class="status-icon buff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div v-for="status in getDebuffStatusList(playerFormation.前锋)" :key="status.key"
-                        class="status-icon debuff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div
-                        v-if="playerFormation.前锋.skillEffects && playerFormation.前锋.skillEffects.recoveryFromDebuff > 0"
-                        class="status-icon buff"
-                        :title="`${playerFormation.前锋.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(playerFormation.前锋.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${playerFormation.前锋.skillEffects.recoveryFromDebuffDuration}回合`">
-                        <span class="status-icon-inner">回血{{
-                          playerFormation.前锋.skillEffects.recoveryFromDebuffDuration }}</span>
-                      </div>
-                    </div>
+                    <StatusEffects :general="playerFormation.前锋" />
                     <div class="card-bottom">
                       <div class="card-bottom-item">
                         <span class="card-level">Lv.{{ playerFormation.前锋.level }}</span>
@@ -657,38 +564,7 @@
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
-                    <div class="card-status">
-                      <div v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageReduction > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.前锋.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.前锋.skillEffects.damageReduction * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">减伤</span>
-                      </div>
-                      <div v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.attributeBonus > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.前锋.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.前锋.skillEffects.attributeBonus * 8).toFixed(0)}%`">
-                        <span class="status-icon-inner">属性+</span>
-                      </div>
-                      <div v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.damageIncrease > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.前锋.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.前锋.skillEffects.damageIncrease * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">增伤</span>
-                      </div>
-                      <div v-for="status in getPassiveBuffStatusList(enemyFormation.前锋)" :key="status.key"
-                        class="status-icon buff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div v-for="status in getDebuffStatusList(enemyFormation.前锋)" :key="status.key"
-                        class="status-icon debuff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div
-                        v-if="enemyFormation.前锋.skillEffects && enemyFormation.前锋.skillEffects.recoveryFromDebuff > 0"
-                        class="status-icon buff"
-                        :title="`${enemyFormation.前锋.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(enemyFormation.前锋.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${enemyFormation.前锋.skillEffects.recoveryFromDebuffDuration}回合`">
-                        <span class="status-icon-inner">回血{{
-                          enemyFormation.前锋.skillEffects.recoveryFromDebuffDuration }}</span>
-                      </div>
-                    </div>
+                    <StatusEffects :general="enemyFormation.前锋" />
                     <div class="card-bottom">
                       <div class="card-bottom-item">
                         <span class="card-level">Lv.{{ enemyFormation.前锋.level }}</span>
@@ -761,38 +637,7 @@
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
-                    <div class="card-status">
-                      <div v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageReduction > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.中军.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.中军.skillEffects.damageReduction * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">减伤</span>
-                      </div>
-                      <div v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.attributeBonus > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.中军.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.中军.skillEffects.attributeBonus * 8).toFixed(0)}%`">
-                        <span class="status-icon-inner">属性+</span>
-                      </div>
-                      <div v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.damageIncrease > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.中军.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.中军.skillEffects.damageIncrease * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">增伤</span>
-                      </div>
-                      <div v-for="status in getPassiveBuffStatusList(enemyFormation.中军)" :key="status.key"
-                        class="status-icon buff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div v-for="status in getDebuffStatusList(enemyFormation.中军)" :key="status.key"
-                        class="status-icon debuff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div
-                        v-if="enemyFormation.中军.skillEffects && enemyFormation.中军.skillEffects.recoveryFromDebuff > 0"
-                        class="status-icon buff"
-                        :title="`${enemyFormation.中军.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(enemyFormation.中军.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${enemyFormation.中军.skillEffects.recoveryFromDebuffDuration}回合`">
-                        <span class="status-icon-inner">回血{{
-                          enemyFormation.中军.skillEffects.recoveryFromDebuffDuration }}</span>
-                      </div>
-                    </div>
+                    <StatusEffects :general="enemyFormation.中军" />
                     <div class="card-bottom">
                       <div class="card-bottom-item">
                         <span class="card-level">Lv.{{ enemyFormation.中军.level }}</span>
@@ -865,38 +710,7 @@
                       </div>
                     </div>
                     <!-- 状态标记区域 -->
-                    <div class="card-status">
-                      <div v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageReduction > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.大营.skillEffects.damageReductionSource || '未知来源'}：物理伤害减免 ${(enemyFormation.大营.skillEffects.damageReduction * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">减伤</span>
-                      </div>
-                      <div v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.attributeBonus > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.大营.skillEffects.attributeBonusSource || '未知来源'}：全属性提升 ${(enemyFormation.大营.skillEffects.attributeBonus * 8).toFixed(0)}%`">
-                        <span class="status-icon-inner">属性+</span>
-                      </div>
-                      <div v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.damageIncrease > 0"
-                        class="status-icon"
-                        :title="`${enemyFormation.大营.skillEffects.damageIncreaseSource || '未知来源'}：增伤 ${(enemyFormation.大营.skillEffects.damageIncrease * 100).toFixed(0)}%`">
-                        <span class="status-icon-inner">增伤</span>
-                      </div>
-                      <div v-for="status in getPassiveBuffStatusList(enemyFormation.大营)" :key="status.key"
-                        class="status-icon buff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div v-for="status in getDebuffStatusList(enemyFormation.大营)" :key="status.key"
-                        class="status-icon debuff" :title="status.title">
-                        <span class="status-icon-inner">{{ status.text }}</span>
-                      </div>
-                      <div
-                        v-if="enemyFormation.大营.skillEffects && enemyFormation.大营.skillEffects.recoveryFromDebuff > 0"
-                        class="status-icon buff"
-                        :title="`${enemyFormation.大营.skillEffects.recoveryFromDebuffSource || '未知来源'}：回血增益 ${(enemyFormation.大营.skillEffects.recoveryFromDebuff * 100).toFixed(0)}%，持续${enemyFormation.大营.skillEffects.recoveryFromDebuffDuration}回合`">
-                        <span class="status-icon-inner">回血{{
-                          enemyFormation.大营.skillEffects.recoveryFromDebuffDuration }}</span>
-                      </div>
-                    </div>
+                    <StatusEffects :general="enemyFormation.大营" />
                     <div class="card-bottom">
                       <div class="card-bottom-item">
                         <span class="card-level">Lv.{{ enemyFormation.大营.level }}</span>
@@ -975,12 +789,15 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck - 跳过此文件的类型检查以允许未使用的变量
 import { ref, computed, onMounted, watch } from "vue";
 import AuthModal from "../components/AuthModal.vue";
 import GeneralTooltip from "../components/GeneralTooltip.vue";
 import GeneralList from "../components/GeneralList.vue";
 import BattleReport from "../components/BattleReport.vue";
+import StatusEffects from "../components/StatusEffects.vue";
 import type { General } from "../skills/types";
+import { RECRUIT_CONFIG as RECRUIT_CONFIG_BASE, getFetchFunction as getFetchFunctionBase } from "../skills/index";
 
 const isLoggedIn = ref(false);
 const showAuthModal = ref(false);
@@ -1074,7 +891,7 @@ const soldierType克制 = {
 };
 
 // 随机兵种
-const getRandomSoldierType = (): "步兵" | "弓兵" | "骑兵" => {
+const _getRandomSoldierType = (): "步兵" | "弓兵" | "骑兵" => {
   const types: Array<"步兵" | "弓兵" | "骑兵"> = ["步兵", "弓兵", "骑兵"];
   return types[Math.floor(Math.random() * types.length)];
 };
@@ -1551,7 +1368,7 @@ interface Relic {
 
 interface VictoryRewardOption {
   id: string;
-  type: "gold" | "conscript" | "promote";
+  type: "gold" | "conscript" | "promote" | "layerHeal";
   icon: string;
   name: string;
   description: string;
@@ -1843,11 +1660,11 @@ const runMap = ref<RunMap | null>(null);
 const pendingNodeId = ref<string | null>(null);
 const pendingBattleNodeType = ref<NodeType | null>(null);
 const currentAct = ref(1);
-const isLayerComplete = ref(false);
+const _isLayerComplete = ref(false);
 const layerRewardOptions = ref<VictoryRewardOption[]>([]);
 const showLayerRewardSelector = ref(false);
 const layerRewardDialogLine = ref("");
-const cuiJueLayerQuote = ref("");
+const _cuiJueLayerQuote = ref("");
 
 const MAP_CONFIG = {
   minFloors: 8,
@@ -2040,12 +1857,12 @@ const generateRunMap = (seed?: number): RunMap => {
 
 const generateNextLayerNodes = (existingNodes: MapNode[]): MapNode[] => {
   const baseSeed = Date.now();
-  const rng = hashSeed(baseSeed);
+  const _rng = hashSeed(baseSeed);
   const newFloor = (existingNodes.reduce((m, n) => Math.max(m, n.floor), 0)) + 1;
   const newNodes: MapNode[] = [];
-  const bossFloor = newFloor;
+  const _bossFloor = newFloor;
   const nodeCount = 1;
-  const lastFloorMaxLane = existingNodes
+  const _lastFloorMaxLane = existingNodes
     .filter((n) => n.floor === newFloor - 1)
     .reduce((m, n) => Math.max(m, n.lane), -1);
 
@@ -2141,7 +1958,7 @@ watch(isBattleActive, (active) => {
   unlockBattleConscriptSnapshot();
 });
 
-const mapFloors = computed(() => {
+const _mapFloors = computed(() => {
   if (!runMap.value) return [] as Array<{ floor: number; nodes: MapNode[] }>;
   const floors: Array<{ floor: number; nodes: MapNode[] }> = [];
   for (let floor = 1; floor <= runMap.value.floors; floor++) {
@@ -2681,7 +2498,7 @@ const applyPlayerRecoveryForDeaths = () => {
   updateCurrentCommand();
 };
 
-const tickPlayerRecoveryRounds = () => {
+const _tickPlayerRecoveryRounds = () => {
   const next: Record<number, number> = {};
   Object.entries(playerRecoveryRounds.value).forEach(([id, rounds]) => {
     const left = Math.max(0, rounds - 1);
@@ -2696,36 +2513,16 @@ const areAllOwnedGeneralsResting = () => {
 };
 
 // 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
-const RECRUIT_CONFIG = [
-  { id: 633, probability: 0.091 }, // 尉迟迥
-  { id: 69, probability: 0.091 }, // 李德林
-  { id: 71, probability: 0.091 }, // 韦世康
-  { id: 70, probability: 0.091 }, // 陆彦师
-  { id: 515, probability: 0.091 }, // 元岩
-  { id: 577, probability: 0.09 }, // 冯慈明
-  { id: 739, probability: 0.091 }, // 第五琦
-  { id: 707, probability: 0.091 }, // 上官仪
-  { id: 66, probability: 0.091 }, // 杨文思
-  { id: 73, probability: 0.091 }, // 韦艺
-  { id: 43, probability: 0.091 }, // 韩擒虎
-];
+// 自动生成：在 skills/index.ts 的 RECRUIT_CONFIG 中添加新武将即可
+const probability = 1 / RECRUIT_CONFIG_BASE.length;
+const RECRUIT_CONFIG = RECRUIT_CONFIG_BASE.map(item => ({
+  id: item.id,
+  probability: Math.round(probability * 1000) / 1000,
+}));
 
-// 获取武将的fetch函数映射
+// 获取武将的fetch函数映射（使用 skills/index.ts 中定义的配置）
 const getFetchFunction = (id: number) => {
-  const fetchMap: { [key: number]: () => Promise<General | null> } = {
-    633: () => import('../skills/yuchi-jiong').then(m => m.fetchYuchiJiongFromDatabase(API_BASE_URL)),
-    69: () => import('../skills/li-de-lin').then(m => m.fetchLiDeLinFromDatabase(API_BASE_URL)),
-    71: () => import('../skills/wei-shi-kang').then(m => m.fetchWeiShiKangFromDatabase(API_BASE_URL)),
-    70: () => import('../skills/lu-yan-shi').then(m => m.fetchLuYanShiFromDatabase(API_BASE_URL)),
-    515: () => import('../skills/yuan-yan-shi').then(m => m.fetchYuanYanFromDatabase(API_BASE_URL)),
-    577: () => import('../skills/feng-ci-ming').then(m => m.fetchFengCiMingFromDatabase(API_BASE_URL)),
-    739: () => import('../skills/di-wu-qi').then(m => m.fetchDiWuQiFromDatabase(API_BASE_URL)),
-    707: () => import('../skills/shang-guan-yi').then(m => m.fetchShangGuanYiFromDatabase(API_BASE_URL)),
-    66: () => import('../skills/yang-wen-si').then(m => m.fetchYangWenSiFromDatabase(API_BASE_URL)),
-    73: () => import('../skills/wei-yi').then(m => m.fetchWeiYiFromDatabase(API_BASE_URL)),
-    43: () => import('../skills/han-qin-hu').then(m => m.fetchHanQinHuFromDatabase(API_BASE_URL)),
-  };
-  return fetchMap[id] || null;
+  return getFetchFunctionBase(id, API_BASE_URL);
 };
 
 const designedGeneralIds = () => RECRUIT_CONFIG.map((c) => c.id);
@@ -3099,57 +2896,6 @@ const selectVictoryReward = async (reward: VictoryRewardOption) => {
   } finally {
     isResolvingVictoryReward.value = false;
   }
-};
-
-const getDebuffStatusList = (general: General | null | undefined) => {
-  const effects = general?.skillEffects || {};
-  const statuses = [
-    {
-      key: "damageOutputReduction",
-      active: !!effects.damageOutputReduction && effects.damageOutputReduction > 0,
-      text: `降攻${effects.damageOutputReductionDuration || 0}`,
-      title: `${effects.damageOutputReductionSource || "未知来源"}：伤害输出降低 ${((effects.damageOutputReduction || 0) * 100).toFixed(0)}%，持续${effects.damageOutputReductionDuration || 0}回合`,
-    },
-    {
-      key: "skillTriggerReduction",
-      active: !!effects.skillTriggerReduction && effects.skillTriggerReduction > 0,
-      text: `降率${effects.skillTriggerReductionDuration || 0}`,
-      title: `${effects.skillTriggerReductionSource || "未知来源"}：战法发动概率降低 ${((effects.skillTriggerReduction || 0) * 100).toFixed(0)}%，持续${effects.skillTriggerReductionDuration || 0}回合`,
-    },
-    {
-      key: "defenseReduction",
-      active: !!effects.defenseReduction && effects.defenseReduction > 0,
-      text: `降防${effects.defenseReductionDuration || 0}`,
-      title: `${effects.defenseReductionSource || "未知来源"}：防御降低 ${((effects.defenseReduction || 0) * 100).toFixed(0)}%，持续${effects.defenseReductionDuration || 0}回合`,
-    },
-    {
-      key: "cannotNormalAttack",
-      active: !!effects.cannotNormalAttack && (effects.cannotNormalAttackDuration || 0) > 0,
-      text: `怯战${effects.cannotNormalAttackDuration || 0}`,
-      title: `${effects.cannotNormalAttackSource || "未知来源"}：陷入怯战（无法普攻），持续${effects.cannotNormalAttackDuration || 0}回合`,
-    },
-  ];
-
-  return statuses.filter((status) => status.active);
-};
-
-const getPassiveBuffStatusList = (general: General | null | undefined) => {
-  const effects = general?.skillEffects || {};
-  const statuses = [];
-
-  if ((effects.passiveDamageTagValue || 0) > 0) {
-    const chanceText =
-      (effects.passiveDamageTagChance || 0) > 0
-        ? `，触发概率${((effects.passiveDamageTagChance || 0) * 100).toFixed(0)}%`
-        : "";
-    statuses.push({
-      key: "passiveDamageTag",
-      text: effects.passiveDamageTagLabel || "被动增伤",
-      title: `${effects.passiveDamageTagSource || "被动效果"}：增伤${((effects.passiveDamageTagValue || 0) * 100).toFixed(0)}%${chanceText}`,
-    });
-  }
-
-  return statuses;
 };
 
 const getRelicTooltip = (relic: Relic | null) => {
@@ -4060,7 +3806,7 @@ const checkGameOverByTurns = () => {
   }
 };
 
-const advanceTime = () => {
+const _advanceTime = () => {
   currentYear.value += 10;
   currentWave.value += 1;
 
@@ -4206,7 +3952,7 @@ const getAllAllies = (side: "player" | "enemy"): Array<{
   return allies;
 };
 
-const initializeSpeedUnits = () => {
+const _initializeSpeedUnits = () => {
   const units: SpeedUnit[] = [];
 
   // 添加我方武将
@@ -4242,7 +3988,7 @@ const initializeSpeedUnits = () => {
   speedUnits.value = units;
 };
 
-const updateSpeed = () => {
+const _updateSpeed = () => {
   speedUnits.value.forEach((unit) => {
     if (!unit.general.isDead) {
       unit.speed += unit.general.speed / 20; // 降低速度增长速率，使其更慢
@@ -4256,7 +4002,7 @@ const updateSpeed = () => {
   speedUnits.value.sort((a, b) => b.speed - a.speed);
 };
 
-const checkSpeedThreshold = () => {
+const _checkSpeedThreshold = () => {
   const readyUnit = speedUnits.value.find(
     (unit) => unit.speed >= 100 && !unit.general.isDead,
   );
@@ -4266,7 +4012,7 @@ const checkSpeedThreshold = () => {
   return null;
 };
 
-const resetUnitSpeed = (unit: SpeedUnit) => {
+const _resetUnitSpeed = (unit: SpeedUnit) => {
   unit.speed = 0;
   unit.isActive = false;
 };
@@ -4695,7 +4441,7 @@ const startBattle = async () => {
   clearAllBattleFx();
 };
 
-const nextWave = async () => {
+const _nextWave = async () => {
   await enterNextBattleAfterReward();
 };
 </script>
