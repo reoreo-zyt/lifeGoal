@@ -132,60 +132,17 @@
           </div>
           <div v-if="!showBattleBoard" class="middle-hub">
             <div class="middle-hub-left">
-              <div class="event-map-panel">
-                <div class="event-map-header">
-                  <span>事件树 · 当前可选层 {{ currentMapFloor }}</span>
-                </div>
-                <div class="event-map-board">
-                  <svg class="event-map-links" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path
-                      v-for="line in mapLinkLines"
-                      :key="line.id"
-                      :d="line.path"
-                      class="event-map-link"
-                      :class="{ reachable: line.reachable, visited: line.visited }"
-                    />
-                  </svg>
-                  <button
-                    v-for="node in (runMap?.nodes || [])"
-                    :key="node.id"
-                    class="event-node-btn"
-                    :class="[
-                      `type-${node.type}`,
-                      {
-                        selectable: canSelectMapNode(node),
-                        visited: node.visited,
-                        pending: pendingNodeId === node.id,
-                        current: runMap?.currentNodeId === node.id,
-                      },
-                    ]"
-                    :style="getNodeStyle(node)"
-                    :disabled="!canSelectMapNode(node)"
-                    :title="`第${node.floor}层 · ${nodeTypeTitle[node.type]}`"
-                    @click="selectEventNode(node)"
-                  >
-                    <img class="event-node-icon" :src="mapNodeIconByType[node.type]" :alt="nodeTypeTitle[node.type]" />
-                  </button>
-                  <div class="map-legend">
-                    <div class="map-legend-header">
-                      <div class="map-legend-title">图例</div>
-                      <button class="map-legend-toggle" @click="toggleMapLegend">
-                        {{ isMapLegendCollapsed ? "展开" : "收起" }}
-                      </button>
-                    </div>
-                    <div v-if="!isMapLegendCollapsed">
-                      <div
-                        v-for="item in mapLegendItems"
-                        :key="item.type"
-                        class="map-legend-item"
-                      >
-                        <img class="map-legend-icon" :src="item.icon" :alt="item.label" />
-                        <span class="map-legend-text">{{ item.label }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <RunMap
+                :run-map="runMap"
+                :current-map-floor="currentMapFloor"
+                :pending-node-id="pendingNodeId"
+                :map-node-icon-by-type="mapNodeIconByType"
+                :node-type-title="nodeTypeTitle"
+                :map-legend-items="mapLegendItems"
+                :is-map-legend-collapsed="isMapLegendCollapsed"
+                @select-node="selectEventNode"
+                @toggle-legend="toggleMapLegend"
+              />
             </div>
             <div class="middle-hub-right">
               <BattleReport :reports="battleReports" />
@@ -199,548 +156,48 @@
             {{ showBattleMapDrawer ? "收起事件树" : "展开事件树" }}
           </button>
           <div v-if="showBattleBoard" class="battle-map-drawer" :class="{ open: showBattleMapDrawer }">
-            <div class="event-map-panel">
-              <div class="event-map-header">
-                <span>事件树 · 当前可选层 {{ currentMapFloor }}</span>
-              </div>
-              <div class="event-map-board">
-                <svg class="event-map-links" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  <path
-                    v-for="line in mapLinkLines"
-                    :key="line.id"
-                    :d="line.path"
-                    class="event-map-link"
-                    :class="{ reachable: line.reachable, visited: line.visited }"
-                  />
-                </svg>
-                <button
-                  v-for="node in (runMap?.nodes || [])"
-                  :key="node.id"
-                  class="event-node-btn"
-                  :class="[
-                    `type-${node.type}`,
-                    {
-                      selectable: canSelectMapNode(node),
-                      visited: node.visited,
-                      pending: pendingNodeId === node.id,
-                      current: runMap?.currentNodeId === node.id,
-                    },
-                  ]"
-                  :style="getNodeStyle(node)"
-                  :disabled="!canSelectMapNode(node)"
-                  :title="`第${node.floor}层 · ${nodeTypeTitle[node.type]}`"
-                  @click="selectEventNode(node)"
-                >
-                  <img class="event-node-icon" :src="mapNodeIconByType[node.type]" :alt="nodeTypeTitle[node.type]" />
-                </button>
-                <div class="map-legend">
-                  <div class="map-legend-header">
-                    <div class="map-legend-title">图例</div>
-                    <button class="map-legend-toggle" @click="toggleMapLegend">
-                      {{ isMapLegendCollapsed ? "展开" : "收起" }}
-                    </button>
-                  </div>
-                  <div v-if="!isMapLegendCollapsed">
-                    <div
-                      v-for="item in mapLegendItems"
-                      :key="item.type"
-                      class="map-legend-item"
-                    >
-                      <img class="map-legend-icon" :src="item.icon" :alt="item.label" />
-                      <span class="map-legend-text">{{ item.label }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <RunMap
+              :run-map="runMap"
+              :current-map-floor="currentMapFloor"
+              :pending-node-id="pendingNodeId"
+              :map-node-icon-by-type="mapNodeIconByType"
+              :node-type-title="nodeTypeTitle"
+              :map-legend-items="mapLegendItems"
+              :is-map-legend-collapsed="isMapLegendCollapsed"
+              in-drawer
+              @select-node="selectEventNode"
+              @toggle-legend="toggleMapLegend"
+            />
           </div>
           <div v-if="showBattleBoard" class="battle-stage">
-          <div class="player-side">
-            <div class="side-label">我方</div>
-            <div class="relic-bar">
-              <div
-                v-for="relic in playerRelics"
-                :key="relic.id"
-                class="relic-item"
-                :class="`rarity-${relic.rarity}`"
-                :title="getRelicTooltip(relic)"
-              >
-                <span class="relic-icon">{{ relic.icon }}</span>
-                <span class="relic-name">{{ relic.name }}</span>
-              </div>
-              <div v-if="playerRelics.length === 0" class="relic-item empty">未选择遗物</div>
-            </div>
-            <div class="troop-ops-bar">
-              <button
-                class="relic-auto-btn"
-                :disabled="isBattleActive"
-                @click="autoAllocateTroopsEvenly"
-              >
-                自动分配兵力
-              </button>
-            </div>
-            <div class="formation horizontal">
-              <div class="card-slot" @click="selectSlot('player', '大营')">
-                <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.大营 }">
-                    <div class="troops-bar" @mousedown.stop="handleTroopsBarMouseDown('大营', $event)">
-                      <div class="troops-fill" :style="{
-                        width: playerFormation.大营
-                          ? (playerFormation.大营.troops /
-                            playerFormation.大营.maxTroops) *
-                          100 +
-                          '%'
-                          : '0%',
-                      }"></div>
-                      <div class="troops-text">
-                        {{ playerFormation.大营 ? playerFormation.大营.troops : 0 }}
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="playerFormation.大营" class="card player" :style="{
-                    backgroundImage: `url(${playerFormation.大营.avatar ? API_BASE_URL + playerFormation.大营.avatar : playerFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                  }" :class="{
-                    selected: selectedSlot === 'player-大营',
-                    dead: playerFormation.大营.isDead,
-                    attacking: attackingCard === 'player-大营',
-                  }" data-card-side="player" data-card-position="大营" @contextmenu="showTooltip('player-大营', $event)"
-                    @click="hideTooltip">
-                    <div class="card-top">
-                      <div class="card-left-top">
-                        <div class="card-dynasty">
-                          {{ playerFormation.大营.dynasty }}
-                        </div>
-                        <div class="card-name">
-                          {{ playerFormation.大营.name }}
-                        </div>
-                      </div>
-                      <div class="card-right-top">
-                        <div class="card-stars">
-                          <span v-for="i in 5" :key="i" class="star" :class="{
-                            active: i <= getSynthStar(playerFormation.大营),
-                            enhanced: getSynthStar(playerFormation.大营) > 0,
-                          }">★</span>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- 状态标记区域 -->
-                    <StatusEffects :general="playerFormation.大营" />
-                    <div class="card-middle"></div>
-                    <div class="card-bottom">
-                      <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ playerFormation.大营.level }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-command">{{
-                          playerFormation.大营.leadership
-                        }}</span>
-                        <span class="card-bottom-label">统率</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{
-                          playerFormation.大营.soldierType
-                        }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-range">{{
-                          playerFormation.大营.attackRange
-                        }}</span>
-                        <span class="card-bottom-label">距</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="empty-slot">
-                    <span>大营</span>
-                  </div>
-                </div>
-              </div>
-              <div class="card-slot" @click="selectSlot('player', '中军')">
-                <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.中军 }">
-                    <div class="troops-bar" @mousedown.stop="handleTroopsBarMouseDown('中军', $event)">
-                      <div class="troops-fill" :style="{
-                        width: playerFormation.中军
-                          ? (playerFormation.中军.troops /
-                            playerFormation.中军.maxTroops) *
-                          100 +
-                          '%'
-                          : '0%',
-                      }"></div>
-                      <div class="troops-text">
-                        {{ playerFormation.中军 ? playerFormation.中军.troops : 0 }}
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="playerFormation.中军" class="card player" :style="{
-                    backgroundImage: `url(${playerFormation.中军.avatar ? API_BASE_URL + playerFormation.中军.avatar : playerFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                  }" :class="{
-                    selected: selectedSlot === 'player-中军',
-                    dead: playerFormation.中军.isDead,
-                    attacking: attackingCard === 'player-中军',
-                  }" data-card-side="player" data-card-position="中军" @contextmenu="showTooltip('player-中军', $event)"
-                    @click="hideTooltip">
-                    <div class="card-top">
-                      <div class="card-left-top">
-                        <div class="card-dynasty">
-                          {{ playerFormation.中军.dynasty }}
-                        </div>
-                        <div class="card-name">
-                          {{ playerFormation.中军.name }}
-                        </div>
-                      </div>
-                      <div class="card-right-top">
-                        <div class="card-stars">
-                          <span v-for="i in 5" :key="i" class="star" :class="{
-                            active: i <= getSynthStar(playerFormation.中军),
-                            enhanced: getSynthStar(playerFormation.中军) > 0,
-                          }">★</span>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- 状态标记区域 -->
-                    <StatusEffects :general="playerFormation.中军" />
-                    <div class="card-bottom">
-                      <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ playerFormation.中军.level }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-command">{{
-                          playerFormation.中军.leadership
-                        }}</span>
-                        <span class="card-bottom-label">统率</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{
-                          playerFormation.中军.soldierType
-                        }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-range">{{
-                          playerFormation.中军.attackRange
-                        }}</span>
-                        <span class="card-bottom-label">距</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="empty-slot">
-                    <span>中军</span>
-                  </div>
-                </div>
-              </div>
-              <div class="card-slot" @click="selectSlot('player', '前锋')">
-                <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && playerFormation.前锋 }">
-                    <div class="troops-bar" @mousedown.stop="handleTroopsBarMouseDown('前锋', $event)">
-                      <div class="troops-fill" :style="{
-                        width: playerFormation.前锋
-                          ? (playerFormation.前锋.troops /
-                            playerFormation.前锋.maxTroops) *
-                          100 +
-                          '%'
-                          : '0%',
-                      }"></div>
-                      <div class="troops-text">
-                        {{ playerFormation.前锋 ? playerFormation.前锋.troops : 0 }}
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="playerFormation.前锋" class="card player" :style="{
-                    backgroundImage: `url(${playerFormation.前锋.avatar ? API_BASE_URL + playerFormation.前锋.avatar : playerFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                  }" :class="{
-                    selected: selectedSlot === 'player-前锋',
-                    dead: playerFormation.前锋.isDead,
-                    attacking: attackingCard === 'player-前锋',
-                  }" data-card-side="player" data-card-position="前锋" @contextmenu="showTooltip('player-前锋', $event)"
-                    @click="hideTooltip">
-                    <div class="card-top">
-                      <div class="card-left-top">
-                        <div class="card-dynasty">
-                          {{ playerFormation.前锋.dynasty }}
-                        </div>
-                        <div class="card-name">
-                          {{ playerFormation.前锋.name }}
-                        </div>
-                      </div>
-                      <div class="card-right-top">
-                        <div class="card-stars">
-                          <span v-for="i in 5" :key="i" class="star" :class="{
-                            active: i <= getSynthStar(playerFormation.前锋),
-                            enhanced: getSynthStar(playerFormation.前锋) > 0,
-                          }">★</span>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- 状态标记区域 -->
-                    <StatusEffects :general="playerFormation.前锋" />
-                    <div class="card-bottom">
-                      <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ playerFormation.前锋.level }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-command">{{
-                          playerFormation.前锋.leadership
-                        }}</span>
-                        <span class="card-bottom-label">统率</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{
-                          playerFormation.前锋.soldierType
-                        }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-range">{{
-                          playerFormation.前锋.attackRange
-                        }}</span>
-                        <span class="card-bottom-label">距</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="empty-slot">
-                    <span>前锋</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            <FormationPanel
+              side="player"
+              :formation="playerFormation"
+              :relics="playerRelics"
+              :selected-slot="selectedSlot"
+              :attacking-card="attackingCard"
+              :is-battle-active="isBattleActive"
+              :api-base-url="API_BASE_URL"
+              @select-slot="({ side, position }) => selectSlot(side, position)"
+              @show-tooltip="(slotKey, event) => showTooltip(slotKey, event)"
+              @hide-tooltip="hideTooltip"
+              @troops-bar-mousedown="(position, event) => handleTroopsBarMouseDown(position, event)"
+              @auto-allocate-troops="autoAllocateTroopsEvenly"
+            />
           <BattleReport :reports="battleReports" />
           <!-- 战斗场景 -->
-          <div class="player-side enemy">
-            <div class="side-label">敌方</div>
-            <div class="relic-bar">
-              <div
-                v-for="relic in enemyRelics"
-                :key="relic.id"
-                class="relic-item"
-                :class="`rarity-${relic.rarity}`"
-                :title="getRelicTooltip(relic)"
-              >
-                <span class="relic-icon">{{ relic.icon }}</span>
-                <span class="relic-name">{{ relic.name }}</span>
-              </div>
-              <div v-if="enemyRelics.length === 0" class="relic-item empty">未选择遗物</div>
-            </div>
-            <div class="formation horizontal enemy">
-              <div class="card-slot" @click="selectSlot('enemy', '前锋')">
-                <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.前锋 }">
-                    <div class="troops-bar">
-                      <div class="troops-fill" :style="{
-                        width: enemyFormation.前锋
-                          ? (enemyFormation.前锋.troops /
-                            enemyFormation.前锋.maxTroops) *
-                          100 +
-                          '%'
-                          : '0%',
-                      }"></div>
-                      <div class="troops-text">
-                        {{ enemyFormation.前锋 ? enemyFormation.前锋.troops : 0 }}
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="enemyFormation.前锋" class="card enemy" :style="{
-                    backgroundImage: `url(${enemyFormation.前锋.avatar ? API_BASE_URL + enemyFormation.前锋.avatar : enemyFormation.前锋.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                  }" :class="{
-                    selected: selectedSlot === 'enemy-前锋',
-                    dead: enemyFormation.前锋.isDead,
-                    attacking: attackingCard === 'enemy-前锋',
-                  }" data-card-side="enemy" data-card-position="前锋" @contextmenu="showTooltip('enemy-前锋', $event)"
-                    @click="hideTooltip">
-                    <div class="card-top">
-                      <div class="card-left-top">
-                        <div class="card-dynasty">
-                          {{ enemyFormation.前锋.dynasty }}
-                        </div>
-                        <div class="card-name">
-                          {{ enemyFormation.前锋.name }}
-                        </div>
-                      </div>
-                      <div class="card-right-top">
-                        <div class="card-stars">
-                          <span v-for="i in 5" :key="i" class="star" :class="{
-                            active: i <= getSynthStar(enemyFormation.前锋),
-                            enhanced: getSynthStar(enemyFormation.前锋) > 0,
-                          }">★</span>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- 状态标记区域 -->
-                    <StatusEffects :general="enemyFormation.前锋" />
-                    <div class="card-bottom">
-                      <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ enemyFormation.前锋.level }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-command">{{
-                          enemyFormation.前锋.leadership
-                        }}</span>
-                        <span class="card-bottom-label">统率</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{
-                          enemyFormation.前锋.soldierType
-                        }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-range">{{
-                          enemyFormation.前锋.attackRange
-                        }}</span>
-                        <span class="card-bottom-label">距</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="empty-slot">
-                    <span>前锋</span>
-                  </div>
-                </div>
-              </div>
-              <div class="card-slot" @click="selectSlot('enemy', '中军')">
-                <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.中军 }">
-                    <div class="troops-bar">
-                      <div class="troops-fill" :style="{
-                        width: enemyFormation.中军
-                          ? (enemyFormation.中军.troops /
-                            enemyFormation.中军.maxTroops) *
-                          100 +
-                          '%'
-                          : '0%',
-                      }"></div>
-                      <div class="troops-text">
-                        {{ enemyFormation.中军 ? enemyFormation.中军.troops : 0 }}
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="enemyFormation.中军" class="card enemy" :style="{
-                    backgroundImage: `url(${enemyFormation.中军.avatar ? API_BASE_URL + enemyFormation.中军.avatar : enemyFormation.中军.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                  }" :class="{
-                    selected: selectedSlot === 'enemy-中军',
-                    dead: enemyFormation.中军.isDead,
-                    attacking: attackingCard === 'enemy-中军',
-                  }" data-card-side="enemy" data-card-position="中军" @contextmenu="showTooltip('enemy-中军', $event)"
-                    @click="hideTooltip">
-                    <div class="card-top">
-                      <div class="card-left-top">
-                        <div class="card-dynasty">
-                          {{ enemyFormation.中军.dynasty }}
-                        </div>
-                        <div class="card-name">
-                          {{ enemyFormation.中军.name }}
-                        </div>
-                      </div>
-                      <div class="card-right-top">
-                        <div class="card-stars">
-                          <span v-for="i in 5" :key="i" class="star" :class="{
-                            active: i <= getSynthStar(enemyFormation.中军),
-                            enhanced: getSynthStar(enemyFormation.中军) > 0,
-                          }">★</span>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- 状态标记区域 -->
-                    <StatusEffects :general="enemyFormation.中军" />
-                    <div class="card-bottom">
-                      <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ enemyFormation.中军.level }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-command">{{
-                          enemyFormation.中军.leadership
-                        }}</span>
-                        <span class="card-bottom-label">统率</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{
-                          enemyFormation.中军.soldierType
-                        }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-range">{{
-                          enemyFormation.中军.attackRange
-                        }}</span>
-                        <span class="card-bottom-label">距</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="empty-slot">
-                    <span>中军</span>
-                  </div>
-                </div>
-              </div>
-              <div class="card-slot" @click="selectSlot('enemy', '大营')">
-                <div class="card-container">
-                  <div class="troops-bar-container" :class="{ active: isBattleActive && enemyFormation.大营 }">
-                    <div class="troops-bar">
-                      <div class="troops-fill" :style="{
-                        width: enemyFormation.大营
-                          ? (enemyFormation.大营.troops /
-                            enemyFormation.大营.maxTroops) *
-                          100 +
-                          '%'
-                          : '0%',
-                      }"></div>
-                      <div class="troops-text">
-                        {{ enemyFormation.大营 ? enemyFormation.大营.troops : 0 }}
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="enemyFormation.大营" class="card enemy" :style="{
-                    backgroundImage: `url(${enemyFormation.大营.avatar ? API_BASE_URL + enemyFormation.大营.avatar : enemyFormation.大营.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp'})`,
-                  }" :class="{
-                    selected: selectedSlot === 'enemy-大营',
-                    dead: enemyFormation.大营.isDead,
-                    attacking: attackingCard === 'enemy-大营',
-                  }" data-card-side="enemy" data-card-position="大营" @contextmenu="showTooltip('enemy-大营', $event)"
-                    @click="hideTooltip">
-                    <div class="card-top">
-                      <div class="card-left-top">
-                        <div class="card-dynasty">
-                          {{ enemyFormation.大营.dynasty }}
-                        </div>
-                        <div class="card-name">
-                          {{ enemyFormation.大营.name }}
-                        </div>
-                      </div>
-                      <div class="card-right-top">
-                        <div class="card-stars">
-                          <span v-for="i in 5" :key="i" class="star" :class="{
-                            active: i <= getSynthStar(enemyFormation.大营),
-                            enhanced: getSynthStar(enemyFormation.大营) > 0,
-                          }">★</span>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- 状态标记区域 -->
-                    <StatusEffects :general="enemyFormation.大营" />
-                    <div class="card-bottom">
-                      <div class="card-bottom-item">
-                        <span class="card-level">Lv.{{ enemyFormation.大营.level }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-command">{{
-                          enemyFormation.大营.leadership
-                        }}</span>
-                        <span class="card-bottom-label">统率</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-soldier-type">{{
-                          enemyFormation.大营.soldierType
-                        }}</span>
-                      </div>
-                      <div class="card-bottom-item">
-                        <span class="card-range">{{
-                          enemyFormation.大营.attackRange
-                        }}</span>
-                        <span class="card-bottom-label">距</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="empty-slot">
-                    <span>大营</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            <FormationPanel
+              side="enemy"
+              :formation="enemyFormation"
+              :relics="enemyRelics"
+              :selected-slot="selectedSlot"
+              :attacking-card="attackingCard"
+              :is-battle-active="isBattleActive"
+              :api-base-url="API_BASE_URL"
+              @select-slot="({ side, position }) => selectSlot(side, position)"
+              @show-tooltip="(slotKey, event) => showTooltip(slotKey, event)"
+              @hide-tooltip="hideTooltip"
+            />
           </div>
         </div>
 
@@ -796,8 +253,11 @@ import GeneralTooltip from "../components/GeneralTooltip.vue";
 import GeneralList from "../components/GeneralList.vue";
 import BattleReport from "../components/BattleReport.vue";
 import StatusEffects from "../components/StatusEffects.vue";
-import type { General } from "../skills/types";
-import { RECRUIT_CONFIG as RECRUIT_CONFIG_BASE, getFetchFunction as getFetchFunctionBase } from "../skills/index";
+import FormationPanel from "../components/FormationPanel.vue";
+import RunMap from "../components/RunMap.vue";
+import type { General, FormationPosition, SpeedUnit } from "../skills/types";
+import { RELIC_POOL, ENEMY_WAVE_RELIC_CONFIG, pickWeightedRelics, type Relic, type RelicEffects } from "../relics";
+import { RECRUIT_CONFIG, getFetchFunctionBase } from '../skills/index';
 
 const isLoggedIn = ref(false);
 const showAuthModal = ref(false);
@@ -1325,47 +785,6 @@ const triggerTargetHitReaction = (
   );
 };
 
-interface SpeedUnit {
-  id: string;
-  general: General;
-  side: "player" | "enemy";
-  position: string;
-  speed: number;
-  isActive: boolean;
-}
-
-interface RelicEffects {
-  defensePct?: number;
-  debuffResistChance?: number;
-  turnEndHealPct?: number;
-  commandPct?: number;
-  siegePct?: number;
-  physicalDamagePct?: number;
-  strategyPct?: number;
-  activeSkillChancePct?: number;
-  strategyDamagePct?: number;
-  resourcePerTurn?: number;
-  resourceEfficiencyPct?: number;
-  cavalrySpeedPct?: number;
-  cavalryDoubleStrikeChance?: number;
-  strategyDamageReductionPct?: number;
-  speedPct?: number;
-  physicalDamageReductionPct?: number;
-  lowTroopsDefenseBonusPct?: number;
-  lowTroopsThreshold?: number;
-  healEffectPct?: number;
-}
-
-interface Relic {
-  id: string;
-  name: string;
-  icon: string;
-  rarity: "common" | "uncommon" | "rare" | "legendary";
-  history: string;
-  effectText: string;
-  effects: RelicEffects;
-}
-
 interface VictoryRewardOption {
   id: string;
   type: "gold" | "conscript" | "promote" | "layerHeal";
@@ -1403,249 +822,6 @@ interface RunMap {
   currentNodeId: string;
 }
 
-const relicPool: Relic[] = [
-  {
-    id: "kaihuanglvjian",
-    name: "开皇律简",
-    icon: "📜",
-    rarity: "rare",
-    history:
-      "隋文帝时期颁布的《开皇律》竹简残卷，是隋唐法律制度的基础，规范朝纲、安定民心。",
-    effectText: "全队防御+8%，受负面概率-5%，每回合结束恢复全队3%兵力。",
-    effects: { defensePct: 0.08, debuffResistChance: 0.05, turnEndHealPct: 0.03 },
-  },
-  {
-    id: "suidaibingfu",
-    name: "隋代兵符",
-    icon: "🛡️",
-    rarity: "rare",
-    history: "隋代调兵遣将兵符，象征古代军事权力。",
-    effectText: "全队统御+10%，攻城+15%，物理伤害+8%。",
-    effects: { commandPct: 0.1, siegePct: 0.15, physicalDamagePct: 0.08 },
-  },
-  {
-    id: "lantingxumoben",
-    name: "兰亭序摹本（隋唐版）",
-    icon: "🖌️",
-    rarity: "rare",
-    history: "隋唐时期临摹《兰亭序》珍品，体现文化繁荣。",
-    effectText: "全队谋略+12%，战法发动概率+5%，谋略伤害+6%。",
-    effects: { strategyPct: 0.12, activeSkillChancePct: 0.05, strategyDamagePct: 0.06 },
-  },
-  {
-    id: "dayunhecaoyin",
-    name: "大运河漕印",
-    icon: "🚢",
-    rarity: "rare",
-    history: "隋唐漕运管理官印，见证大运河贯通南北。",
-    effectText: "全队攻城+12%，每回合获得资源，防御+8%。",
-    effects: { siegePct: 0.12, resourcePerTurn: 18, defensePct: 0.08 },
-  },
-  {
-    id: "tangsancaimayong",
-    name: "唐三彩马俑",
-    icon: "🐎",
-    rarity: "rare",
-    history: "隋唐代表性马俑工艺，见证时代繁荣与交流。",
-    effectText: "全队骑兵速度+10%，物理伤害+7%，每回合6%概率骑兵连击一次。",
-    effects: { cavalrySpeedPct: 0.1, physicalDamagePct: 0.07, cavalryDoubleStrikeChance: 0.06 },
-  },
-  {
-    id: "fangkongqianfan",
-    name: "隋代方孔钱范",
-    icon: "🪙",
-    rarity: "rare",
-    history: "隋代五铢钱钱范，规范全国货币制度。",
-    effectText: "全队统御+8%，资源产出效率+10%，受谋略伤害-6%。",
-    effects: { commandPct: 0.08, resourceEfficiencyPct: 0.1, strategyDamageReductionPct: 0.06 },
-  },
-  {
-    id: "yantabeitie",
-    name: "雁塔碑帖",
-    icon: "🗿",
-    rarity: "rare",
-    history: "隋唐碑帖文献，见证文化鼎盛。",
-    effectText: "全队谋略+10%，战法发动概率+4%，谋略属性额外+7%。",
-    effects: { strategyPct: 0.17, activeSkillChancePct: 0.04 },
-  },
-  {
-    id: "suidaikaijiacanpian",
-    name: "隋代铠甲残片",
-    icon: "🧱",
-    rarity: "rare",
-    history: "隋代军用铠甲残片，体现军事装备水平。",
-    effectText: "全队防御+11%，受物理伤害-7%，兵力低于60%额外防御+5%。",
-    effects: {
-      defensePct: 0.11,
-      physicalDamageReductionPct: 0.07,
-      lowTroopsDefenseBonusPct: 0.05,
-      lowTroopsThreshold: 0.6,
-    },
-  },
-  {
-    id: "tangdaichajingchaoben",
-    name: "唐代茶经抄本",
-    icon: "🍵",
-    rarity: "rare",
-    history: "唐代《茶经》手抄本，见证茶文化兴起。",
-    effectText: "全队谋略+9%，治疗效果+10%，每回合恢复全队4%兵力。",
-    effects: { strategyPct: 0.09, healEffectPct: 0.1, turnEndHealPct: 0.04 },
-  },
-  {
-    id: "suitangfenghuotailingpai",
-    name: "隋唐烽火台令牌",
-    icon: "🔥",
-    rarity: "rare",
-    history: "隋唐烽火台军情令牌，见证边防通讯体系。",
-    effectText: "全队速度+8%，物理伤害+6%，强化侦查能力。",
-    effects: { speedPct: 0.08, physicalDamagePct: 0.06 },
-  },
-  {
-    id: "white_copper_tally",
-    name: "铜节残符",
-    icon: "🪙",
-    rarity: "common",
-    history: "旧军营遗落的铜节，虽不起眼，却能稳住军心。",
-    effectText: "全队防御+2%。",
-    effects: { defensePct: 0.02 },
-  },
-  {
-    id: "white_oil_lamp",
-    name: "行营油灯",
-    icon: "🪔",
-    rarity: "common",
-    history: "夜行点灯，照路亦照心。",
-    effectText: "全队速度+2%。",
-    effects: { speedPct: 0.02 },
-  },
-  {
-    id: "white_worn_sheath",
-    name: "旧鞘",
-    icon: "🗡️",
-    rarity: "common",
-    history: "磨损严重的刀鞘，仍能提醒武人守序。",
-    effectText: "全队物理伤害+2%。",
-    effects: { physicalDamagePct: 0.02 },
-  },
-  {
-    id: "white_bamboo_abacus",
-    name: "竹算筹",
-    icon: "🧮",
-    rarity: "common",
-    history: "军需官常备小器，精打细算。",
-    effectText: "每回合获得金币+6。",
-    effects: { resourcePerTurn: 6 },
-  },
-  {
-    id: "white_horse_bell",
-    name: "驿马铃",
-    icon: "🔔",
-    rarity: "common",
-    history: "驿卒铃响，队列更易齐步。",
-    effectText: "骑兵速度+3%。",
-    effects: { cavalrySpeedPct: 0.03 },
-  },
-  {
-    id: "white_herb_bag",
-    name: "草药囊",
-    icon: "🌿",
-    rarity: "common",
-    history: "行军常备，聊胜于无。",
-    effectText: "每回合结束恢复全队1%兵力。",
-    effects: { turnEndHealPct: 0.01 },
-  },
-  {
-    id: "white_small_banner",
-    name: "小纛旗",
-    icon: "🚩",
-    rarity: "common",
-    history: "伍长所持，鼓舞邻队。",
-    effectText: "全队统率+2%。",
-    effects: { commandPct: 0.02 },
-  },
-  {
-    id: "white_old_manual",
-    name: "旧操典",
-    icon: "📘",
-    rarity: "common",
-    history: "残卷犹在，仍可习阵。",
-    effectText: "全队攻城+3%。",
-    effects: { siegePct: 0.03 },
-  },
-  {
-    id: "green_war_drum",
-    name: "行军战鼓",
-    icon: "🥁",
-    rarity: "uncommon",
-    history: "鼓点稳阵，前后呼应。",
-    effectText: "全队速度+4%，统率+3%。",
-    effects: { speedPct: 0.04, commandPct: 0.03 },
-  },
-  {
-    id: "green_quiver",
-    name: "鹰羽箭囊",
-    icon: "🏹",
-    rarity: "uncommon",
-    history: "精选箭羽，破甲更稳。",
-    effectText: "全队物理伤害+4%。",
-    effects: { physicalDamagePct: 0.04 },
-  },
-  {
-    id: "green_tactic_slip",
-    name: "战术简牍",
-    icon: "📗",
-    rarity: "uncommon",
-    history: "简明战术，强调协同。",
-    effectText: "全队谋略+5%。",
-    effects: { strategyPct: 0.05 },
-  },
-  {
-    id: "green_supply_cart",
-    name: "补给车契",
-    icon: "🛒",
-    rarity: "uncommon",
-    history: "登记军需，减少浪费。",
-    effectText: "每回合获得金币+10，资源效率+4%。",
-    effects: { resourcePerTurn: 10, resourceEfficiencyPct: 0.04 },
-  },
-  {
-    id: "green_guard_plate",
-    name: "护心铜片",
-    icon: "🛡",
-    rarity: "uncommon",
-    history: "贴甲于胸，聊增生机。",
-    effectText: "全队防御+5%，受物理伤害-2%。",
-    effects: { defensePct: 0.05, physicalDamageReductionPct: 0.02 },
-  },
-  {
-    id: "green_signal_fire",
-    name: "烽火引",
-    icon: "🔥",
-    rarity: "uncommon",
-    history: "边烽传令，军情更快。",
-    effectText: "战法发动概率+2%。",
-    effects: { activeSkillChancePct: 0.02 },
-  },
-  {
-    id: "green_horse_hoof",
-    name: "铁蹄钉",
-    icon: "🐴",
-    rarity: "uncommon",
-    history: "稳蹄易行，利于追击。",
-    effectText: "骑兵速度+6%，骑兵连击率+2%。",
-    effects: { cavalrySpeedPct: 0.06, cavalryDoubleStrikeChance: 0.02 },
-  },
-  {
-    id: "green_medical_scroll",
-    name: "军医札记",
-    icon: "📙",
-    rarity: "uncommon",
-    history: "营中急救要诀，重在止损。",
-    effectText: "治疗效果+5%，每回合结束恢复全队2%兵力。",
-    effects: { healEffectPct: 0.05, turnEndHealPct: 0.02 },
-  },
-];
-
 const playerRelicCandidates = ref<Relic[]>([]);
 const playerRelics = ref<Relic[]>([]);
 const enemyRelics = ref<Relic[]>([]);
@@ -1674,13 +850,6 @@ const MAP_CONFIG = {
   maxConnectionsPerNode: 2,
   defaultNodePool: ["battle", "event", "treasure", "rest", "shop"] as NodeType[],
 } as const;
-
-const ENEMY_WAVE_RELIC_CONFIG: Record<number, string> = {
-  3: "suidaibingfu",
-  5: "kaihuanglvjian",
-  8: "suitangfenghuotailingpai",
-  12: "suidaikaijiacanpian",
-};
 
 const cuiJueQuotes = {
   newRun: [
@@ -2151,7 +1320,7 @@ const resolveEventNode = () => {
 };
 
 const resolveTreasureNode = () => {
-  if (relicPool.length > 0) {
+  if (RELIC_POOL.length > 0) {
     const relic = pickWeightedRelics(1)[0];
     if (!relic) {
       money.value += 150;
@@ -2514,8 +1683,8 @@ const areAllOwnedGeneralsResting = () => {
 
 // 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
 // 自动生成：在 skills/index.ts 的 RECRUIT_CONFIG 中添加新武将即可
-const probability = 1 / RECRUIT_CONFIG_BASE.length;
-const RECRUIT_CONFIG = RECRUIT_CONFIG_BASE.map(item => ({
+const probability = 1 / RECRUIT_CONFIG.length;
+const RECRUIT_CONFIG_BASE = RECRUIT_CONFIG.map(item => ({
   id: item.id,
   probability: Math.round(probability * 1000) / 1000,
 }));
@@ -2525,7 +1694,7 @@ const getFetchFunction = (id: number) => {
   return getFetchFunctionBase(id, API_BASE_URL);
 };
 
-const designedGeneralIds = () => RECRUIT_CONFIG.map((c) => c.id);
+const designedGeneralIds = () => RECRUIT_CONFIG_BASE.map((c) => c.id);
 
 const cloneGeneralForEnemy = (g: General): General => ({
   ...g,
@@ -2585,7 +1754,7 @@ const generateEnemyTeam = async () => {
   }
 
   const relicId = ENEMY_WAVE_RELIC_CONFIG[currentWave.value];
-  const enemyRelic = relicPool.find((r) => r.id === relicId) || null;
+  const enemyRelic = RELIC_POOL.find((r) => r.id === relicId) || null;
   enemyRelics.value = enemyRelic ? [enemyRelic] : [];
   if (enemyRelic) {
     addReport(`本波敌军携带遗物【${enemyRelic.name}】。`);
@@ -2898,11 +2067,6 @@ const selectVictoryReward = async (reward: VictoryRewardOption) => {
   }
 };
 
-const getRelicTooltip = (relic: Relic | null) => {
-  if (!relic) return "";
-  return `${relic.name}\n${relic.history}\n效果：${relic.effectText}`;
-};
-
 const getRandomLine = (lines: string[]) =>
   lines[Math.floor(Math.random() * lines.length)];
 
@@ -2913,40 +2077,6 @@ const addCuiJueQuote = (
   const line = getRandomLine(cuiJueQuotes[scene]);
   addReport(`${extraPrefix}【崔珏】${line}`);
   return line;
-};
-
-const RELIC_RARITY_WEIGHT: Record<Relic["rarity"], number> = {
-  common: 55,
-  uncommon: 33,
-  rare: 12,
-  legendary: 0,
-};
-
-const pickRarityByWeight = (): Relic["rarity"] => {
-  const roll = Math.random() * 100;
-  let cursor = 0;
-  for (const rarity of ["common", "uncommon", "rare", "legendary"] as Relic["rarity"][]) {
-    cursor += RELIC_RARITY_WEIGHT[rarity];
-    if (roll <= cursor) return rarity;
-  }
-  return "common";
-};
-
-const pickWeightedRelics = (count: number): Relic[] => {
-  const available = [...relicPool];
-  const picked: Relic[] = [];
-  while (picked.length < count && available.length > 0) {
-    const rarity = pickRarityByWeight();
-    const sameRarity = available.filter((relic) => relic.rarity === rarity);
-    const pool = sameRarity.length > 0 ? sameRarity : available;
-    const chosen = pool[Math.floor(Math.random() * pool.length)];
-    picked.push(chosen);
-    const idx = available.findIndex((item) => item.id === chosen.id);
-    if (idx >= 0) {
-      available.splice(idx, 1);
-    }
-  }
-  return picked;
 };
 
 const getRelicsBySide = (side: "player" | "enemy"): Relic[] =>
@@ -3076,9 +2206,9 @@ const recruitCard = () => {
   // 根据概率随机选择武将
   const random = Math.random();
   let cumulativeProbability = 0;
-  let selectedGeneralId = RECRUIT_CONFIG[0].id;
+  let selectedGeneralId = RECRUIT_CONFIG_BASE[0].id;
 
-  for (const config of RECRUIT_CONFIG) {
+  for (const config of RECRUIT_CONFIG_BASE) {
     cumulativeProbability += config.probability;
     if (random < cumulativeProbability) {
       selectedGeneralId = config.id;
@@ -4981,97 +4111,6 @@ const _nextWave = async () => {
   margin-bottom: 15px;
   padding-bottom: 10px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-.relic-bar {
-  min-height: 60px;
-  border: 1px solid rgba(200, 70, 70, 0.65);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 8px 12px;
-}
-
-.relic-auto-btn {
-  border: 1px solid rgba(255, 215, 0, 0.5);
-  background: rgba(45, 50, 60, 0.92);
-  color: #f6e7bf;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.relic-auto-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-}
-
-.relic-auto-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.troop-ops-bar {
-  margin-top: 8px;
-  margin-bottom: 6px;
-  min-height: 42px;
-  border: 1px solid rgba(200, 70, 70, 0.65);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-}
-
-.relic-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(35, 40, 45, 0.92);
-  color: #f6e7bf;
-  border: 1px solid rgba(255, 215, 0, 0.35);
-  font-size: 13px;
-}
-
-.relic-item.rarity-common {
-  border-color: rgba(226, 232, 240, 0.85);
-}
-
-.relic-item.rarity-uncommon {
-  border-color: rgba(94, 203, 115, 0.9);
-}
-
-.relic-item.rarity-rare {
-  border-color: rgba(141, 109, 247, 0.9);
-}
-
-.relic-item.rarity-legendary {
-  border-color: rgba(245, 191, 79, 0.95);
-  box-shadow: 0 0 10px rgba(245, 191, 79, 0.2);
-}
-
-.relic-item.empty {
-  background: rgba(40, 40, 40, 0.55);
-  color: #ddd;
-  border-style: dashed;
-}
-
-.relic-icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.relic-name {
-  font-weight: 700;
 }
 
 .formation.horizontal {

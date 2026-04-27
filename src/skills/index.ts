@@ -73,7 +73,7 @@ export const getRecruitProbabilities = (): Map<number, number> => {
 };
 
 // 动态获取 fetch 函数
-export const getFetchFunction = (id: number, API_BASE_URL: string): (() => Promise<import("./types").General | null>) | null => {
+export const getFetchFunctionBase = (id: number, API_BASE_URL: string): (() => Promise<import("./types").General | null>) | null => {
   const config = RECRUIT_CONFIG.find(item => item.id === id);
   if (!config) return null;
 

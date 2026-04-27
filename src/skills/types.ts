@@ -1,6 +1,9 @@
 // 兵种类型
 export type SoldierType = "步兵" | "弓兵" | "骑兵";
 
+// 阵型位置类型
+export type FormationPosition = "大营" | "中军" | "前锋";
+
 // 技能接口
 export interface Skill {
   id: string;
