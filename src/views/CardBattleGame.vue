@@ -94,6 +94,27 @@
               </div>
             </div>
           </div>
+          <div v-if="showLayerRewardSelector" class="relic-selector-mask">
+            <div class="relic-selector-panel reward-panel layer-reward-panel">
+              <h3>第 {{ currentAct }} 层完成 · 崔珏犒赏</h3>
+              <div class="cui-jue-dialog">
+                <img class="cui-jue-portrait" :src="cuiJuePortrait" alt="崔珏" />
+                <div class="cui-jue-bubble">{{ layerRewardDialogLine }}</div>
+              </div>
+              <div class="relic-candidate-list">
+                <div
+                  v-for="reward in layerRewardOptions"
+                  :key="reward.id"
+                  class="relic-candidate-card reward-candidate-card"
+                  @click="selectLayerReward(reward)"
+                >
+                  <div class="relic-candidate-icon">{{ reward.icon }}</div>
+                  <div class="relic-candidate-name">{{ reward.name }}</div>
+                  <div class="relic-candidate-effect">{{ reward.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text"
             :class="[`damage-${damageText.kind || 'normal'}`, { crit: !!damageText.critical }]" :style="{
             left: damageText.x + 'px',
@@ -1821,6 +1842,12 @@ const showEventMap = ref(true);
 const runMap = ref<RunMap | null>(null);
 const pendingNodeId = ref<string | null>(null);
 const pendingBattleNodeType = ref<NodeType | null>(null);
+const currentAct = ref(1);
+const isLayerComplete = ref(false);
+const layerRewardOptions = ref<VictoryRewardOption[]>([]);
+const showLayerRewardSelector = ref(false);
+const layerRewardDialogLine = ref("");
+const cuiJueLayerQuote = ref("");
 
 const MAP_CONFIG = {
   minFloors: 8,
@@ -2009,6 +2036,43 @@ const generateRunMap = (seed?: number): RunMap => {
     currentNodeId: "start",
   };
   return map;
+};
+
+const generateNextLayerNodes = (existingNodes: MapNode[]): MapNode[] => {
+  const baseSeed = Date.now();
+  const rng = hashSeed(baseSeed);
+  const newFloor = (existingNodes.reduce((m, n) => Math.max(m, n.floor), 0)) + 1;
+  const newNodes: MapNode[] = [];
+  const bossFloor = newFloor;
+  const nodeCount = 1;
+  const lastFloorMaxLane = existingNodes
+    .filter((n) => n.floor === newFloor - 1)
+    .reduce((m, n) => Math.max(m, n.lane), -1);
+
+  for (let lane = 0; lane < nodeCount; lane++) {
+    const node: MapNode = {
+      id: `f${newFloor}-l${lane}`,
+      floor: newFloor,
+      lane,
+      yOffset: 0,
+      type: "boss",
+      linksTo: [],
+      visited: false,
+    };
+    newNodes.push(node);
+  }
+
+  const prevFloorNodes = existingNodes.filter((n) => n.floor === newFloor - 1);
+  const prevBossCandidates = prevFloorNodes;
+
+  for (const prevNode of prevBossCandidates) {
+    const nextNode = newNodes.find((n) => n.floor === newFloor && n.lane === 0);
+    if (nextNode) {
+      prevNode.linksTo.push(nextNode.id);
+    }
+  }
+
+  return newNodes;
 };
 
 const resetRunProgress = () => {
@@ -2834,6 +2898,38 @@ const buildVictoryRewardOptions = (): VictoryRewardOption[] => {
   return options;
 };
 
+const buildLayerRewardOptions = (): VictoryRewardOption[] => {
+  const goldValue = 300 + currentAct.value * 150;
+  const conscriptValue = 500 + currentAct.value * 200;
+  const options: VictoryRewardOption[] = [
+    {
+      id: `layer-gold-${Date.now()}`,
+      type: "gold",
+      icon: "💰",
+      name: "军资嘉奖",
+      description: `获得金币 +${goldValue}`,
+      value: goldValue,
+    },
+    {
+      id: `layer-conscript-${Date.now()}`,
+      type: "conscript",
+      icon: "🪖",
+      name: "征召犒赏",
+      description: `恢复征召兵 +${conscriptValue}`,
+      value: conscriptValue,
+    },
+    {
+      id: `layer-heal-${Date.now()}`,
+      type: "layerHeal",
+      icon: "❤️",
+      name: "全员疗伤",
+      description: "所有上阵武将恢复至满兵力",
+      value: 0,
+    },
+  ];
+  return options;
+};
+
 const applyVictoryReward = (reward: VictoryRewardOption) => {
   if (reward.type === "gold") {
     money.value += reward.value;
@@ -2917,6 +3013,57 @@ const applyVictoryReward = (reward: VictoryRewardOption) => {
     const target = generals.value[Math.floor(Math.random() * generals.value.length)];
     promoteGeneralByReward(target);
   }
+  if (reward.type === "layerHeal") {
+    let healed = 0;
+    (Object.keys(playerFormation.value) as FormationPosition[]).forEach((position) => {
+      const general = playerFormation.value[position];
+      if (!general || general.isDead) return;
+      if (general.troops < general.maxTroops) {
+        healed++;
+        general.troops = general.maxTroops;
+      }
+    });
+    addReport(`崔珏施法：${healed} 名武将恢复至满兵力！`);
+  }
+};
+
+const applyLayerReward = (reward: VictoryRewardOption) => {
+  applyVictoryReward(reward);
+};
+
+const openLayerRewardSelector = () => {
+  layerRewardOptions.value = buildLayerRewardOptions();
+  layerRewardDialogLine.value = getRandomLine(cuiJueQuotes.victory);
+  showLayerRewardSelector.value = true;
+  gamePhase.value = "reward_resolve";
+  addReport(`【崔珏】${layerRewardDialogLine.value}`);
+  addReport(`第 ${currentAct.value} 层已完成！崔珏现身裁赏。`);
+};
+
+const selectLayerReward = async (reward: VictoryRewardOption) => {
+  if (isResolvingVictoryReward.value) return;
+  isResolvingVictoryReward.value = true;
+  try {
+    showLayerRewardSelector.value = false;
+    applyLayerReward(reward);
+
+    // 重新生成下一层
+    if (!runMap.value) {
+      resetRunProgress();
+      return;
+    }
+    const existingNodes = runMap.value.nodes;
+    const newNodes = generateNextLayerNodes(existingNodes);
+    runMap.value.nodes.push(...newNodes);
+    runMap.value.currentNodeId = "start";
+    currentAct.value += 1;
+
+    addReport(`第 ${currentAct.value - 1} 层崔珏裁赏完毕！第 ${currentAct.value} 层已开启。`);
+    gamePhase.value = "map_select";
+    showEventMap.value = true;
+  } finally {
+    isResolvingVictoryReward.value = false;
+  }
 };
 
 const enterNextBattleAfterReward = async () => {
@@ -2929,6 +3076,11 @@ const enterNextBattleAfterReward = async () => {
 
 const openVictorySettlement = () => {
   unlockBattleConscriptSnapshot();
+  const currentNode = pendingNodeId.value ? getNodeById(pendingNodeId.value) : null;
+  if (currentNode?.type === "boss") {
+    openLayerRewardSelector();
+    return;
+  }
   showVictoryRewardSelector.value = true;
   gamePhase.value = "reward_resolve";
   victoryRewardOptions.value = buildVictoryRewardOptions();
@@ -5277,6 +5429,12 @@ const nextWave = async () => {
 
 .reward-panel .relic-candidate-card {
   min-height: 180px;
+}
+
+.layer-reward-panel h3 {
+  color: #c0392b;
+  font-size: 22px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .event-map-panel {
