@@ -154,6 +154,13 @@
               @auto-allocate-troops="autoAllocateTroopsEvenly"
             />
           <BattleReport :reports="battleReports" />
+          <BattleStats
+            v-if="showBattleStatsPanel"
+            :stats="battleStats"
+            :player-formation="playerFormation"
+            :enemy-formation="enemyFormation"
+            @close="showBattleStatsPanel = false"
+          />
           <!-- 战斗场景 -->
             <FormationPanel
               side="enemy"
@@ -222,6 +229,7 @@ import AuthModal from "../components/AuthModal.vue";
 import GeneralTooltip from "../components/GeneralTooltip.vue";
 import GeneralList from "../components/GeneralList.vue";
 import BattleReport from "../components/BattleReport.vue";
+import BattleStats from "../components/BattleStats.vue";
 import FormationPanel from "../components/FormationPanel.vue";
 import RunMap from "../components/RunMap.vue";
 import RewardSelector from "../components/RewardSelector.vue";
@@ -574,6 +582,31 @@ const battleControlAlt = computed(() => {
   if (!isBattleActive.value) return "开始";
   return isBattlePaused.value ? "继续" : "暂停";
 });
+
+// ========== 战斗统计 ==========
+// 战斗统计面板数据
+interface BattleStats {
+  dealt: {
+    player: { 大营: number; 中军: number; 前锋: number };
+    enemy: { 大营: number; 中军: number; 前锋: number };
+  };
+  healing: {
+    player: { 大营: number; 中军: number; 前锋: number };
+    enemy: { 大营: number; 中军: number; 前锋: number };
+  };
+}
+const battleStats = ref<BattleStats>({
+  dealt: {
+    player: { 大营: 0, 中军: 0, 前锋: 0 },
+    enemy: { 大营: 0, 中军: 0, 前锋: 0 },
+  },
+  healing: {
+    player: { 大营: 0, 中军: 0, 前锋: 0 },
+    enemy: { 大营: 0, 中军: 0, 前锋: 0 },
+  },
+});
+// 是否显示战斗统计面板
+const showBattleStatsPanel = ref(false);
 
 // ========== 征召兵管理 ==========
 // 已提交到上阵武将的征召兵总量
@@ -2188,6 +2221,7 @@ const applyEndTurnRelicEffects = () => {
       const actualHeal = generalData.general.troops - oldTroops;
       if (actualHeal > 0) {
         addReport(`【${generalData.general.name}】受到遗物效果恢复${actualHeal}点兵力。`);
+        battleStats.value.healing[generalData.side][generalData.position as FormationPosition] += actualHeal;
       }
     }
   });
@@ -2681,6 +2715,13 @@ const performAttack = (
     0,
     target.general.troops - Math.floor(damage),
   );
+
+  // 追踪造成伤害统计
+  const actualDamage = oldTroops - target.general.troops;
+  if (actualDamage > 0) {
+    const targetSide = target.side === "player" ? "player" : "enemy";
+    battleStats.value.dealt[targetSide][target.position as FormationPosition] += actualDamage;
+  }
 
   // 兵力变化后触发目标的战法效果
   if (target.general.troops < oldTroops) {
@@ -3233,6 +3274,17 @@ const startBattle = async () => {
   showEventMap.value = true;
   isBattlePaused.value = false;
   lockBattleConscriptSnapshot();
+  // 重置战斗统计
+  battleStats.value = {
+    dealt: {
+      player: { 大营: 0, 中军: 0, 前锋: 0 },
+      enemy: { 大营: 0, 中军: 0, 前锋: 0 },
+    },
+    healing: {
+      player: { 大营: 0, 中军: 0, 前锋: 0 },
+      enemy: { 大营: 0, 中军: 0, 前锋: 0 },
+    },
+  };
   isBattleActive.value = true;
   captureBattleStartSnapshot();
 
@@ -3604,7 +3656,9 @@ const startBattle = async () => {
 
   // 8回合结束后
   addReport("8回合结束！");
-  
+  showBattleStatsPanel.value = true;
+  await waitBattle(1000);
+
   // 检查是否和局（双方大营都存活）
   const playerCavalryAlive = playerFormation.value.大营 && !playerFormation.value.大营.isDead;
   const enemyCavalryAlive = enemyFormation.value.大营 && !enemyFormation.value.大营.isDead;
