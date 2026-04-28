@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const SHANG_GUAN_YI_QUOTES = {
+  skill: ["辞锋可折冲，文笔亦安邦。", "文章经国，亦可定策。"],
+  death: ["孤忠难申，徒留清名。"]
+} as const;
+
 const SHANG_GUAN_YI_BASE = {
   id: 707,
   name: "上官仪",
@@ -94,10 +99,7 @@ export const createShangGuanYi = (): General => {
     maxTroops: troops,
     skills: [createShangGuanYiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: ["辞锋可折冲，文笔亦安邦。", "文章经国，亦可定策。"],
-      death: ["孤忠难申，徒留清名。"],
-    },
+    quotes: SHANG_GUAN_YI_QUOTES,
   };
 };
 

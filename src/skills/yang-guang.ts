@@ -1,5 +1,14 @@
 import type { Skill, General } from "./types";
 
+const YANG_GUANG_QUOTES = {
+  skill: [
+    "朕之江山，万里疆域。",
+    "征辽东，开运河，功在千秋。",
+    "大业千秋，万古流芳。"
+  ],
+  death: ["大好头颅，谁当斫之..."]
+} as const;
+
 // 杨广的基础属性常量
 const YANG_GUANG_BASE = {
   id: 22,
@@ -124,14 +133,7 @@ export const createYangGuang = (): General => {
     maxTroops: troops,
     skills: [createYangGuangSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "朕之江山，万里疆域。",
-        "征辽东，开运河，功在千秋。",
-        "大业千秋，万古流芳。"
-      ],
-      death: ["大好头颅，谁当斫之..."]
-    }
+    quotes: YANG_GUANG_QUOTES
   };
 };
 
@@ -157,14 +159,7 @@ export const fetchYangGuangFromDatabase = async (API_BASE_URL: string): Promise<
       maxTroops: troops,
       skills: [createYangGuangSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "朕之江山，万里疆域。",
-          "征辽东，开运河，功在千秋。",
-          "大业千秋，万古流芳。"
-        ],
-        death: ["大好头颅，谁当斫之..."]
-      }
+      quotes: YANG_GUANG_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取杨广信息失败:', error);

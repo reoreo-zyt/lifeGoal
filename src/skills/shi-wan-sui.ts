@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const SHI_WAN_SUI_QUOTES = {
+  skill: ["将士们，随我冲杀！", "突厥小儿，吃我一刀！", "冲锋陷阵，所向披靡！"],
+  death: ["素贼害我，文帝误我..."]
+} as const;
+
 // 史万岁的基础属性常量
 const SHI_WAN_SUI_BASE = {
   id: 42,
@@ -122,14 +127,7 @@ export const createShiWanSui = (): General => {
     maxTroops: troops,
     skills: [createShiWanSuiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "将士们，随我冲杀！",
-        "突厥小儿，吃我一刀！",
-        "冲锋陷阵，所向披靡！"
-      ],
-      death: ["素贼害我，文帝误我..."]
-    }
+    quotes: SHI_WAN_SUI_QUOTES,
   };
 };
 

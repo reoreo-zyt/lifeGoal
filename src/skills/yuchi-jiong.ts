@@ -1,5 +1,14 @@
 import type { Skill, General } from "./types";
 
+const YUCHI_JIONG_QUOTES = {
+  skill: [
+    "临危授命，以安宗社。",
+    "举义勤王，诛篡逆之贼。",
+    "城存人存，城亡人亡！"
+  ],
+  death: ["周室既倾，吾身殉国，无憾矣。"]
+} as const;
+
 // 尉迟迥的基础属性常量
 const YUCHI_JIONG_BASE = {
   id: 633,
@@ -130,14 +139,7 @@ export const createYuchiJiong = (): General => {
     maxTroops: troops,
     skills: [createYuchiJiongSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "临危授命，以安宗社。",
-        "举义勤王，诛篡逆之贼。",
-        "城存人存，城亡人亡！"
-      ],
-      death: ["周室既倾，吾身殉国，无憾矣。"]
-    }
+    quotes: YUCHI_JIONG_QUOTES
   };
 };
 
@@ -163,14 +165,7 @@ export const fetchYuchiJiongFromDatabase = async (API_BASE_URL: string): Promise
       maxTroops: troops,
       skills: [createYuchiJiongSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "临危授命，以安宗社。",
-          "举义勤王，诛篡逆之贼。",
-          "城存人存，城亡人亡！"
-        ],
-        death: ["周室既倾，吾身殉国，无憾矣。"]
-      }
+      quotes: YUCHI_JIONG_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取尉迟迥信息失败:', error);

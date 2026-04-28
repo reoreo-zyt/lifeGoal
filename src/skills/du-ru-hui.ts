@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const DU_RU_HUI_QUOTES = {
+  skill: ["断则必行，行之必果。", "谋定而后动，动则必胜。", "当机立断，不容迟疑。"],
+  death: ["天不假年，壮志未酬..."],
+} as const;
+
 // 杜如晦的基础属性常量
 const DU_RU_HUI_BASE = {
   id: 28,
@@ -144,14 +149,7 @@ export const createDuRuHui = (): General => {
     maxTroops: troops,
     skills: [createDuRuHuiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "断则必行，行之必果。",
-        "谋定而后动，动则必胜。",
-        "当机立断，不容迟疑。"
-      ],
-      death: ["天不假年，壮志未酬..."]
-    }
+    quotes: DU_RU_HUI_QUOTES
   };
 };
 
@@ -177,14 +175,7 @@ export const fetchDuRuHuiFromDatabase = async (API_BASE_URL: string): Promise<Ge
       maxTroops: troops,
       skills: [createDuRuHuiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "断则必行，行之必果。",
-          "谋定而后动，动则必胜。",
-          "当机立断，不容迟疑。"
-        ],
-        death: ["天不假年，壮志未酬..."]
-      }
+      quotes: DU_RU_HUI_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取杜如晦信息失败:', error);

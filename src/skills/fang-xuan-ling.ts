@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const FANG_XUAN_LING_QUOTES = {
+  skill: ["房谋杜断，共治天下。", "为陛下分忧，臣之职也。", "贞观之治，始于良谋。"],
+  death: ["贞观之治，臣无憾矣..."],
+} as const;
+
 // 房玄龄的基础属性常量
 const FANG_XUAN_LING_BASE = {
   id: 27,
@@ -132,14 +137,7 @@ export const createFangXuanLing = (): General => {
     maxTroops: troops,
     skills: [createFangXuanLingSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "房谋杜断，共治天下。",
-        "为陛下分忧，臣之职也。",
-        "贞观之治，始于良谋。"
-      ],
-      death: ["贞观之治，臣无憾矣..."]
-    }
+    quotes: FANG_XUAN_LING_QUOTES
   };
 };
 
@@ -165,14 +163,7 @@ export const fetchFangXuanLingFromDatabase = async (API_BASE_URL: string): Promi
       maxTroops: troops,
       skills: [createFangXuanLingSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "房谋杜断，共治天下。",
-          "为陛下分忧，臣之职也。",
-          "贞观之治，始于良谋。"
-        ],
-        death: ["贞观之治，臣无憾矣..."]
-      }
+      quotes: FANG_XUAN_LING_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取房玄龄信息失败:', error);

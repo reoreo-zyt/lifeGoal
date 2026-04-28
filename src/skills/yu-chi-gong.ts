@@ -1,5 +1,14 @@
 import type { Skill, General } from "./types";
 
+const YU_CHI_GONG_QUOTES = {
+  skill: [
+    "玄武门前，谁敢放肆！",
+    "铁骑踏处，敌阵瓦解！",
+    "某家在此，谁敢来战！"
+  ],
+  death: ["主公...末将不能再护卫左右了..."]
+} as const;
+
 // 尉迟恭的基础属性常量
 const YU_CHI_GONG_BASE = {
   id: 4,
@@ -132,14 +141,7 @@ export const createYuChiGong = (): General => {
     maxTroops: troops,
     skills: [createYuChiGongSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "玄武门前，谁敢放肆！",
-        "铁骑踏处，敌阵瓦解！",
-        "某家在此，谁敢来战！"
-      ],
-      death: ["主公...末将不能再护卫左右了..."]
-    }
+    quotes: YU_CHI_GONG_QUOTES
   };
 };
 
@@ -165,14 +167,7 @@ export const fetchYuChiGongFromDatabase = async (API_BASE_URL: string): Promise<
       maxTroops: troops,
       skills: [createYuChiGongSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "玄武门前，谁敢放肆！",
-          "铁骑踏处，敌阵瓦解！",
-          "某家在此，谁敢来战！"
-        ],
-        death: ["主公...末将不能再护卫左右了..."]
-      }
+      quotes: YU_CHI_GONG_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取尉迟恭信息失败:', error);

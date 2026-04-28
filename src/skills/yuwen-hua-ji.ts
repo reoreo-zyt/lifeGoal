@@ -1,5 +1,14 @@
 import type { Skill, General } from "./types";
 
+const YU_WEN_HUA_JI_QUOTES = {
+  skill: [
+    "江都之变，天命在我。",
+    "杨广无道，当诛之。",
+    "弑君夺位，舍我其谁。"
+  ],
+  death: ["本想称帝，竟至于此..."]
+} as const;
+
 // 宇文化及的基础属性常量
 const YU_WEN_HUA_JI_BASE = {
   id: 26,
@@ -113,14 +122,7 @@ export const createYuWenHuaJi = (): General => {
     maxTroops: troops,
     skills: [createYuWenHuaJiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "江都之变，天命在我。",
-        "杨广无道，当诛之。",
-        "弑君夺位，舍我其谁。"
-      ],
-      death: ["本想称帝，竟至于此..."]
-    }
+    quotes: YU_WEN_HUA_JI_QUOTES
   };
 };
 
@@ -146,14 +148,7 @@ export const fetchYuWenHuaJiFromDatabase = async (API_BASE_URL: string): Promise
       maxTroops: troops,
       skills: [createYuWenHuaJiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "江都之变，天命在我。",
-          "杨广无道，当诛之。",
-          "弑君夺位，舍我其谁。"
-        ],
-        death: ["本想称帝，竟至于此..."]
-      }
+      quotes: YU_WEN_HUA_JI_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取宇文化及信息失败:', error);

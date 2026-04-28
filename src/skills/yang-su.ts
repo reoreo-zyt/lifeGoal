@@ -1,5 +1,14 @@
 import type { Skill, General } from "./types";
 
+const YANG_SU_QUOTES = {
+  skill: [
+    "铁骑所至，皆为齑粉。",
+    "破阵杀敌，如探囊取物。",
+    "出塞千里，踏破贺兰山缺。"
+  ],
+  death: ["权倾一时，终归尘土..."]
+} as const;
+
 // 杨素的基础属性常量
 const YANG_SU_BASE = {
   id: 25,
@@ -125,14 +134,7 @@ export const createYangSu = (): General => {
     maxTroops: troops,
     skills: [createYangSuSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "铁骑所至，皆为齑粉。",
-        "破阵杀敌，如探囊取物。",
-        "出塞千里，踏破贺兰山缺。"
-      ],
-      death: ["权倾一时，终归尘土..."]
-    }
+    quotes: YANG_SU_QUOTES
   };
 };
 
@@ -158,14 +160,7 @@ export const fetchYangSuFromDatabase = async (API_BASE_URL: string): Promise<Gen
       maxTroops: troops,
       skills: [createYangSuSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "铁骑所至，皆为齑粉。",
-          "破阵杀敌，如探囊取物。",
-          "出塞千里，踏破贺兰山缺。"
-        ],
-        death: ["权倾一时，终归尘土..."]
-      }
+      quotes: YANG_SU_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取杨素信息失败:', error);

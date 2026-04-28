@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const LI_DE_LIN_QUOTES = {
+  skill: ["掌笔裁策，以定天下。", "经国大略，运筹帷幄。", "文墨安邦，智衡时局。"],
+  death: ["一生秉笔，尽事三朝，功名浮沉，皆为天命。"],
+} as const;
+
 // 李德林的基础属性常量
 const LI_DE_LIN_BASE = {
   id: 69,
@@ -158,14 +163,7 @@ export const createLiDeLin = (): General => {
     maxTroops: troops,
     skills: [createLiDeLinSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "掌笔裁策，以定天下。",
-        "经国大略，运筹帷幄。",
-        "文墨安邦，智衡时局。"
-      ],
-      death: ["一生秉笔，尽事三朝，功名浮沉，皆为天命。"]
-    }
+    quotes: LI_DE_LIN_QUOTES,
   };
 };
 
@@ -191,14 +189,7 @@ export const fetchLiDeLinFromDatabase = async (API_BASE_URL: string): Promise<Ge
       maxTroops: troops,
       skills: [createLiDeLinSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "掌笔裁策，以定天下。",
-          "经国大略，运筹帷幄。",
-          "文墨安邦，智衡时局。"
-        ],
-        death: ["一生秉笔，尽事三朝，功名浮沉，皆为天命。"]
-      }
+      quotes: LI_DE_LIN_QUOTES,
     };
   } catch (error) {
     console.error('从数据库获取李德林信息失败:', error);

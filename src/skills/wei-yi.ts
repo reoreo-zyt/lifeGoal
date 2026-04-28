@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const WEI_YI_QUOTES = {
+  skill: ["边城既定，民心自安。", "戎马为国，亦当抚众。"],
+  death: ["边烽未息，吾已至此。"],
+} as const;
+
 const WEI_YI_BASE = {
   id: 73,
   name: "韦艺",
@@ -99,10 +104,7 @@ export const createWeiYi = (): General => {
     maxTroops: troops,
     skills: [createWeiYiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: ["边城既定，民心自安。", "戎马为国，亦当抚众。"],
-      death: ["边烽未息，吾已至此。"],
-    },
+    quotes: WEI_YI_QUOTES,
   };
 };
 
@@ -125,10 +127,7 @@ export const fetchWeiYiFromDatabase = async (
       maxTroops: troops,
       skills: [createWeiYiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: ["边城既定，民心自安。", "戎马为国，亦当抚众。"],
-        death: ["边烽未息，吾已至此。"],
-      },
+      quotes: WEI_YI_QUOTES,
     };
   } catch (error) {
     console.error("从数据库获取韦艺信息失败:", error);

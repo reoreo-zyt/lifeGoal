@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const HAN_QIN_HU_QUOTES = {
+  skill: ["先登破阵，擒敌于前！", "一鼓而入，敌城可下！"],
+  death: ["平陈之志，竟止于此。"],
+} as const;
+
 const HAN_QIN_HU_BASE = {
   id: 43,
   name: "韩擒虎",
@@ -94,10 +99,7 @@ export const createHanQinHu = (): General => {
     maxTroops: troops,
     skills: [createHanQinHuSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: ["先登破阵，擒敌于前！", "一鼓而入，敌城可下！"],
-      death: ["平陈之志，竟止于此。"],
-    },
+    quotes: HAN_QIN_HU_QUOTES,
   };
 };
 
@@ -120,10 +122,7 @@ export const fetchHanQinHuFromDatabase = async (
       maxTroops: troops,
       skills: [createHanQinHuSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: ["先登破阵，擒敌于前！", "一鼓而入，敌城可下！"],
-        death: ["平陈之志，竟止于此。"],
-      },
+      quotes: HAN_QIN_HU_QUOTES,
     };
   } catch (error) {
     console.error("从数据库获取韩擒虎信息失败:", error);

@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const LI_MI_QUOTES = {
+  skill: ["瓦岗英雄，唯我独尊。", "问鼎中原，舍我其谁。", "天下大势，尽在掌握。"],
+  death: ["熊耳山下，李密休矣..."],
+} as const;
+
 // 李密的基础属性常量
 const LI_MI_BASE = {
   id: 570,
@@ -112,14 +117,7 @@ export const createLiMi = (): General => {
     maxTroops: troops,
     skills: [createLiMiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "瓦岗英雄，唯我独尊。",
-        "问鼎中原，舍我其谁。",
-        "天下大势，尽在掌握。"
-      ],
-      death: ["熊耳山下，李密休矣..."]
-    }
+    quotes: LI_MI_QUOTES,
   };
 };
 
@@ -145,14 +143,7 @@ export const fetchLiMiFromDatabase = async (API_BASE_URL: string): Promise<Gener
       maxTroops: troops,
       skills: [createLiMiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "瓦岗英雄，唯我独尊。",
-          "问鼎中原，舍我其谁。",
-          "天下大势，尽在掌握。"
-        ],
-        death: ["熊耳山下，李密休矣..."]
-      }
+      quotes: LI_MI_QUOTES,
     };
   } catch (error) {
     console.error('从数据库获取李密信息失败:', error);

@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const YANG_WEN_SI_QUOTES = {
+  skill: ["宽政安民，方可久治。", "为政在简，惠及黎庶。"],
+  death: ["政道未竟，抱憾而终。"],
+} as const;
+
 const YANG_WEN_SI_BASE = {
   id: 66,
   name: "杨文思",
@@ -90,10 +95,7 @@ export const createYangWenSi = (): General => {
     maxTroops: troops,
     skills: [createYangWenSiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: ["宽政安民，方可久治。", "为政在简，惠及黎庶。"],
-      death: ["政道未竟，抱憾而终。"],
-    },
+    quotes: YANG_WEN_SI_QUOTES,
   };
 };
 
@@ -116,10 +118,7 @@ export const fetchYangWenSiFromDatabase = async (
       maxTroops: troops,
       skills: [createYangWenSiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: ["宽政安民，方可久治。", "为政在简，惠及黎庶。"],
-        death: ["政道未竟，抱憾而终。"],
-      },
+      quotes: YANG_WEN_SI_QUOTES,
     };
   } catch (error) {
     console.error("从数据库获取杨文思信息失败:", error);

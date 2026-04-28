@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const LI_JING_QUOTES = {
+  skill: ["兵贵神速，出其不意。", "以正合，以奇胜。", "卫公兵法，鬼神莫测。"],
+  death: ["平生征战，无愧于心..."],
+} as const;
+
 // 李靖的基础属性常量
 const LI_JING_BASE = {
   id: 29,
@@ -125,14 +130,7 @@ export const createLiJing = (): General => {
     maxTroops: troops,
     skills: [createLiJingSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "兵贵神速，出其不意。",
-        "以正合，以奇胜。",
-        "卫公兵法，鬼神莫测。"
-      ],
-      death: ["平生征战，无愧于心..."]
-    }
+    quotes: LI_JING_QUOTES,
   };
 };
 
@@ -158,14 +156,7 @@ export const fetchLiJingFromDatabase = async (API_BASE_URL: string): Promise<Gen
       maxTroops: troops,
       skills: [createLiJingSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "兵贵神速，出其不意。",
-          "以正合，以奇胜。",
-          "卫公兵法，鬼神莫测。"
-        ],
-        death: ["平生征战，无愧于心..."]
-      }
+      quotes: LI_JING_QUOTES,
     };
   } catch (error) {
     console.error('从数据库获取李靖信息失败:', error);

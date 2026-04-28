@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const FENG_CI_MING_QUOTES = {
+  skill: ["守节不移，虽死犹荣。", "臣心所系，唯在社稷。"],
+  death: ["义尽于此，无愧天下。"],
+} as const;
+
 // 冯慈明的基础属性常量
 const FENG_CI_MING_BASE = {
   id: 577,
@@ -134,10 +139,7 @@ export const createFengCiMing = (): General => {
     maxTroops: troops,
     skills: [createFengCiMingSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: ["守节不移，虽死犹荣。", "臣心所系，唯在社稷。"],
-      death: ["义尽于此，无愧天下。"],
-    },
+    quotes: FENG_CI_MING_QUOTES,
   };
 };
 
@@ -165,10 +167,7 @@ export const fetchFengCiMingFromDatabase = async (
       maxTroops: troops,
       skills: [createFengCiMingSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: ["守节不移，虽死犹荣。", "臣心所系，唯在社稷。"],
-        death: ["义尽于此，无愧天下。"],
-      },
+      quotes: FENG_CI_MING_QUOTES,
     };
   } catch (error) {
     console.error("从数据库获取冯慈明信息失败:", error);

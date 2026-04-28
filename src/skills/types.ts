@@ -44,8 +44,8 @@ export interface General {
     [key: string]: any;
   };
   quotes?: {
-    skill: string[];
-    death: string[];
+    readonly skill: ReadonlyArray<string>;
+    readonly death: ReadonlyArray<string>;
   };
 }
 

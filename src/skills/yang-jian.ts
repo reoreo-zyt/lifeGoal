@@ -1,5 +1,14 @@
 import type { Skill, General } from "./types";
 
+const YANG_JIAN_QUOTES = {
+  skill: [
+    "开皇之治，天下归一。",
+    "朕为天子，当抚四方。",
+    "隋室基业，万世永昌。"
+  ],
+  death: ["太子不肖，隋室危矣..."]
+} as const;
+
 // 杨坚的基础属性常量
 const YANG_JIAN_BASE = {
   id: 21,
@@ -115,14 +124,7 @@ export const createYangJian = (): General => {
     maxTroops: troops,
     skills: [createYangJianSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "开皇之治，天下归一。",
-        "朕为天子，当抚四方。",
-        "隋室基业，万世永昌。"
-      ],
-      death: ["太子不肖，隋室危矣..."]
-    }
+    quotes: YANG_JIAN_QUOTES
   };
 };
 
@@ -148,14 +150,7 @@ export const fetchYangJianFromDatabase = async (API_BASE_URL: string): Promise<G
       maxTroops: troops,
       skills: [createYangJianSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "开皇之治，天下归一。",
-          "朕为天子，当抚四方。",
-          "隋室基业，万世永昌。"
-        ],
-        death: ["太子不肖，隋室危矣..."]
-      }
+      quotes: YANG_JIAN_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取杨坚信息失败:', error);

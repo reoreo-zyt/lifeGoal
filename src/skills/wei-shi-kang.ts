@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const WEI_SHI_KANG_QUOTES = {
+  skill: ["宽以御民，静以安邦。", "居官守心，以德化人。"],
+  death: ["立身清正，一生简静，足矣。"]
+} as const;
+
 // 韦世康的基础属性常量
 const WEI_SHI_KANG_BASE = {
   id: 71,
@@ -198,13 +203,7 @@ export const createWeiShiKang = (): General => {
     maxTroops: troops,
     skills: [createWeiShiKangSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "宽以御民，静以安邦。",
-        "居官守心，以德化人。"
-      ],
-      death: ["立身清正，一生简静，足矣。"]
-    }
+    quotes: WEI_SHI_KANG_QUOTES
   };
 };
 
@@ -230,13 +229,7 @@ export const fetchWeiShiKangFromDatabase = async (API_BASE_URL: string): Promise
       maxTroops: troops,
       skills: [createWeiShiKangSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "宽以御民，静以安邦。",
-          "居官守心，以德化人。"
-        ],
-        death: ["立身清正，一生简静，足矣。"]
-      }
+      quotes: WEI_SHI_KANG_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取韦世康信息失败:', error);

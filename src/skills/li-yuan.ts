@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const LI_YUAN_QUOTES = {
+  skill: ["晋阳起兵，匡扶天下。", "李唐基业，始于今日。", "天下大乱，当取而代之。"],
+  death: ["玄武门之事，朕之过矣..."]
+} as const;
+
 // 李渊的基础属性常量
 const LI_YUAN_BASE = {
   id: 1,
@@ -133,14 +138,7 @@ export const createLiYuan = (): General => {
     maxTroops: troops,
     skills: [createLiYuanSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "晋阳起兵，匡扶天下。",
-        "李唐基业，始于今日。",
-        "天下大乱，当取而代之。"
-      ],
-      death: ["玄武门之事，朕之过矣..."]
-    }
+    quotes: LI_YUAN_QUOTES,
   };
 };
 

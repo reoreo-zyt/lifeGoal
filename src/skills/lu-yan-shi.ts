@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const LU_YAN_SHI_QUOTES = {
+  skill: ["整肃风纪，以正朝纲。", "敦礼明伦，修身匡世。", "清身守道，不以权势屈节。"],
+  death: ["正道难行，清节犹在，此生无愧名教。"]
+} as const;
+
 // 陆彦师的基础属性常量
 const LU_YAN_SHI_BASE = {
   id: 588,
@@ -175,14 +180,7 @@ export const createLuYanShi = (): General => {
     maxTroops: troops,
     skills: [createLuYanShiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "整肃风纪，以正朝纲。",
-        "敦礼明伦，修身匡世。",
-        "清身守道，不以权势屈节。"
-      ],
-      death: ["正道难行，清节犹在，此生无愧名教。"]
-    }
+    quotes: LU_YAN_SHI_QUOTES,
   };
 };
 

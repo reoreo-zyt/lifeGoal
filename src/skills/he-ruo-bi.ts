@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const HE_RUO_BI_QUOTES = {
+  skill: ["先锋之职，当破坚阵。", "建康城下，敌主授首。", "擒龙破阵，一击必杀。"],
+  death: ["功高震主，古今同然..."],
+} as const;
+
 // 贺若弼的基础属性常量
 const HE_RUO_BI_BASE = {
   id: 44,
@@ -128,14 +133,7 @@ export const createHeRuoBi = (): General => {
     maxTroops: troops,
     skills: [createHeRuoBiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "先锋之职，当破坚阵。",
-        "建康城下，敌主授首。",
-        "擒龙破阵，一击必杀。"
-      ],
-      death: ["功高震主，古今同然..."]
-    }
+    quotes: HE_RUO_BI_QUOTES,
   };
 };
 
@@ -161,14 +159,7 @@ export const fetchHeRuoBiFromDatabase = async (API_BASE_URL: string): Promise<Ge
       maxTroops: troops,
       skills: [createHeRuoBiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "先锋之职，当破坚阵。",
-          "建康城下，敌主授首。",
-          "擒龙破阵，一击必杀。"
-        ],
-        death: ["功高震主，古今同然..."]
-      }
+      quotes: HE_RUO_BI_QUOTES,
     };
   } catch (error) {
     console.error('从数据库获取贺若弼信息失败:', error);

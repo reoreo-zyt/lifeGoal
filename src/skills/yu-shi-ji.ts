@@ -1,5 +1,14 @@
 import type { Skill, General } from "./types";
 
+const YU_SHI_JI_QUOTES = {
+  skill: [
+    "陛下圣明，臣遵旨。",
+    "顺天者昌，逆天者亡。",
+    "谄媚逢迎，乃生存之道。"
+  ],
+  death: ["化及反贼，不得好死..."]
+} as const;
+
 // 虞世基的基础属性常量
 const YU_SHI_JI_BASE = {
   id: 561,
@@ -146,14 +155,7 @@ export const createYuShiJi = (): General => {
     maxTroops: troops,
     skills: [createYuShiJiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "陛下圣明，臣遵旨。",
-        "顺天者昌，逆天者亡。",
-        "谄媚逢迎，乃生存之道。"
-      ],
-      death: ["化及反贼，不得好死..."]
-    }
+    quotes: YU_SHI_JI_QUOTES
   };
 };
 
@@ -179,14 +181,7 @@ export const fetchYuShiJiFromDatabase = async (API_BASE_URL: string): Promise<Ge
       maxTroops: troops,
       skills: [createYuShiJiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "陛下圣明，臣遵旨。",
-          "顺天者昌，逆天者亡。",
-          "谄媚逢迎，乃生存之道。"
-        ],
-        death: ["化及反贼，不得好死..."]
-      }
+      quotes: YU_SHI_JI_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取虞世基信息失败:', error);

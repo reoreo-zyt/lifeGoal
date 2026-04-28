@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const LIU_WEN_JING_QUOTES = {
+  skill: ["晋阳起兵，大业可成。", "与秦王共谋，定天下之策。", "运筹帷幄，决胜千里。"],
+  death: ["裴寂害我，死不瞑目..."]
+} as const;
+
 // 刘文静的基础属性常量
 const LIU_WEN_JING_BASE = {
   id: 20,
@@ -150,14 +155,7 @@ export const createLiuWenJing = (): General => {
     maxTroops: troops,
     skills: [createLiuWenJingSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "晋阳起兵，大业可成。",
-        "与秦王共谋，定天下之策。",
-        "运筹帷幄，决胜千里。"
-      ],
-      death: ["裴寂害我，死不瞑目..."]
-    }
+    quotes: LIU_WEN_JING_QUOTES,
   };
 };
 

@@ -231,15 +231,22 @@ import type {
 import { RELIC_POOL, ENEMY_WAVE_RELIC_CONFIG, pickWeightedRelics, type Relic, type RelicEffects } from "../relics";
 import { RECRUIT_CONFIG, getFetchFunctionBase } from '../skills/index';
 
+// ========== 认证与初始化 ==========
+// 是否已登录（通过 localStorage 中的 user 数据判断）
 const isLoggedIn = ref(false);
+// 是否显示登录/注册弹窗
 const showAuthModal = ref(false);
+// 弹窗模式：true=登录，false=注册
 const isLogin = ref(true);
 
-// 游戏加载状态
+// ========== 游戏加载状态 ==========
+// 游戏主界面是否已加载完成（false=显示加载动画，true=显示游戏内容）
 const gameLoaded = ref(false);
+// 游戏加载进度（0-100），用于显示加载条
 const loadingProgress = ref(0);
 
-// 悬浮提示状态
+// ========== 悬浮提示 ==========
+// 顶部状态栏的悬浮提示（控制显隐、文本、位置）
 const tooltip = ref({
   visible: false,
   text: '',
@@ -247,7 +254,7 @@ const tooltip = ref({
   y: 0,
 });
 
-// 悬浮提示文本映射
+// 各状态项对应的中文说明文本
 const tooltipTexts: Record<string, string> = {
   money: '当前金币数量',
   wave: '当前波次/总波次',
@@ -258,7 +265,7 @@ const tooltipTexts: Record<string, string> = {
   next: '进入下一轮战斗',
 };
 
-// 显示悬浮提示
+// 显示顶部状态栏悬浮提示（根据 key 查找对应文本）
 const showHeaderTooltip = (event: MouseEvent, key: string) => {
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   tooltip.value = {
@@ -269,11 +276,12 @@ const showHeaderTooltip = (event: MouseEvent, key: string) => {
   };
 };
 
-// 隐藏悬浮提示
+// 隐藏顶部状态栏悬浮提示
 const hideHeaderTooltip = () => {
   tooltip.value.visible = false;
 };
 
+// 显示战斗控制按钮的悬浮提示（开始/继续/暂停）
 const showBattleControlTooltip = (event: MouseEvent) => {
   const text = !isBattleActive.value
     ? "开始战斗"
@@ -289,57 +297,70 @@ const showBattleControlTooltip = (event: MouseEvent) => {
   };
 };
 
-// 游戏初始数据
+// ========== 游戏初始数据 ==========
+// 游戏各数值的初始值（resetGame 时恢复使用）
 const initialGameData = {
   money: 10000,
   currentYear: -2070,
   currentWave: 1,
 };
 
+// 当前金币数量
 const money = ref(initialGameData.money);
+// 当前游戏年份（显示用）
 const currentYear = ref(initialGameData.currentYear);
+// 当前波次（与地图层数对应）
 const currentWave = ref(initialGameData.currentWave);
+// 总波次数（游戏通关目标）
 const totalWaves = ref(300);
+// 当前战斗回合数（每场战斗共 8 回合）
 const currentTurn = ref(0);
+// 招募武将卡牌消耗的金币
 const recruitCost = ref(100);
+// 玩家最大统率上限
 const maxCommand = ref(100);
+// 当前上阵武将的统率消耗总和
 const currentCommand = ref(0);
+// 征召兵上限（固定 3000）
 const maxConscripts = 3000;
+// 当前总征召兵数量（含已分配和可分配的）
 const totalConscripts = ref(maxConscripts);
 
-// API配置
+// API 根地址（从环境变量读取，开发环境默认 localhost:3000）
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
-// 人物数据
+// ========== 人物数据 ==========
+// 从后端获取的原始人物数据列表（用于生成敌方队伍）
 const characters = ref<any[]>([]);
+// 是否正在加载人物数据
 const loadingCharacters = ref(false);
 
-// 兵种克制关系
+// ========== 兵种克制关系 ==========
+// 克制规则：攻击方兵种克制目标兵种时，伤害额外 +30%
 const soldierType克制 = {
   骑兵: "步兵",
   步兵: "弓兵",
   弓兵: "骑兵",
 };
 
-// 监听登录状态变化，登录成功后开始游戏加载
+// ========== 游戏状态监听 ==========
+// 监听登录状态变化：登录成功后自动开始游戏加载流程
 watch(isLoggedIn, (newValue) => {
   if (newValue) {
     startGameLoading();
   }
 });
 
-// 开始游戏加载
+// 启动游戏加载动画（模拟加载过程，进度从 0 增长到 100）
 const startGameLoading = () => {
   loadingProgress.value = 0;
   gameLoaded.value = false;
 
-  // 模拟游戏加载过程
   const loadingInterval = setInterval(() => {
     loadingProgress.value += 50;
     if (loadingProgress.value >= 100) {
       clearInterval(loadingInterval);
-      // 加载完成后显示游戏主界面
       setTimeout(() => {
         gameLoaded.value = true;
       }, 500);
@@ -347,14 +368,16 @@ const startGameLoading = () => {
   }, 150);
 };
 
-// 组件挂载时检查登录状态
+// ========== 组件挂载 ==========
+// 组件挂载时：检查登录状态 → 获取人物数据 → 重置地图进度
 onMounted(() => {
   if (isLoggedIn.value) {
     startGameLoading();
   }
 });
 
-// 获取人物数据
+// ========== 获取人物数据 ==========
+// 从后端 API 获取人物列表（用于生成敌方武将）
 const fetchCharacters = async () => {
   try {
     loadingCharacters.value = true;
@@ -368,7 +391,7 @@ const fetchCharacters = async () => {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // 构建查询参数，获取前 50 个人物数据
+    // 分页获取前 50 个人物数据
     const params = new URLSearchParams();
     params.append("page", "1");
     params.append("pageSize", "50");
@@ -394,34 +417,32 @@ const fetchCharacters = async () => {
   }
 };
 
+// ========== 队伍编成 ==========
+// 玩家阵营的三位置编成（大营/中军/前锋），null 表示空位
 const playerFormation = ref({
   大营: null as General | null,
   中军: null as General | null,
   前锋: null as General | null,
 });
 
+// 敌方阵营的三位置编成
 const enemyFormation = ref({
   大营: null as General | null,
   中军: null as General | null,
   前锋: null as General | null,
 });
 
+// ========== 战斗快照 ==========
+// 战斗开始时的状态快照（用于战后恢复：保留/恢复兵力、清除战斗中的状态变化）
 const battleStartSnapshot = ref<{
   player: Record<FormationPosition, GeneralBattleSnapshot | null>;
   enemy: Record<FormationPosition, GeneralBattleSnapshot | null>;
 }>({
-  player: {
-    大营: null,
-    中军: null,
-    前锋: null,
-  },
-  enemy: {
-    大营: null,
-    中军: null,
-    前锋: null,
-  },
+  player: { 大营: null, 中军: null, 前锋: null },
+  enemy: { 大营: null, 中军: null, 前锋: null },
 });
 
+// 从武将对象创建战斗快照数据
 const createGeneralSnapshot = (
   general: General | null,
 ): GeneralBattleSnapshot | null => {
@@ -439,6 +460,7 @@ const createGeneralSnapshot = (
   };
 };
 
+// 捕获当前编成状态为快照（战斗开始时调用）
 const captureBattleStartSnapshot = () => {
   (Object.keys(playerFormation.value) as FormationPosition[]).forEach((position) => {
     battleStartSnapshot.value.player[position] = createGeneralSnapshot(
@@ -450,12 +472,11 @@ const captureBattleStartSnapshot = () => {
   });
 };
 
+// 从快照恢复武将状态（preserveTroops=true 时保留当前兵力，否则恢复满兵）
 const restoreGeneralFromSnapshot = (
   general: General | null,
   snapshot: GeneralBattleSnapshot | null,
-  options?: {
-    preserveTroops?: boolean;
-  },
+  options?: { preserveTroops?: boolean },
 ) => {
   if (!general || !snapshot) return;
   const preserveTroops = !!options?.preserveTroops;
@@ -478,9 +499,8 @@ const restoreGeneralFromSnapshot = (
   general.skillEffects = {};
 };
 
-const restoreBattleStateToInitial = (options?: {
-  preserveTroops?: boolean;
-}) => {
+// 将双方编成恢复到战斗开始时的状态
+const restoreBattleStateToInitial = (options?: { preserveTroops?: boolean }) => {
   (Object.keys(playerFormation.value) as FormationPosition[]).forEach((position) => {
     restoreGeneralFromSnapshot(
       playerFormation.value[position],
@@ -495,51 +515,84 @@ const restoreBattleStateToInitial = (options?: {
   });
 };
 
+// ========== 武将数据 ==========
+// 玩家拥有的武将列表（招募获得，可上阵/下阵）
 const generals = ref<General[]>([]);
+// 武将休整记录：key=武将ID，value=还需休整的回合数（阵亡后进入休整）
 const playerRecoveryRounds = ref<Record<number, number>>({});
+// 当前选中的编成槽位（格式："player-大营"）
 const selectedSlot = ref<string | null>(null);
+// 是否显示武将列表弹窗
 const showGeneralList = ref(false);
+// 战斗播报信息列表（显示在 BattleReport 组件中）
 const battleReports = ref<string[]>([]);
+// ========== 战斗系统 ==========
+// 战斗是否进行中（影响兵力分配、动画等）
 const isBattleActive = ref(false);
+// 战斗是否已暂停
 const isBattlePaused = ref(false);
+// 战斗是否正在启动中（防止重复启动）
 const isBattleStarting = ref(false);
+// 战斗速度倍率（1/2/4/8x）
 const battleSpeed = ref(1);
+// 是否跳过战斗动画（直接结算，跳过过程动画）
 const skipBattleAnimation = ref(false);
+// 可选的战斗速度选项
 const speedOptions = [1, 2, 4, 8];
+// 战斗控制按钮图标（根据状态显示开始/暂停图标）
 const battleControlIcon = computed(() => {
   if (!isBattleActive.value || isBattlePaused.value) return "/assets/start.webp";
   return "/assets/pause_btn.png";
 });
+// 战斗控制按钮的辅助文字
 const battleControlAlt = computed(() => {
   if (!isBattleActive.value) return "开始";
   return isBattlePaused.value ? "继续" : "暂停";
 });
+
+// ========== 征召兵管理 ==========
+// 已提交到上阵武将的征召兵总量
 const committedConscripts = ref(0);
+// 战斗锁定后保存的已用征召兵数量
 const battleLockedUsedConscripts = ref<number | null>(null);
+// 战斗锁定后可分配征召兵数量快照
 const battleLockedAvailableConscripts = ref<number | null>(null);
+// 战斗锁定后总征召兵数量快照
 const battleLockedTotalConscripts = ref<number | null>(null);
+
+// 将 committedConscripts 同步为当前上阵武将的兵力总和
 const syncCommittedConscriptsFromFormation = () => {
   committedConscripts.value = calculateUsedConscripts();
 };
+
+// 锁定征召兵快照（战斗开始时调用，保存当前分配状态）
 const lockBattleConscriptSnapshot = () => {
   const used = committedConscripts.value;
   battleLockedUsedConscripts.value = used;
   battleLockedAvailableConscripts.value = Math.max(0, totalConscripts.value - used);
   battleLockedTotalConscripts.value = totalConscripts.value;
 };
+
+// 解除征召兵锁定（战斗结束后调用）
 const unlockBattleConscriptSnapshot = () => {
   battleLockedUsedConscripts.value = null;
   battleLockedAvailableConscripts.value = null;
   battleLockedTotalConscripts.value = null;
 };
+
+// 计算当前上阵武将已使用的征召兵总量
 const calculateUsedConscripts = () =>
   Object.values(playerFormation.value).reduce((sum, general) => {
     if (!general) return sum;
     return sum + Math.max(0, general.troops || 0);
   }, 0);
+
+// 已使用的征召兵（用于显示）
 const usedConscripts = computed(() => {
   return Math.max(0, committedConscripts.value);
 });
+
+// 可分配的征召兵数量（战斗中取快照值，战斗外实时计算）
 const availableConscripts = computed(() => {
   if (
     isBattleActive.value &&
@@ -549,6 +602,8 @@ const availableConscripts = computed(() => {
   }
   return Math.max(0, totalConscripts.value - usedConscripts.value);
 });
+
+// 界面上显示的可分配征召兵（战斗中取快照值）
 const displayAvailableConscripts = computed(() => {
   if (
     isBattleActive.value &&
@@ -558,6 +613,8 @@ const displayAvailableConscripts = computed(() => {
   }
   return availableConscripts.value;
 });
+
+// 界面上显示的总征召兵（战斗中取快照值）
 const displayTotalConscripts = computed(() => {
   if (
     isBattleActive.value &&
@@ -567,12 +624,20 @@ const displayTotalConscripts = computed(() => {
   }
   return totalConscripts.value;
 });
+// ========== 伤害与特效 ==========
+// 战斗中显示的伤害数值列表（绝对定位在卡牌上，2秒后自动移除）
 const damageTexts = ref<any[]>([]);
+// 战斗中显示的武将台词列表（绝对定位在卡牌上，3秒后自动移除）
 const quoteTexts = ref<any[]>([]);
+// 当前正在攻击的卡牌标识（格式："player-大营"，用于控制攻击动画样式）
 const attackingCard = ref<string | null>(null);
+// 战斗特效等级（影响动画时长、震动幅度等）
 const battleFxLevel = ref<"low" | "medium" | "high">("medium");
+// 屏幕震动效果开关
 const isScreenShaking = ref(false);
 
+// ========== 战斗特效配置 ==========
+// 不同特效等级下的动画参数（windup=前摇,dash=冲刺,recover=恢复,hit=受击）
 const FX_PROFILES = {
   low: {
     windupMs: 60,
@@ -614,11 +679,15 @@ const FX_PROFILES = {
 
 type FxProfile = (typeof FX_PROFILES)[keyof typeof FX_PROFILES];
 
+// 获取当前特效等级的参数配置
 const getFxProfile = (): FxProfile => FX_PROFILES[battleFxLevel.value];
 
+// 活跃特效定时器集合（key=卡牌标识，value=定时器ID列表，用于清除）
 const activeFxTimers = new Map<string, number[]>();
+// 上次受击时间记录（用于节流，避免同一目标受击动画过于频繁）
 const targetHitLastAt = new Map<string, number>();
 
+// 清除指定卡牌的所有特效定时器
 const clearFxTimers = (key: string) => {
   const timers = activeFxTimers.get(key);
   if (!timers) return;
@@ -626,6 +695,7 @@ const clearFxTimers = (key: string) => {
   activeFxTimers.delete(key);
 };
 
+// 清除所有战斗特效（战斗结束时调用，清除所有定时器和动画状态）
 const clearAllBattleFx = () => {
   for (const key of activeFxTimers.keys()) {
     clearFxTimers(key);
@@ -648,17 +718,21 @@ const clearAllBattleFx = () => {
   });
 };
 
+// 注册特效定时器（将定时器ID关联到卡牌key，便于统一清除）
 const registerFxTimer = (key: string, timerId: number) => {
   const timers = activeFxTimers.get(key) || [];
   timers.push(timerId);
   activeFxTimers.set(key, timers);
 };
 
+// 根据 side 和 position 查找对应卡牌的 DOM 元素
 const getCardElement = (side: "player" | "enemy", position: string) =>
   document.querySelector(
     `[data-card-side="${side}"][data-card-position="${position}"]`,
   ) as HTMLElement | null;
 
+// ========== 攻击动画阶段控制 ==========
+// 设置攻击方动画阶段（windup=前摇,dash=冲刺,recover=恢复），驱动 CSS 动画
 const markAttackerPhase = (
   side: "player" | "enemy",
   position: string,
@@ -679,6 +753,7 @@ const markAttackerPhase = (
   attackingCard.value = key;
 };
 
+// 清除攻击方动画阶段（攻击结束后调用）
 const clearAttackerPhase = (side: "player" | "enemy", position: string) => {
   const card = getCardElement(side, position);
   if (!card) return;
@@ -688,6 +763,8 @@ const clearAttackerPhase = (side: "player" | "enemy", position: string) => {
   attackingCard.value = null;
 };
 
+// ========== 受击动画 ==========
+// 触发目标受击反应（抖动+闪白+描边），高伤害时额外加重
 const triggerTargetHitReaction = (
   side: "player" | "enemy",
   position: string,
@@ -695,6 +772,7 @@ const triggerTargetHitReaction = (
 ) => {
   const key = `${side}-${position}`;
   const now = Date.now();
+  // 节流：同一目标短时间内不重复触发动画
   if (now - (targetHitLastAt.get(key) || 0) < getFxProfile().hitThrottleMs) {
     return;
   }
@@ -715,6 +793,7 @@ const triggerTargetHitReaction = (
     card.classList.add("target-hit-heavy");
   }
 
+  // 分阶段清除各类动画效果
   registerFxTimer(
     key,
     window.setTimeout(() => {
@@ -736,24 +815,47 @@ const triggerTargetHitReaction = (
   );
 };
 
+// ========== 遗物系统 ==========
+// 遗物选择候选列表（三选一界面显示）
 const playerRelicCandidates = ref<Relic[]>([]);
+// 玩家当前持有的遗物列表
 const playerRelics = ref<Relic[]>([]);
+// 敌方当前持有的遗物列表（每波从配置中读取）
 const enemyRelics = ref<Relic[]>([]);
+// 是否显示遗物选择弹窗（开局时触发）
 const showRelicSelector = ref(false);
+// ========== 奖励系统 ==========
+// 是否显示战斗胜利奖励选择弹窗
 const showVictoryRewardSelector = ref(false);
+// 战斗胜利时的三个可选奖励
 const victoryRewardOptions = ref<VictoryRewardOption[]>([]);
+// 是否正在处理奖励（防止重复触发）
 const isResolvingVictoryReward = ref(false);
+// 崔珏裁赏胜利奖励阶段的台词
 const cuiJueRewardDialogLine = ref("此战有功，生死簿前，许你择其一赏。");
+
+// ========== 游戏阶段与地图 ==========
+// 当前游戏阶段（map_select=选节点, encounter_resolve=处理事件, reward_resolve=奖励选择等）
 const gamePhase = ref<GamePhase>("map_select");
+// 是否显示事件地图
 const showEventMap = ref(true);
+// 当前整局跑图数据（包含所有楼层和节点）
 const runMap = ref<RunMapType | null>(null);
+// 待处理的节点ID（已选择但尚未完成事件）
 const pendingNodeId = ref<string | null>(null);
+// 待处理节点的战斗类型（battle/elite/boss，null=非战斗节点）
 const pendingBattleNodeType = ref<NodeType | null>(null);
+// 当前处于第几幕/几层（击败Boss后递增）
 const currentAct = ref(1);
+// 层完成奖励的三个可选项
 const layerRewardOptions = ref<VictoryRewardOption[]>([]);
+// 是否显示层完成奖励选择弹窗
 const showLayerRewardSelector = ref(false);
+// 层奖励选择时崔珏的台词
 const layerRewardDialogLine = ref("");
 
+// ========== 地图配置 ==========
+// 地图生成参数（楼层数、每层节点数、连接规则等）
 const MAP_CONFIG = {
   minFloors: 8,
   maxFloors: 10,
@@ -763,34 +865,41 @@ const MAP_CONFIG = {
   defaultNodePool: ["battle", "event", "treasure", "rest", "shop"] as NodeType[],
 } as const;
 
+// ========== 崔琰台词 ==========
+// 崔琰（游戏中的判官NPC）在各场景下的随机台词
 const cuiJueQuotes = {
-  newRun: [
+  newRun: [  // 开局/重新开始时
     "生死簿上，名字又添一笔。这一世，你打算如何书写？",
     "我见过无数魂魄来来去去，却少有人能真正改写命数。你，会是例外吗？",
     "又回到起点了。记住，每一步选择，都在命运的天平上。",
   ],
-  relic: [
+  relic: [  // 遗物选择时
     "这些是前人留下的痕迹。有的带着荣耀，有的染着遗憾——你选哪个？",
     "命运从不免费馈赠，每一次获得，背后都有代价。想清楚了吗？",
   ],
-  battle: [
+  battle: [  // 战斗开始时
     "前方凶险，但你心中自有明灯。去吧，判官看着你呢。",
     "我判过无数善恶，却判不出你的命数——因为那在你自己手中。",
   ],
-  defeat: [
+  defeat: [  // 战斗失败时
     "又一个轮回落幕……但故事未完。休息片刻，再重新开始吧。",
     "虚负凌云万丈才，一生襟抱未曾开——你还有机会，别让这句话成真。",
   ],
-  victory: [
+  victory: [  // 战斗胜利时
     "这一局，你赢了。生死簿上，又多了一个传奇。",
     "判官见证过无数成败，而你——值得被记住。",
   ],
 };
 
+// 是否已显示过开局崔琰台词（防止重复显示）
 const hasShownNewRunQuote = ref(false);
+// 崔琰头像图片路径
 const cuiJuePortrait = "/assets/cui_jue.webp";
+// 遗物选择时崔琰的台词
 const cuiJueRelicDialogLine = ref("这些是前人留下的痕迹。有的带着荣耀，有的染着遗憾——你选哪个？");
 
+// ========== 地图节点配置 ==========
+// 各类型节点对应的图标路径
 const mapNodeIconByType: Record<NodeType, string> = {
   event: "/assets/icon_event.png",
   battle: "/assets/icon_sword.png",
@@ -801,6 +910,7 @@ const mapNodeIconByType: Record<NodeType, string> = {
   boss: "/assets/crown_icon.png",
 };
 
+// 各类型节点的鼠标悬停提示文字
 const nodeTypeTitle: Record<NodeType, string> = {
   battle: "普通战斗",
   elite: "精英战斗",
@@ -811,6 +921,8 @@ const nodeTypeTitle: Record<NodeType, string> = {
   boss: "Boss战",
 };
 
+// ========== 地图生成（确定性随机） ==========
+// 哈希种子函数：将一个数字转换为确定性随机数生成器（用于服务端可复现的随机）
 const hashSeed = (seed: number) => {
   let h = seed >>> 0;
   return () => {
@@ -822,9 +934,11 @@ const hashSeed = (seed: number) => {
   };
 };
 
+// 在 [min, max] 范围内生成一个整数（使用给定 RNG）
 const randInt = (rng: () => number, min: number, max: number) =>
   Math.floor(rng() * (max - min + 1)) + min;
 
+// 根据楼层权重随机决定节点类型（最后层=Boss，中层有一定概率精英）
 const pickWeightedNodeType = (rng: () => number, floor: number, totalFloors: number): NodeType => {
   if (floor === totalFloors) return "boss";
   const eliteWeight = floor >= 3 && floor <= totalFloors - 2 ? 0.2 : 0.08;
@@ -834,6 +948,7 @@ const pickWeightedNodeType = (rng: () => number, floor: number, totalFloors: num
   return pool[Math.floor(rng() * pool.length)];
 };
 
+// 将左右两层节点以不交叉的方式连接（左右各取中点附近配对，再随机额外连接）
 const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => number) => {
   const edges = new Set<string>();
   const leftCount = left.length;
@@ -844,6 +959,7 @@ const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => n
   };
   const parseEdge = (edge: string) => edge.split("-").map(Number) as [number, number];
 
+  // 基础连接：每个左节点连接到对应右节点（按比例映射）
   for (let i = 0; i < leftCount; i++) {
     const j =
       leftCount === 1
@@ -852,6 +968,7 @@ const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => n
     addEdge(i, j);
   }
 
+  // 基础连接：每个右节点连接到对应左节点（按比例映射）
   for (let j = 0; j < rightCount; j++) {
     const i =
       rightCount === 1
@@ -860,6 +977,7 @@ const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => n
     addEdge(i, j);
   }
 
+  // 额外连接：随机为部分节点添加额外路径（保证地图可选性）
   for (let i = 0; i < leftCount; i++) {
     const currentTargets = [...edges]
       .map(parseEdge)
@@ -871,6 +989,7 @@ const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => n
       ? currentTargets[0]
       : Math.round((i * (rightCount - 1)) / Math.max(1, leftCount - 1));
     const candidates = [primary - 1, primary + 1].filter((toIdx) => toIdx >= 0 && toIdx < rightCount);
+    // 过滤掉会导致边交叉的候选节点
     const safeCandidates = candidates.filter((cand) => {
       for (const edge of edges) {
         const [existingFrom, existingTo] = parseEdge(edge);
@@ -887,12 +1006,15 @@ const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => n
     }
   }
 
+  // 将边信息写入节点的 linksTo 字段
   for (const edge of edges) {
     const [fromIdx, toIdx] = parseEdge(edge);
     left[fromIdx].linksTo.push(right[toIdx].id);
   }
 };
 
+// ========== 地图生成 ==========
+// 生成整张跑图地图（使用时间戳作为随机种子）
 const generateRunMap = (seed?: number): RunMapType => {
   const baseSeed = typeof seed === "number" ? seed : Date.now();
   const rng = hashSeed(baseSeed);
@@ -922,6 +1044,7 @@ const generateRunMap = (seed?: number): RunMapType => {
     floorNodes.push(thisFloorNodes);
   }
 
+  // 依次连接相邻楼层
   for (let floor = 0; floor < floorNodes.length - 1; floor++) {
     connectTwoFloorsNoCross(floorNodes[floor], floorNodes[floor + 1], rng);
   }
@@ -936,10 +1059,12 @@ const generateRunMap = (seed?: number): RunMapType => {
   return map;
 };
 
+// ========== 无限层生成 ==========
+// 当玩家击败一层Boss后，在已有地图基础上追加新楼层节点
 const generateNextLayerNodes = (existingNodes: MapNode[]): MapNode[] => {
-  const newFloor = (existingNodes.reduce((m, n) => Math.max(m, n.floor), 0)) + 1;
+  const newFloor = existingNodes.reduce((m, n) => Math.max(m, n.floor), 0) + 1;
   const newNodes: MapNode[] = [];
-  const nodeCount = 1;
+  const nodeCount = 1;  // 新楼层只有1个Boss节点
 
   for (let lane = 0; lane < nodeCount; lane++) {
     const node: MapNode = {
@@ -954,10 +1079,9 @@ const generateNextLayerNodes = (existingNodes: MapNode[]): MapNode[] => {
     newNodes.push(node);
   }
 
+  // 将上一层的Boss节点连接到新楼层节点
   const prevFloorNodes = existingNodes.filter((n) => n.floor === newFloor - 1);
-  const prevBossCandidates = prevFloorNodes;
-
-  for (const prevNode of prevBossCandidates) {
+  for (const prevNode of prevFloorNodes) {
     const nextNode = newNodes.find((n) => n.floor === newFloor && n.lane === 0);
     if (nextNode) {
       prevNode.linksTo.push(nextNode.id);
@@ -967,6 +1091,8 @@ const generateNextLayerNodes = (existingNodes: MapNode[]): MapNode[] => {
   return newNodes;
 };
 
+// ========== 地图进度重置 ==========
+// 重置整局跑图进度（游戏初始化或重新开始时调用）
 const resetRunProgress = () => {
   runMap.value = generateRunMap(Date.now());
   gamePhase.value = "map_select";
@@ -978,9 +1104,12 @@ const resetRunProgress = () => {
   }
 };
 
+// 根据节点ID查找节点对象
 const getNodeById = (id: string) =>
   runMap.value?.nodes.find((node) => node.id === id) || null;
 
+// ========== 地图节点计算属性 ==========
+// 当前楼层编号（起始节点时显示第1层，已访问节点后显示下一层）
 const currentMapFloor = computed(() => {
   if (!runMap.value) return 1;
   if (runMap.value.currentNodeId === "start") return 1;
@@ -988,11 +1117,13 @@ const currentMapFloor = computed(() => {
   return node ? Math.min(runMap.value.floors, node.floor + 1) : 1;
 });
 
+// 当前楼层的所有节点列表
 const currentFloorNodes = computed(() => {
   if (!runMap.value) return [] as MapNode[];
   return runMap.value.nodes.filter((node) => node.floor === currentMapFloor.value);
 });
 
+// 当前可选的下一批节点ID列表（允许玩家点击选择）
 const allowedNextNodeIds = computed(() => {
   if (!runMap.value) return [] as string[];
   if (runMap.value.currentNodeId === "start") {
@@ -1002,20 +1133,27 @@ const allowedNextNodeIds = computed(() => {
   return node ? node.linksTo : [];
 });
 
+// 判断某节点是否可选中
 const canSelectMapNode = (node: MapNode) =>
   gamePhase.value === "map_select" &&
   allowedNextNodeIds.value.includes(node.id);
 
+// ========== UI显示状态 ==========
+// 是否显示战斗面板（有待处理战斗节点或战斗进行中时为true）
 const showBattleBoard = computed(
   () => !!pendingBattleNodeType.value || isBattleActive.value || isBattleStarting.value,
 );
+// 战斗中显示/收起地图抽屉
 const showBattleMapDrawer = ref(false);
+// 地图图例是否折叠
 const isMapLegendCollapsed = ref(false);
 
+// 切换地图图例折叠状态
 const toggleMapLegend = () => {
   isMapLegendCollapsed.value = !isMapLegendCollapsed.value;
 };
 
+// 监听战斗面板显隐：当进入战斗时收起地图抽屉
 watch(showBattleBoard, (active, prevActive) => {
   if (active && !prevActive) {
     showBattleMapDrawer.value = false;
@@ -1025,6 +1163,7 @@ watch(showBattleBoard, (active, prevActive) => {
   }
 });
 
+// 监听战斗状态：进入战斗时锁定征召兵快照，退出时解除
 watch(isBattleActive, (active) => {
   if (active) {
     lockBattleConscriptSnapshot();
@@ -1033,8 +1172,8 @@ watch(isBattleActive, (active) => {
   unlockBattleConscriptSnapshot();
 });
 
-// Map utilities moved to RunMap.vue component
-
+// ========== 地图图例 ==========
+// 地图图例项列表（用于显示各节点类型的图标和名称）
 const mapLegendItems = computed(() => [
   { type: "event" as NodeType, label: "事件", icon: mapNodeIconByType.event },
   { type: "battle" as NodeType, label: "战斗", icon: mapNodeIconByType.battle },
@@ -1045,6 +1184,8 @@ const mapLegendItems = computed(() => [
   { type: "boss" as NodeType, label: "Boss", icon: mapNodeIconByType.boss },
 ]);
 
+// ========== 地图事件池 ==========
+// 所有可触发的随机事件列表（每个事件包含ID、标题、描述和应用逻辑）
 const mapEventPool = [
   {
     id: "event-gold-for-star",
@@ -1105,6 +1246,8 @@ const mapEventPool = [
   },
 ] as const;
 
+// ========== 节点解析 ==========
+// 处理战斗类型节点：生成敌方队伍，精英/Boss属性强化
 const resolveBattleNode = async (type: NodeType) => {
   pendingBattleNodeType.value = type;
   showEventMap.value = true;
@@ -1117,6 +1260,7 @@ const resolveBattleNode = async (type: NodeType) => {
     addReport("遭遇普通战斗。");
   }
   await generateEnemyTeam();
+  // 精英×1.18倍、Boss×1.35倍属性强化
   if (type === "elite" || type === "boss") {
     const ratio = type === "elite" ? 1.18 : 1.35;
     (Object.keys(enemyFormation.value) as (keyof typeof enemyFormation.value)[]).forEach(
@@ -1134,6 +1278,7 @@ const resolveBattleNode = async (type: NodeType) => {
   }
 };
 
+// 处理随机事件节点：从事件池随机抽取一个并应用
 const resolveEventNode = () => {
   const event = mapEventPool[Math.floor(Math.random() * mapEventPool.length)];
   addReport(`事件【${event.title}】：${event.description}`);
@@ -1142,6 +1287,7 @@ const resolveEventNode = () => {
   showEventMap.value = true;
 };
 
+// 处理宝物节点：随机获取一个遗物，或折算为金币
 const resolveTreasureNode = () => {
   if (RELIC_POOL.length > 0) {
     const relic = pickWeightedRelics(1)[0];
@@ -1165,6 +1311,7 @@ const resolveTreasureNode = () => {
   showEventMap.value = true;
 };
 
+// 处理休整节点：恢复征召兵，并随机减少一名武将的休整轮次
 const resolveRestNode = () => {
   const before = totalConscripts.value;
   totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 600);
@@ -1186,6 +1333,7 @@ const resolveRestNode = () => {
   showEventMap.value = true;
 };
 
+// 处理商店节点：花费金币购买征召兵
 const resolveShopNode = () => {
   if (money.value >= 180) {
     money.value -= 180;
@@ -1199,6 +1347,8 @@ const resolveShopNode = () => {
   showEventMap.value = true;
 };
 
+// ========== 统一节点解析入口 ==========
+// 根据节点类型分发到对应解析函数
 const resolveNode = async (node: MapNode) => {
   if (!runMap.value) return;
   runMap.value.currentNodeId = node.id;
@@ -1216,6 +1366,8 @@ const resolveNode = async (node: MapNode) => {
   else if (node.type === "shop") resolveShopNode();
 };
 
+// ========== 节点选择 ==========
+// 玩家点击地图节点时触发（需满足可选择条件）
 const selectEventNode = async (node: MapNode) => {
   if (!canSelectMapNode(node)) return;
   await resolveNode(node);
@@ -1315,6 +1467,8 @@ const hideTooltip = () => {
   tooltipData.value = null;
 };
 
+// ========== UI 状态 ==========
+// 显示武将详情悬浮提示
 const showGeneralTooltip = (general: General, event?: MouseEvent) => {
   // 阻止默认的右键菜单
   if (event) {
@@ -1331,12 +1485,14 @@ const showGeneralTooltip = (general: General, event?: MouseEvent) => {
   tooltipData.value = general;
 };
 
+// 关闭武将列表浮层
 const closeGeneralList = () => {
   showGeneralList.value = false;
   selectedSlot.value = null;
   hideTooltip();
 };
 
+// 部署武将到指定阵位（阵位满员则替换，统率不足时阻止部署）
 const deployGeneral = (general: General) => {
   if (selectedSlot.value) {
     const restRounds = playerRecoveryRounds.value[general.id] || 0;
@@ -1389,6 +1545,7 @@ const deployGeneral = (general: General) => {
   }
 };
 
+// 为上阵武将设置兵力分配（通过征召兵分配界面）
 const setGeneralTroops = (
   position: keyof typeof playerFormation.value,
   targetTroops: number,
@@ -1405,6 +1562,7 @@ const setGeneralTroops = (
   syncCommittedConscriptsFromFormation();
 };
 
+// 鼠标按下兵力条时记录初始值和已分配量，用于拖拽调整
 const handleTroopsBarMouseDown = (
   position: keyof typeof playerFormation.value,
   event: MouseEvent,
@@ -1432,6 +1590,7 @@ const handleTroopsBarMouseDown = (
   window.addEventListener("mouseup", onUp);
 };
 
+// 将剩余可分配征召兵平均分配给所有上阵武将（优先补满兵力的）
 const autoAllocateTroopsEvenly = () => {
   if (isBattleActive.value) return;
   const deployed = Object.values(playerFormation.value).filter(
@@ -1474,6 +1633,7 @@ const autoAllocateTroopsEvenly = () => {
   addReport("已自动均分征召兵到我方上阵武将。");
 };
 
+// 战斗结束后：阵亡武将进入4轮休整，从阵型中移除并播报
 const applyPlayerRecoveryForDeaths = () => {
   (Object.keys(playerFormation.value) as (keyof typeof playerFormation.value)[]).forEach(
     (position) => {
@@ -1490,6 +1650,7 @@ const applyPlayerRecoveryForDeaths = () => {
   updateCurrentCommand();
 };
 
+// 判断我方所有武将是否都在休整中（全部休整时游戏结束）
 const areAllOwnedGeneralsResting = () => {
   if (generals.value.length === 0) return false;
   return generals.value.every((general) => (playerRecoveryRounds.value[general.id] || 0) > 0);
@@ -1510,6 +1671,7 @@ const getFetchFunction = (id: number) => {
 
 const designedGeneralIds = () => RECRUIT_CONFIG_BASE.map((c) => c.id);
 
+// 深拷贝敌方武将（保留技能和台词的独立副本）
 const cloneGeneralForEnemy = (g: General): General => ({
   ...g,
   skills: g.skills?.map((s) => ({ ...s })),
@@ -1519,6 +1681,7 @@ const cloneGeneralForEnemy = (g: General): General => ({
     : undefined,
 });
 
+// Fisher-Yates 洗牌：返回所有预设武将ID的随机排列顺序
 const shuffleDesignedGeneralIds = (): number[] => {
   const ids = [...designedGeneralIds()];
   for (let i = ids.length - 1; i > 0; i--) {
@@ -1528,6 +1691,7 @@ const shuffleDesignedGeneralIds = (): number[] => {
   return ids;
 };
 
+// 生成敌方队伍：从预设武将池中洗牌抽取3名布置到大营/中军/前锋，并配置敌方遗物
 const generateEnemyTeam = async () => {
   const positions: (keyof typeof enemyFormation.value)[] = [
     "大营",
@@ -1578,7 +1742,8 @@ const generateEnemyTeam = async () => {
   addReport("敌方队伍已集结完毕！");
 };
 
-// 格式化武将信息报告
+// ========== 武将升级与合成 ==========
+// 格式化武将信息并输出到战斗报告（获取武将时调用）
 const formatGeneralReport = (general: General) => {
   addReport(`恭喜获得【${general.name}】！等级:${general.level} 攻:${general.attack} 防:${general.defense} 策:${general.strategy} 速:${general.speed} 兵:${general.troops} 距:${general.attackRange} 统御:${general.command} 统率:${general.leadership} 兵种:${general.soldierType}`);
   if (general.skills && general.skills.length > 0) {
@@ -1586,12 +1751,14 @@ const formatGeneralReport = (general: General) => {
   }
 };
 
+// 获取武将的合成星级（0~5，超出范围截断）
 const getSynthStar = (general: General | null | undefined) => {
   if (!general) return 0;
   const star = (general as General & { synthStar?: number }).synthStar;
   return typeof star === "number" ? Math.max(0, Math.min(5, star)) : 0;
 };
 
+// 设置武将的合成星级（0~5，超出范围截断）
 const setSynthStar = (general: General, value: number) => {
   (general as General & { synthStar?: number }).synthStar = Math.max(
     0,
@@ -1599,6 +1766,7 @@ const setSynthStar = (general: General, value: number) => {
   );
 };
 
+// 重复招募已拥有武将时执行升星逻辑：属性成长、满兵、清除负面状态
 const promoteExistingGeneral = (general: General) => {
   const beforeStar = getSynthStar(general);
   const nextStar = Math.min(5, beforeStar + 1);
@@ -1623,6 +1791,7 @@ const promoteExistingGeneral = (general: General) => {
   }
 };
 
+// 崔珏奖励武将升星：与普通升星相同，但播报文案不同
 const promoteGeneralByReward = (general: General) => {
   const beforeStar = getSynthStar(general);
   const nextStar = Math.min(5, beforeStar + 1);
@@ -1646,6 +1815,7 @@ const promoteGeneralByReward = (general: General) => {
   }
 };
 
+// 构建战斗胜利奖励选项：军资、征召兵、升星三选一
 const buildVictoryRewardOptions = (): VictoryRewardOption[] => {
   const goldValue = [120, 150, 180][Math.floor(Math.random() * 3)];
   const conscriptValue = [600, 800, 1000][Math.floor(Math.random() * 3)];
@@ -1678,6 +1848,7 @@ const buildVictoryRewardOptions = (): VictoryRewardOption[] => {
   return options;
 };
 
+// 构建层Boss奖励选项：军资、征召兵、全员疗伤三选一
 const buildLayerRewardOptions = (): VictoryRewardOption[] => {
   const goldValue = 300 + currentAct.value * 150;
   const conscriptValue = 500 + currentAct.value * 200;
@@ -1710,6 +1881,7 @@ const buildLayerRewardOptions = (): VictoryRewardOption[] => {
   return options;
 };
 
+// 应用战斗胜利奖励（金币/征召兵/升星）
 const applyVictoryReward = (reward: VictoryRewardOption) => {
   if (reward.type === "gold") {
     money.value += reward.value;
@@ -1807,10 +1979,13 @@ const applyVictoryReward = (reward: VictoryRewardOption) => {
   }
 };
 
+// 应用层Boss奖励（目前与战斗奖励相同）
 const applyLayerReward = (reward: VictoryRewardOption) => {
   applyVictoryReward(reward);
 };
 
+// ========== 奖励选择 ==========
+// 打开层Boss奖励选择界面（崔珏裁赏）
 const openLayerRewardSelector = () => {
   layerRewardOptions.value = buildLayerRewardOptions();
   layerRewardDialogLine.value = getRandomLine(cuiJueQuotes.victory);
@@ -1820,6 +1995,7 @@ const openLayerRewardSelector = () => {
   addReport(`第 ${currentAct.value} 层已完成！崔珏现身裁赏。`);
 };
 
+// 玩家选择层奖励后：应用奖励、生成下一层、切换到地图选择阶段
 const selectLayerReward = async (reward: VictoryRewardOption) => {
   if (isResolvingVictoryReward.value) return;
   isResolvingVictoryReward.value = true;
@@ -1846,6 +2022,7 @@ const selectLayerReward = async (reward: VictoryRewardOption) => {
   }
 };
 
+// 奖励选择完成后返回地图继续前进
 const enterNextBattleAfterReward = async () => {
   gamePhase.value = "map_advance";
   pendingBattleNodeType.value = null;
@@ -1854,6 +2031,7 @@ const enterNextBattleAfterReward = async () => {
   addReport("崔珏裁赏已落定，返回事件树继续前进。");
 };
 
+// 打开战斗胜利奖励界面（崔珏现身裁赏）
 const openVictorySettlement = () => {
   unlockBattleConscriptSnapshot();
   const currentNode = pendingNodeId.value ? getNodeById(pendingNodeId.value) : null;
@@ -1868,6 +2046,7 @@ const openVictorySettlement = () => {
   addReport("崔珏现身，进入战后裁赏。");
 };
 
+// 玩家选择战斗胜利奖励：应用奖励、进入下一场战斗
 const selectVictoryReward = async (reward: VictoryRewardOption) => {
   if (isResolvingVictoryReward.value) return;
   isResolvingVictoryReward.value = true;
@@ -1881,6 +2060,7 @@ const selectVictoryReward = async (reward: VictoryRewardOption) => {
   }
 };
 
+// 从给定台词数组中随机抽取一条（崔珏对话）
 const getRandomLine = (lines: string[]) =>
   lines[Math.floor(Math.random() * lines.length)];
 
@@ -1893,9 +2073,12 @@ const addCuiJueQuote = (
   return line;
 };
 
+// ========== 遗物系统 ==========
+// 获取指定阵营持有的全部遗物列表
 const getRelicsBySide = (side: "player" | "enemy"): Relic[] =>
   side === "player" ? playerRelics.value : enemyRelics.value;
 
+// 统计指定阵营遗物效果数值之和（如：防御加成百分比、伤害加成百分比等）
 const getRelicEffectValue = (
   side: "player" | "enemy",
   key: keyof RelicEffects,
@@ -1905,6 +2088,7 @@ const getRelicEffectValue = (
   return relics.reduce((sum, relic) => sum + Number(relic.effects[key] || 0), 0);
 };
 
+// 判断某武将是否满足低兵力防御加成条件（兵力低于上限的指定比例时生效）
 const hasLowTroopsDefenseBonus = (
   side: "player" | "enemy",
   general: General,
@@ -1916,6 +2100,7 @@ const hasLowTroopsDefenseBonus = (
   return general.maxTroops > 0 && general.troops / general.maxTroops < threshold;
 };
 
+// 计算武将实际速度（基础速度 × 遗物百分比加成，骑兵额外有加成）
 const getAdjustedSpeed = (general: General, side: "player" | "enemy") => {
   let speed = general.speed;
   speed *= 1 + getRelicEffectValue(side, "speedPct");
@@ -1925,6 +2110,7 @@ const getAdjustedSpeed = (general: General, side: "player" | "enemy") => {
   return speed;
 };
 
+// 回合开始时：若遗物提供debuff抵抗率，以指定概率清除该武将身上的持续debuff效果
 const applyRelicDebuffResist = (unit: {
   general: General;
   side: "player" | "enemy";
@@ -1959,6 +2145,7 @@ const applyRelicDebuffResist = (unit: {
   }
 };
 
+// 回合结束时：所有存活武将触发遗物回血效果；若有资源类遗物额外获得金币
 const applyEndTurnRelicEffects = () => {
   const allAliveGenerals = getAllGenerals().filter((g) => !g.general.isDead);
   allAliveGenerals.forEach((generalData) => {
@@ -1989,6 +2176,7 @@ const applyEndTurnRelicEffects = () => {
   }
 };
 
+// 开启遗物选择流程：从遗物池抽取3个候选遗物让玩家选择
 const startRelicSelection = () => {
   if (playerRelics.value.length > 0) return;
   if (!hasShownNewRunQuote.value) {
@@ -2001,6 +2189,7 @@ const startRelicSelection = () => {
   showRelicSelector.value = true;
 };
 
+// 玩家选择一个遗物后，将其加入我方遗物列表并关闭选择界面
 const selectPlayerRelic = (relic: Relic) => {
   if (!playerRelics.value.some((item) => item.id === relic.id)) {
     playerRelics.value.push(relic);
@@ -2009,6 +2198,8 @@ const selectPlayerRelic = (relic: Relic) => {
   addReport(`我方选择遗物【${relic.name}】。`);
 };
 
+// ========== 招募武将 ==========
+// 消耗金币随机招募一名武将：若已拥有则升星，否则加入麾下
 const recruitCard = () => {
   if (money.value < recruitCost.value) {
     addReport("金额不足，无法招募！");
@@ -2051,8 +2242,11 @@ const recruitCard = () => {
   }
 };
 
+// ========== 战斗控制 ==========
+// 异步等待指定毫秒数（战斗动画延迟用）
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// 战斗动画等待函数：跳过模式下直接返回，正常模式下按战斗速度和暂停状态逐帧等待
 const waitBattle = async (baseMs: number) => {
   if (skipBattleAnimation.value) return;
   let progressed = 0;
@@ -2067,11 +2261,13 @@ const waitBattle = async (baseMs: number) => {
   }
 };
 
+// 设置战斗速度倍率（影响waitBattle中的时间流逝速度）
 const setBattleSpeed = (speed: number) => {
   battleSpeed.value = speed;
   addReport(`战斗速度已切换为 ${speed}x`);
 };
 
+// 切换战斗跳过模式：跳过模式下动画等待函数直接返回
 const toggleSkipBattle = () => {
   if (isBattleActive.value) {
     addReport("战斗进行中不可切换跳过状态。");
@@ -2081,12 +2277,14 @@ const toggleSkipBattle = () => {
   addReport(skipBattleAnimation.value ? "已开启跳过战斗动画。" : "已关闭跳过战斗动画。");
 };
 
+// 切换战斗暂停状态（暂停时waitBattle会一直sleep直到恢复）
 const toggleBattlePause = () => {
   if (!isBattleActive.value) return;
   isBattlePaused.value = !isBattlePaused.value;
   addReport(isBattlePaused.value ? "战斗已暂停" : "战斗继续");
 };
 
+// 战斗控制入口：根据当前状态执行不同操作（暂停切换/开始战斗/弹窗提示）
 const handleBattleControl = async () => {
   if (showVictoryRewardSelector.value) {
     addReport("请先完成崔珏裁赏，再开启下一场战斗。");
@@ -2110,10 +2308,12 @@ const handleBattleControl = async () => {
   }
 };
 
+// 结束本回合：委托handleBattleControl处理（主要触发暂停切换）
 const endTurn = () => {
   handleBattleControl();
 };
 
+// 根据攻击者位置和攻击范围，计算所有可攻击的敌方存活目标
 const getTargetsInRange = (attacker: {
   general: General;
   side: "player" | "enemy";
@@ -2201,11 +2401,14 @@ const getTargetsInRange = (attacker: {
   return targets;
 };
 
+// ========== 技能与治疗 ==========
+// 播放治疗音效（用于技能回血时反馈）
 const playHealSound = () => {
   const audio = new Audio("/assets/audios/heal.mp3");
   audio.play().catch((e) => console.error("播放治疗音效失败:", e));
 };
 
+// 为指定卡牌添加治疗脉冲动画效果（回血时触发）
 const triggerHealCardFx = (side: "player" | "enemy", position: string) => {
   const card = getCardElement(side, position);
   if (!card) return;
@@ -2217,6 +2420,7 @@ const triggerHealCardFx = (side: "player" | "enemy", position: string) => {
   }, 680);
 };
 
+// 执行技能效果后检测是否有单位回血，如有则播放治疗动画和音效
 const executeSkillEffectWithHealFx = <T>(effectRunner: () => T): T => {
   const allUnits = getAllGenerals()
     .filter((item) => !item.general.isDead)
@@ -2245,6 +2449,7 @@ const executeSkillEffectWithHealFx = <T>(effectRunner: () => T): T => {
   return result;
 };
 
+// 触发武将战法效果（将addReport函数传递给技能效果系统）
 const triggerSkillEffects = (general: General, context: any) => {
   if (general.skills) {
     for (const skill of general.skills) {
@@ -2264,6 +2469,7 @@ const triggerSkillEffects = (general: General, context: any) => {
   return null;
 };
 
+// 执行一次完整攻击流程：攻击前效果触发 → 伤害计算 → 受击反应 → 动画播放 → 攻击后效果触发
 const performAttack = (
   attacker: { general: General; side: "player" | "enemy"; position: string },
   target: { general: General; side: "player" | "enemy"; position: string },
@@ -2411,6 +2617,7 @@ const performAttack = (
   return attackResult;
 };
 
+// 在卡牌上显示伤害/治疗数值浮文字（数值、颜色、标签、暴击标记）
 const showDamageText = (
   damage: number,
   side: "player" | "enemy",
@@ -2515,6 +2722,7 @@ const showDamageText = (
   }, 2000);
 };
 
+// 在卡牌上方显示武将台词气泡（3秒后自动消失）
 const showQuoteText = (
   quote: string,
   side: "player" | "enemy",
@@ -2545,10 +2753,12 @@ const showQuoteText = (
   }, 3000);
 };
 
-const getRandomQuote = (quotes: string[]): string => {
+// 从给定台词数组中随机抽取一条（用于武将技能台词和阵亡台词）
+const getRandomQuote = (quotes: readonly string[]): string => {
   return quotes[Math.floor(Math.random() * quotes.length)];
 };
 
+// 带动画的攻击流程：播报攻击意图 → 执行windup/dash动画 → 真实攻击 → 受击动画 → recover动画
 const performAttackWithAnimation = async (
   attacker: { general: General; side: "player" | "enemy"; position: string },
   target: { general: General; side: "player" | "enemy"; position: string },
@@ -2670,6 +2880,8 @@ const performAttackWithAnimation = async (
   attackingCard.value = null;
 };
 
+// ========== 游戏结束与状态 ==========
+// 检查游戏是否结束（敌方大营阵亡=胜利，我方大营阵亡=失败）
 const checkGameOver = () => {
   if (enemyFormation.value.大营 && enemyFormation.value.大营.isDead) {
     // 胜利结算：进入崔珏裁赏
@@ -2696,6 +2908,7 @@ const checkGameOver = () => {
   return false;
 };
 
+// 8回合结束后按和局/兵力对比规则判定最终胜负
 const checkGameOverByTurns = () => {
   // 首先检查双方大营是否都存活 - 用户要求的新和局逻辑
   const playerCampAlive =
@@ -2750,6 +2963,7 @@ const checkGameOverByTurns = () => {
   }
 };
 
+// 追加一条战斗播报到报告列表（可选带武将头像和阵营颜色）
 const addReport = (
   message: string,
   general?: General,
@@ -2787,6 +3001,7 @@ const addReport = (
   }, 100);
 };
 
+// 重置游戏到初始状态（重新开始时调用）
 const resetGame = () => {
   clearAllBattleFx();
   // 恢复游戏开始时的数据
@@ -2828,6 +3043,7 @@ const resetGame = () => {
   }
 };
 
+// 获取所有存活武将（我方+敌方），用于战斗循环中的速度排序和技能触发
 const getAllGenerals = () => {
   const allGenerals: Array<{
     general: General;
@@ -2860,6 +3076,7 @@ const getAllGenerals = () => {
   return allGenerals;
 };
 
+// 获取指定阵营的所有存活武将（用于指挥战法等友军判定）
 const getAllAllies = (side: "player" | "enemy"): Array<{
   general: General;
   side: "player" | "enemy";
@@ -2886,6 +3103,8 @@ const getAllAllies = (side: "player" | "enemy"): Array<{
   return allies;
 };
 
+// ========== 战斗主循环 ==========
+// 完整战斗流程：初始化状态 → 8回合循环 → 结算
 const startBattle = async () => {
   clearAllBattleFx();
   if (!pendingBattleNodeType.value) {
@@ -3848,178 +4067,6 @@ const startBattle = async () => {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-.formation.horizontal {
-  margin-top: 18px;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  flex: 1;
-  gap: 10px;
-}
-
-.event-map-panel {
-  height: 100%;
-  border: 1px solid rgba(120, 80, 40, 0.45);
-  border-radius: 10px;
-  background: rgba(255, 248, 232, 0.9);
-  padding: 12px;
-}
-
-.event-map-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #5b4124;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.event-map-board {
-  position: relative;
-  min-height: 520px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(245, 238, 224, 0.78));
-  border: 1px solid rgba(120, 80, 40, 0.25);
-  overflow: hidden;
-  padding-right: 140px;
-}
-
-.event-map-links {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.event-map-link {
-  fill: none;
-  stroke: rgba(110, 132, 152, 0.46);
-  stroke-width: 0.92;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 1.5px rgba(125, 154, 180, 0.2));
-  transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
-}
-
-.event-map-link.visited {
-  stroke: rgba(138, 156, 171, 0.62);
-  opacity: 0.98;
-}
-
-.event-map-link.reachable {
-  stroke: rgba(188, 216, 235, 0.92);
-  stroke-width: 1.22;
-  opacity: 1;
-  filter: drop-shadow(0 0 4px rgba(176, 210, 233, 0.35));
-}
-
-.event-node-btn {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgba(96, 70, 40, 0.35);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #5b4124;
-  width: 72px;
-  height: 72px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: not-allowed;
-  opacity: 0.5;
-  z-index: 2;
-}
-
-.event-node-btn.selectable {
-  cursor: pointer;
-  opacity: 1;
-}
-
-.event-node-btn.selectable:hover {
-  transform: translate(-50%, calc(-50% - 2px));
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.event-node-btn.pending {
-  border-color: #e09b42;
-  box-shadow: 0 0 0 2px rgba(224, 155, 66, 0.35);
-}
-
-.event-node-btn.current {
-  border-color: #6fbbff;
-  box-shadow: 0 0 0 2px rgba(111, 187, 255, 0.35);
-}
-
-.event-node-btn.visited {
-  background: rgba(232, 232, 232, 0.9);
-}
-
-.event-node-icon {
-  width: 51px;
-  height: 51px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 1.5px rgba(20, 20, 20, 0.35));
-}
-
-.map-legend {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  z-index: 3;
-  width: 220px;
-  border: 1px solid rgba(123, 90, 52, 0.4);
-  border-radius: 8px;
-  background: rgba(255, 250, 241, 0.9);
-  padding: 8px;
-}
-
-.map-legend-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.map-legend-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #6a4b28;
-  margin-bottom: 0;
-}
-
-.map-legend-toggle {
-  border: 1px solid rgba(123, 90, 52, 0.45);
-  background: rgba(255, 255, 255, 0.75);
-  color: #6a4b28;
-  border-radius: 6px;
-  font-size: 12px;
-  padding: 2px 8px;
-  cursor: pointer;
-}
-
-.map-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 0;
-}
-
-.map-legend-icon {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  display: block;
-  filter: drop-shadow(0 0 2px rgba(20, 20, 20, 0.25));
-}
-
-.map-legend-text {
-  color: #5b4124;
-  font-size: 16px;
-  font-weight: 600;
-}
-
 .battle-stage {
   width: 100%;
   display: flex;
@@ -4027,48 +4074,6 @@ const startBattle = async () => {
   align-items: stretch;
   gap: 20px;
   flex: 1;
-}
-
-.relic-candidate-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
-}
-
-.relic-candidate-icon {
-  font-size: 28px;
-  text-align: center;
-}
-
-.relic-candidate-name {
-  margin-top: 6px;
-  font-weight: 700;
-  color: #43311b;
-  text-align: center;
-}
-
-.relic-candidate-effect {
-  margin-top: 6px;
-  color: #5a4b34;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.card-slot {
-  width: 180px;
-  height: 280px;
-  border: 3px dashed #e0e0e0;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: #f8f9fa;
-}
-
-.card-slot:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
 }
 
 .empty-slot {
@@ -4441,35 +4446,6 @@ const startBattle = async () => {
     max-height: calc(100% - 170px);
   }
 
-  .event-map-board {
-    min-height: 440px;
-    padding-right: 12px;
-    padding-bottom: 150px;
-  }
-
-  .map-legend {
-    top: auto;
-    bottom: 10px;
-    right: 10px;
-    width: calc(100% - 20px);
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 4px 8px;
-  }
-
-  .map-legend-title {
-    grid-column: 1 / -1;
-  }
-
-  .formation.horizontal {
-    flex-wrap: wrap;
-  }
-
-  .card-slot {
-    width: 140px;
-    height: 220px;
-  }
-
   .card {
     padding: 8px;
   }
@@ -4524,11 +4500,6 @@ const startBattle = async () => {
 
 /* 小屏幕移动端适配 */
 @media (max-width: 480px) {
-  .card-slot {
-    width: 120px;
-    height: 180px;
-  }
-
   .card-name {
     font-size: 10px;
   }
@@ -4999,20 +4970,6 @@ const startBattle = async () => {
 
   .player-side {
     width: 100%;
-  }
-
-  .formation.horizontal {
-    flex-wrap: wrap;
-  }
-
-  .card-slot {
-    width: 90px;
-    height: 130px;
-  }
-
-  .card-slot.large {
-    width: 110px;
-    height: 150px;
   }
 
   .game-footer {

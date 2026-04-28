@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const DI_WU_QI_QUOTES = {
+  skill: ["国用当足，军心方定。", "理财有道，方可济时。"],
+  death: ["财尽国危，此身亦尽。"],
+} as const;
+
 const DI_WU_QI_BASE = {
   id: 739,
   name: "第五琦",
@@ -112,10 +117,7 @@ export const createDiWuQi = (): General => {
     maxTroops: troops,
     skills: [createDiWuQiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: ["国用当足，军心方定。", "理财有道，方可济时。"],
-      death: ["财尽国危，此身亦尽。"],
-    },
+    quotes: DI_WU_QI_QUOTES,
   };
 };
 
@@ -138,10 +140,7 @@ export const fetchDiWuQiFromDatabase = async (
       maxTroops: troops,
       skills: [createDiWuQiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: ["国用当足，军心方定。", "理财有道，方可济时。"],
-        death: ["财尽国危，此身亦尽。"],
-      },
+      quotes: DI_WU_QI_QUOTES,
     };
   } catch (error) {
     console.error("从数据库获取第五琦信息失败:", error);

@@ -1,5 +1,10 @@
 import type { Skill, General } from "./types";
 
+const GAO_JIONG_QUOTES = {
+  skill: ["平陈之策，臣已熟虑。", "治国之道，在于任人。", "宰辅之责，安邦定国。"],
+  death: ["臣事隋室，死而无憾..."],
+} as const;
+
 // 高颎的基础属性常量
 const GAO_JIONG_BASE = {
   id: 24,
@@ -154,14 +159,7 @@ export const createGaoJiong = (): General => {
     maxTroops: troops,
     skills: [createGaoJiongSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: {
-      skill: [
-        "平陈之策，臣已熟虑。",
-        "治国之道，在于任人。",
-        "宰辅之责，安邦定国。"
-      ],
-      death: ["臣事隋室，死而无憾..."]
-    }
+    quotes: GAO_JIONG_QUOTES
   };
 };
 
@@ -187,14 +185,7 @@ export const fetchGaoJiongFromDatabase = async (API_BASE_URL: string): Promise<G
       maxTroops: troops,
       skills: [createGaoJiongSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "平陈之策，臣已熟虑。",
-          "治国之道，在于任人。",
-          "宰辅之责，安邦定国。"
-        ],
-        death: ["臣事隋室，死而无憾..."]
-      }
+      quotes: GAO_JIONG_QUOTES
     };
   } catch (error) {
     console.error('从数据库获取高颎信息失败:', error);
