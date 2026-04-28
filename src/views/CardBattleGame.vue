@@ -216,108 +216,6 @@
             </button>
           </div>
         </div>
-
-        <!-- 卡包模态框 -->
-        <div v-if="showCardPackModal" class="modal-overlay">
-          <div class="modal-content card-pack-modal">
-            <div class="modal-header">
-              <h2>选择卡包</h2>
-              <button class="modal-close" @click="closeCardPackModal">×</button>
-            </div>
-            <div class="modal-body">
-              <div v-if="!isOpeningPack" class="card-pack-selection">
-                <div 
-                  class="card-pack-option" 
-                  :class="{ active: selectedCardPack === 'sui' }"
-                  @click="selectCardPack('sui')"
-                >
-                  <h3>隋朝卡包</h3>
-                  <p>包含隋朝时期的武将</p>
-                  <p class="pack-price">价格: $100</p>
-                </div>
-                <div 
-                  class="card-pack-option" 
-                  :class="{ active: selectedCardPack === 'tang' }"
-                  @click="selectCardPack('tang')"
-                >
-                  <h3>唐朝卡包</h3>
-                  <p>包含唐朝时期的武将</p>
-                  <p class="pack-price">价格: $100</p>
-                </div>
-              </div>
-              <div v-else class="pack-opening">
-                <h3>开包中...</h3>
-                <div class="progress-bar">
-                  <div class="progress-fill" :style="{ width: packOpeningProgress + '%' }"></div>
-                </div>
-                <p>鼠标右滑开包</p>
-              </div>
-              <div v-if="packResult.length > 0" class="pack-result">
-                <h3>获得武将</h3>
-                <div class="pack-generals">
-                  <div v-for="(general, index) in packResult" :key="index" class="pack-general-item">
-                    <div class="card player" :style="{
-                      backgroundImage: `url(${general.avatar ? API_BASE_URL + general.avatar : (general.gender === '女' ? API_BASE_URL + '/public/images/ancient_character_women.webp' : API_BASE_URL + '/public/images/ancient_character_men.webp')})`
-                    }">
-                      <div class="card-top">
-                        <div class="card-left-top">
-                          <div class="card-dynasty">{{ general.dynasty }}</div>
-                          <div class="card-name">{{ general.name }}</div>
-                        </div>
-                        <div class="card-right-top">
-                          <div class="card-stars" :class="{
-                            'star-level-3': general.level === 3,
-                            'star-level-4': general.level === 4,
-                            'star-level-5': general.level === 5
-                          }">
-                            <span
-                              v-for="i in general.level"
-                              :key="i"
-                              class="star active"
-                              >★</span
-                            >
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-bottom">
-                        <div class="card-bottom-item">
-                          <span class="card-level">Lv.{{ general.level }}</span>
-                        </div>
-                        <div class="card-bottom-item">
-                          <span class="card-command">{{ general.command }}</span>
-                          <span class="card-bottom-label">统</span>
-                        </div>
-                        <div class="card-bottom-item">
-                          <span class="card-soldier-type">{{ general.soldierType }}</span>
-                        </div>
-                        <div class="card-bottom-item">
-                          <span class="card-range">{{ general.attackRange }}</span>
-                          <span class="card-bottom-label">距</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button 
-                class="modal-button cancel" 
-                @click="closeCardPackModal"
-                :disabled="isOpeningPack"
-              >
-                取消
-              </button>
-              <button 
-                class="modal-button open" 
-                @click="openCardPack"
-                :disabled="isOpeningPack || money < 100"
-              >
-                抽取
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <AuthModal v-if="showAuthModal" :is-login="isLogin" @close="showAuthModal = false" @login="handleLogin" />
@@ -4936,11 +4834,6 @@ const startBattle = async () => {
 
 .tooltip-close:hover {
   background-color: rgba(255, 255, 255, 0.2);
-}
-
-.growth-value {
-  color: #4caf50;
-  font-weight: bold;
 }
 
 .tooltip-stats {
