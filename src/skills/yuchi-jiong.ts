@@ -1,4 +1,4 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const YUCHI_JIONG_QUOTES = {
   skill: [
@@ -9,10 +9,10 @@ const YUCHI_JIONG_QUOTES = {
   death: ["周室既倾，吾身殉国，无憾矣。"]
 } as const;
 
-// 尉迟迥的基础属性常量
 const YUCHI_JIONG_BASE = {
   id: 633,
   name: "尉迟迥",
+  rarity: "rare" as GeneralRarity,
   attack: 96,
   attackGrowth: 2.72,
   defense: 102,
@@ -25,9 +25,9 @@ const YUCHI_JIONG_BASE = {
   siege: 18,
   siegeGrowth: 0.85,
   level: 5,
-  command: 92, // 统御值
+  command: 92,
   commandGrowth: 2.2,
-  leadership: 3.5, // 统率值，用于组建队伍
+  leadership: 3.5,
   isDead: false,
   dynasty: "北周",
   soldierType: "步兵" as const,
@@ -35,142 +35,150 @@ const YUCHI_JIONG_BASE = {
   avatar: "/images/yuchi_jiong.jpg",
 };
 
-// 尉迟迥的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
-  damageReduction: 0.25,
-  damageReductionSource: '【尉迟迥】的【危壁霸临】',
+  damageReduction: 0,
+  damageReductionSource: "",
   attributeBonus: 0,
-  attributeBonusSource: '【尉迟迥】的【危壁霸临】',
+  attributeBonusSource: "",
   maxAttributeBonus: 4,
   damageIncrease: 0,
-  damageIncreaseSource: '【尉迟迥】的【危壁霸临】',
+  damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  attrStackCount: 0,
+  maxAttrStack: 4,
 };
 
-// 计算兵力
-const calculateTroops = (commandValue: number): number => {
-  return Math.floor(commandValue * 10);
-};
+const calculateTroops = (commandValue: number): number =>
+  Math.floor(commandValue * 10);
 
-// 尉迟迥的自带战法【危壁霸临】
-export const createYuchiJiongSkill = (): Skill => {
-  return {
-    id: "weibi-baling",
-    name: "危壁霸临",
-    type: "passive",
-    description: "被攻击时受到物理伤害减25%；回合结束兵力低于70%全属性+8%至多4层；兵力低于50%增伤20%；首次兵力跌破30%净化负面并回复15%兵力，单局一次。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) {
-        general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+/**
+ * 【危壁霸临】指挥
+ * - 战斗开始时：永久获得 28% 物理伤害减伤
+ * - 回合结束时：若自身兵力 < 70%，全属性 +8%，最多叠加 4 层
+ * - HP < 50%：伤害增加 22%（永久）
+ * - 首次兵力跌破 30%：净化自身所有负面效果并回复 15% 兵力（单局一次）
+ * - 整体定位：高防御型前排，兵力越低越强
+ */
+export const createYuchiJiongSkill = (): Skill => ({
+  id: "weibi-baling",
+  name: "危壁霸临",
+  type: "command",
+  description:
+    "指挥：战斗开始时永久获得 28% 物理伤害减伤；回合结束兵力 < 70% 时全属性 +8%（最多 4 层）；HP < 50% 伤害永久 +22%；首次兵力跌破 30% 净化并回复 15% 兵力（单局一次）。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) {
+      general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    }
+
+    const { type, event, currentTroops, maxTroops, addReport } = context;
+
+    // 战斗开始 → 获得永久减伤
+    if (type === "battleStart") {
+      general.skillEffects.damageReduction = 28;
+      general.skillEffects.damageReductionSource = "weibi-baling";
+      if (addReport) {
+        addReport(`【${general.name}】发动【危壁霸临】，永久获得 28% 物理伤害减伤！`);
       }
-
-      const { type, event, currentTroops, maxTroops, addReport } = context;
-
-      // 被攻击时受到物理伤害减25%
-      if (type === "attacked" && event === "beforeDamage") {
-        return { damageReduction: general.skillEffects.damageReduction };
-      }
-
-      // 回合结束兵力低于70%全属性+8%至多4层
-      if (type === "turnEnd") {
-        const troopPercentage = currentTroops / maxTroops;
-        if (
-          troopPercentage < 0.7 &&
-          general.skillEffects.attributeBonus <
-            general.skillEffects.maxAttributeBonus
-        ) {
-          general.skillEffects.attributeBonus += 1;
-          const bonus = general.skillEffects.attributeBonus * 0.08;
-          general.attack *= 1 + bonus;
-          general.defense *= 1 + bonus;
-          general.strategy *= 1 + bonus;
-          general.speed *= 1 + bonus;
-          general.siege *= 1 + bonus;
-          if (addReport) {
-            addReport(
-              `【${general.name}】触发【危壁霸临】，兵力低于70%，全属性提升8%，当前提升${(bonus * 100).toFixed(0)}%！`,
-            );
-          }
-        }
-      }
-
-      // 兵力低于50%增伤20%
-      if (type === "attack" && event === "beforeAttack") {
-        const troopPercentage = currentTroops / maxTroops;
-        if (troopPercentage < 0.5) {
-          general.skillEffects.damageIncrease = 0.2;
-          return { damageIncrease: general.skillEffects.damageIncrease };
-        } else {
-          general.skillEffects.damageIncrease = 0;
-        }
-      }
-
-      // 首次兵力跌破30%净化负面并回复15%兵力，单局一次
-      if (
-        type === "troopChange" &&
-        !general.skillEffects.hasTriggeredRecovery
-      ) {
-        const troopPercentage = currentTroops / maxTroops;
-        if (troopPercentage < 0.3) {
-          general.skillEffects.hasTriggeredRecovery = true;
-          const recoveryAmount = Math.floor(maxTroops * 0.15);
-          general.troops = Math.min(maxTroops, general.troops + recoveryAmount);
-          if (addReport) {
-            addReport(
-              `【${general.name}】触发【危壁霸临】，兵力跌破30%，净化负面效果并回复15%兵力！`,
-            );
-            addReport(`【${general.name}】回复了${recoveryAmount}点兵力！`);
-          }
-        }
-      }
-
       return null;
-    },
-  };
-};
+    }
 
-// 创建尉迟迥武将数据
+    // 受到攻击 → 应用减伤
+    if (type === "attacked" && event === "beforeDamage") {
+      return { damageReduction: general.skillEffects.damageReduction / 100 };
+    }
+
+    // 回合结束 → 兵力 < 70% 则全属性 +8%（最多 4 层）
+    if (type === "turnEnd") {
+      const hpPct = (currentTroops || general.troops) / (maxTroops || general.maxTroops);
+      if (hpPct < 0.7 && general.skillEffects.attrStackCount < general.skillEffects.maxAttrStack) {
+        general.skillEffects.attrStackCount += 1;
+        const pct = general.skillEffects.attrStackCount * 8;
+        general.attack = Math.floor(general.attack * 1.08);
+        general.defense = Math.floor(general.defense * 1.08);
+        general.strategy = Math.floor(general.strategy * 1.08);
+        general.speed = Math.floor(general.speed * 1.08);
+        if (addReport) {
+          addReport(
+            `【${general.name}】兵力 < 70%，【危壁霸临】使全属性提升 8%（当前层数：${general.skillEffects.attrStackCount}/4，累计 +${pct}%）！`
+          );
+        }
+      }
+      return null;
+    }
+
+    // 回合开始 → 检查 HP < 50% 增伤
+    if (type === "turnStart") {
+      const hpPct = (currentTroops || general.troops) / (maxTroops || general.maxTroops);
+      if (hpPct < 0.5 && !general.skillEffects.damageIncrease) {
+        general.skillEffects.damageIncrease = 22;
+        general.skillEffects.damageIncreaseSource = "weibi-baling-lowhp";
+        if (addReport) {
+          addReport(`【${general.name}】HP < 50%，【危壁霸临】使伤害增加 22%（永久）！`);
+        }
+      }
+      // 首次兵力跌破 30% → 净化 + 回复
+      if (
+        !general.skillEffects.hasTriggeredRecovery &&
+        currentTroops <= (maxTroops * 30) / 100
+      ) {
+        general.skillEffects.hasTriggeredRecovery = true;
+        // 净化负面效果
+        general.skillEffects.damageReduction = 0;
+        general.skillEffects.damageReductionSource = "";
+        general.skillEffects.attributeBonus = 0;
+        general.skillEffects.attributeBonusSource = "";
+        general.skillEffects.damageIncrease = 0;
+        general.skillEffects.damageIncreaseSource = "";
+        general.skillEffects.attrStackCount = 0;
+        // 回复 15% 兵力
+        const recovery = Math.floor(maxTroops * 0.15);
+        general.troops = Math.min(maxTroops, general.troops + recovery);
+        if (addReport) {
+          addReport(`【${general.name}】首次跌破 30%，【危壁霸临】净化所有负面效果并回复 ${recovery} 点兵力！`);
+        }
+      }
+      return null;
+    }
+
+    return null;
+  },
+});
+
 export const createYuchiJiong = (): General => {
   const troops = calculateTroops(YUCHI_JIONG_BASE.command);
-
   return {
     ...YUCHI_JIONG_BASE,
     troops,
     maxTroops: troops,
     skills: [createYuchiJiongSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: YUCHI_JIONG_QUOTES
+    quotes: YUCHI_JIONG_QUOTES,
   };
 };
 
-// 从数据库获取尉迟迥的详细信息（包括头像）
-export const fetchYuchiJiongFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
+export const fetchYuchiJiongFromDatabase = async (
+  API_BASE_URL: string
+): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/633`);
-    if (!response.ok) {
-      throw new Error('获取人物信息失败');
-    }
+    if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
-    
     const troops = calculateTroops(YUCHI_JIONG_BASE.command);
-    
     return {
       ...YUCHI_JIONG_BASE,
       id: characterData.id,
       name: characterData.name,
       dynasty: characterData.dynasty,
       gender: characterData.gender,
-      avatar: characterData.avatar, // 使用数据库中的头像
+      avatar: characterData.avatar,
       troops,
       maxTroops: troops,
       skills: [createYuchiJiongSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: YUCHI_JIONG_QUOTES
+      quotes: YUCHI_JIONG_QUOTES,
     };
   } catch (error) {
-    console.error('从数据库获取尉迟迥信息失败:', error);
-    // 如果获取失败，返回默认数据
+    console.error("从数据库获取尉迟迥信息失败:", error);
     return createYuchiJiong();
   }
 };
- 

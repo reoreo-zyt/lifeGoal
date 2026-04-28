@@ -1,4 +1,4 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const LI_JING_QUOTES = {
   skill: ["兵贵神速，出其不意。", "以正合，以奇胜。", "卫公兵法，鬼神莫测。"],
@@ -9,6 +9,7 @@ const LI_JING_QUOTES = {
 const LI_JING_BASE = {
   id: 29,
   name: "李靖",
+  rarity: "legendary",
   attack: 88,
   attackGrowth: 2.30,
   defense: 88,
@@ -34,12 +35,12 @@ const LI_JING_BASE = {
 // 李靖的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0,
-  damageReductionSource: '',
+  damageReductionSource: "",
   attributeBonus: 0,
-  attributeBonusSource: '',
+  attributeBonusSource: "",
   maxAttributeBonus: 4,
   damageIncrease: 0,
-  damageIncreaseSource: '',
+  damageIncreaseSource: "",
   hasTriggeredRecovery: false,
   hasAppliedCommand: false,
   divineStrategyActive: false,
@@ -56,13 +57,13 @@ export const createLiJingSkill = (): Skill => {
     id: "weigong-bingfa",
     name: "卫公兵法",
     type: "command",
-    description: "指挥：战斗开始时，自身获得【神机】：每次攻击额外造成50%谋略伤害；每回合有30%概率使敌方随机1人陷入【震慑】（下回合无法行动）。",
+    description: "指挥：战斗开始时，自身获得【神机】：普通攻击附带50%谋略伤害；全体友军防御+20%（持续全场）；每回合开始时，有35%概率使敌方随机单体陷入【震慑】（跳过下回合行动）。",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
       }
 
-      const { type, event, addReport, targets } = context;
+      const { type, event, addReport, allies, enemies } = context;
 
       // 战斗开始时触发指挥战法
       if (type === "battleStart" && event === "init" && !general.skillEffects.hasAppliedCommand) {
@@ -73,10 +74,23 @@ export const createLiJingSkill = (): Skill => {
           addReport(`【${general.name}】发动【卫公兵法】，运筹帷幄，神机妙算！`);
         }
 
+        // 全体友军防御+20%（通过 teamDefenseBonus 实现）
+        if (allies && allies.length > 0) {
+          allies.forEach((ally: General) => {
+            if (!ally.teamDefenseBonus) {
+              ally.teamDefenseBonus = 0;
+            }
+            ally.teamDefenseBonus += 0.20;
+            if (addReport) {
+              addReport(`【${ally.name}】防御提升20%！`);
+            }
+          });
+        }
+
         return { triggered: true };
       }
 
-      // 攻击时触发额外谋略伤害（【神机】效果）
+      // 攻击时触发【神机】效果，附加谋略伤害
       if (type === "attack" && event === "beforeAttack") {
         if (general.skillEffects.divineStrategyActive) {
           if (addReport) {
@@ -86,33 +100,33 @@ export const createLiJingSkill = (): Skill => {
         }
       }
 
-      // 回合开始时概率触发【震慑】
+      // 回合开始时，35%概率使敌方单体陷入【震慑】
       if (type === "turnStart") {
-        if (Math.random() < 0.30) {
-          if (targets && targets.length > 0) {
-            const randomTarget = targets[Math.floor(Math.random() * targets.length)];
-            if (!randomTarget.skillEffects) {
-              randomTarget.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-            }
-            // 震慑效果：下回合无法行动
-            randomTarget.skillEffects.isStunned = true;
-            randomTarget.skillEffects.stunSource = `【${general.name}】的【卫公兵法】`;
-
-            if (addReport) {
-              addReport(`【${general.name}】的【卫公兵法】使【${randomTarget.name}】陷入【震慑】，下回合无法行动！`);
+        if (Math.random() < 0.35) {
+          if (enemies && enemies.length > 0) {
+            const aliveEnemies = enemies.filter((e: General) => !e.isDead);
+            if (aliveEnemies.length > 0) {
+              const randomTarget = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+              if (!randomTarget.skillEffects) {
+                randomTarget.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+              }
+              randomTarget.skillEffects.isStunned = true;
+              randomTarget.skillEffects.stunSource = `【${general.name}】的【卫公兵法】`;
+              if (addReport) {
+                addReport(`【${general.name}】的【卫公兵法】使【${randomTarget.name}】陷入【震慑】，下回合无法行动！`);
+              }
             }
           }
         }
-      }
 
-      // 回合开始时检查震慑效果
-      if (type === "turnStart" && general.skillEffects?.isStunned) {
-        if (addReport) {
-          addReport(`【${general.name}】处于【震慑】状态，本回合无法行动！`);
+        // 处理自身被震慑的情况
+        if (general.skillEffects?.isStunned) {
+          if (addReport) {
+            addReport(`【${general.name}】处于【震慑】状态，本回合无法行动！`);
+          }
+          general.skillEffects.isStunned = false;
+          return { skipTurn: true };
         }
-        // 清除震慑效果（已生效）
-        general.skillEffects.isStunned = false;
-        return { skipTurn: true };
       }
 
       return null;
@@ -131,6 +145,7 @@ export const createLiJing = (): General => {
     skills: [createLiJingSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
     quotes: LI_JING_QUOTES,
+    rarity: LI_JING_BASE.rarity as GeneralRarity,
   };
 };
 
@@ -157,6 +172,7 @@ export const fetchLiJingFromDatabase = async (API_BASE_URL: string): Promise<Gen
       skills: [createLiJingSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
       quotes: LI_JING_QUOTES,
+      rarity: LI_JING_BASE.rarity as GeneralRarity,
     };
   } catch (error) {
     console.error('从数据库获取李靖信息失败:', error);

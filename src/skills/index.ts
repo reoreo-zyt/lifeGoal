@@ -24,63 +24,118 @@ import { createDuRuHui } from "./du-ru-hui";
 import { createYuChiGong } from "./yu-chi-gong";
 import { createLiDeLin } from "./li-de-lin";
 import { createYuanYan } from "./yuan-yan-shi";
+import type { GeneralRarity } from "./types";
 
-// 招募配置：添加新武将时只需在这里添加一项
+// ============================================================
+// 招募配置：武将稀有度分组
+// ============================================================
+
+// 招募配置项
 export interface RecruitConfigItem {
-  id: number;           // 数据库中的武将ID
-  moduleName: string;   // 技能模块文件名（用于动态导入）
-  fetchFnName: string;  // fetch函数名
-  name: string;         // 武将显示名（注释用）
+  id: number;
+  moduleName: string;
+  fetchFnName: string;
+  name: string;
+  rarity: GeneralRarity;
 }
 
+// 按稀有度分组的武将列表
 export const RECRUIT_CONFIG: RecruitConfigItem[] = [
-  { id: 633, moduleName: "yuchi-jiong", fetchFnName: "fetchYuchiJiongFromDatabase", name: "尉迟迥" },
-  { id: 69, moduleName: "li-de-lin", fetchFnName: "fetchLiDeLinFromDatabase", name: "李德林" },
-  { id: 71, moduleName: "wei-shi-kang", fetchFnName: "fetchWeiShiKangFromDatabase", name: "韦世康" },
-  { id: 70, moduleName: "lu-yan-shi", fetchFnName: "fetchLuYanShiFromDatabase", name: "陆彦师" },
-  { id: 515, moduleName: "yuan-yan-shi", fetchFnName: "fetchYuanYanFromDatabase", name: "元岩" },
-  { id: 577, moduleName: "feng-ci-ming", fetchFnName: "fetchFengCiMingFromDatabase", name: "冯慈明" },
-  { id: 739, moduleName: "di-wu-qi", fetchFnName: "fetchDiWuQiFromDatabase", name: "第五琦" },
-  { id: 707, moduleName: "shang-guan-yi", fetchFnName: "fetchShangGuanYiFromDatabase", name: "上官仪" },
-  { id: 66, moduleName: "yang-wen-si", fetchFnName: "fetchYangWenSiFromDatabase", name: "杨文思" },
-  { id: 73, moduleName: "wei-yi", fetchFnName: "fetchWeiYiFromDatabase", name: "韦艺" },
-  { id: 43, moduleName: "han-qin-hu", fetchFnName: "fetchHanQinHuFromDatabase", name: "韩擒虎" },
-  { id: 4, moduleName: "yu-chi-gong", fetchFnName: "fetchYuChiGongFromDatabase", name: "尉迟恭" },
-  { id: 27, moduleName: "fang-xuan-ling", fetchFnName: "fetchFangXuanLingFromDatabase", name: "房玄龄" },
-  { id: 28, moduleName: "du-ru-hui", fetchFnName: "fetchDuRuHuiFromDatabase", name: "杜如晦" },
-  { id: 21, moduleName: "yang-jian", fetchFnName: "fetchYangJianFromDatabase", name: "杨坚" },
-  { id: 22, moduleName: "yang-guang", fetchFnName: "fetchYangGuangFromDatabase", name: "杨广" },
-  { id: 24, moduleName: "gao-jiong", fetchFnName: "fetchGaoJiongFromDatabase", name: "高颎" },
-  { id: 25, moduleName: "yang-su", fetchFnName: "fetchYangSuFromDatabase", name: "杨素" },
-  { id: 44, moduleName: "he-ruo-bi", fetchFnName: "fetchHeRuoBiFromDatabase", name: "贺若弼" },
-  { id: 29, moduleName: "li-jing", fetchFnName: "fetchLiJingFromDatabase", name: "李靖" },
-  { id: 20, moduleName: "liu-wen-jing", fetchFnName: "fetchLiuWenJingFromDatabase", name: "刘文静" },
-  { id: 26, moduleName: "yuwen-hua-ji", fetchFnName: "fetchYuWenHuaJiFromDatabase", name: "宇文化及" },
-  { id: 570, moduleName: "li-mi", fetchFnName: "fetchLiMiFromDatabase", name: "李密" },
-  { id: 42, moduleName: "shi-wan-sui", fetchFnName: "fetchShiWanSuiFromDatabase", name: "史万岁" },
-  { id: 561, moduleName: "yu-shi-ji", fetchFnName: "fetchYuShiJiFromDatabase", name: "虞世基" },
-  { id: 1, moduleName: "li-yuan", fetchFnName: "fetchLiYuanFromDatabase", name: "李渊" },
+  // ★★★★★ 金（4人）
+  { id: 21, moduleName: "yang-jian", fetchFnName: "fetchYangJianFromDatabase", name: "杨坚", rarity: "legendary" },
+  { id: 24, moduleName: "gao-jiong", fetchFnName: "fetchGaoJiongFromDatabase", name: "高颎", rarity: "legendary" },
+  { id: 25, moduleName: "yang-su", fetchFnName: "fetchYangSuFromDatabase", name: "杨素", rarity: "legendary" },
+  { id: 29, moduleName: "li-jing", fetchFnName: "fetchLiJingFromDatabase", name: "李靖", rarity: "legendary" },
+
+  // ★★★★ 紫（8人）
+  { id: 4, moduleName: "yu-chi-gong", fetchFnName: "fetchYuChiGongFromDatabase", name: "尉迟恭", rarity: "rare" },
+  { id: 27, moduleName: "fang-xuan-ling", fetchFnName: "fetchFangXuanLingFromDatabase", name: "房玄龄", rarity: "rare" },
+  { id: 28, moduleName: "du-ru-hui", fetchFnName: "fetchDuRuHuiFromDatabase", name: "杜如晦", rarity: "rare" },
+  { id: 633, moduleName: "yuchi-jiong", fetchFnName: "fetchYuchiJiongFromDatabase", name: "尉迟迥", rarity: "rare" },
+  { id: 43, moduleName: "han-qin-hu", fetchFnName: "fetchHanQinHuFromDatabase", name: "韩擒虎", rarity: "rare" },
+  { id: 44, moduleName: "he-ruo-bi", fetchFnName: "fetchHeRuoBiFromDatabase", name: "贺若弼", rarity: "rare" },
+  { id: 22, moduleName: "yang-guang", fetchFnName: "fetchYangGuangFromDatabase", name: "杨广", rarity: "rare" },
+  { id: 42, moduleName: "shi-wan-sui", fetchFnName: "fetchShiWanSuiFromDatabase", name: "史万岁", rarity: "rare" },
+
+  // ★★★ 绿（7人）
+  { id: 570, moduleName: "li-mi", fetchFnName: "fetchLiMiFromDatabase", name: "李密", rarity: "uncommon" },
+  { id: 561, moduleName: "yu-shi-ji", fetchFnName: "fetchYuShiJiFromDatabase", name: "虞世基", rarity: "uncommon" },
+  { id: 69, moduleName: "li-de-lin", fetchFnName: "fetchLiDeLinFromDatabase", name: "李德林", rarity: "uncommon" },
+  { id: 20, moduleName: "liu-wen-jing", fetchFnName: "fetchLiuWenJingFromDatabase", name: "刘文静", rarity: "uncommon" },
+  { id: 1, moduleName: "li-yuan", fetchFnName: "fetchLiYuanFromDatabase", name: "李渊", rarity: "uncommon" },
+  { id: 515, moduleName: "yuan-yan-shi", fetchFnName: "fetchYuanYanFromDatabase", name: "元岩", rarity: "uncommon" },
+  { id: 26, moduleName: "yuwen-hua-ji", fetchFnName: "fetchYuWenHuaJiFromDatabase", name: "宇文化及", rarity: "uncommon" },
+
+  // ★★ 白（7人）
+  { id: 66, moduleName: "yang-wen-si", fetchFnName: "fetchYangWenSiFromDatabase", name: "杨文思", rarity: "common" },
+  { id: 73, moduleName: "wei-yi", fetchFnName: "fetchWeiYiFromDatabase", name: "韦艺", rarity: "common" },
+  { id: 577, moduleName: "feng-ci-ming", fetchFnName: "fetchFengCiMingFromDatabase", name: "冯慈明", rarity: "common" },
+  { id: 71, moduleName: "wei-shi-kang", fetchFnName: "fetchWeiShiKangFromDatabase", name: "韦世康", rarity: "common" },
+  { id: 70, moduleName: "lu-yan-shi", fetchFnName: "fetchLuYanShiFromDatabase", name: "陆彦师", rarity: "common" },
+  { id: 739, moduleName: "di-wu-qi", fetchFnName: "fetchDiWuQiFromDatabase", name: "第五琦", rarity: "common" },
+  { id: 707, moduleName: "shang-guan-yi", fetchFnName: "fetchShangGuanYiFromDatabase", name: "上官仪", rarity: "common" },
 ];
 
-// 计算平均概率
-export const getRecruitProbabilities = (): Map<number, number> => {
-  const prob = 1 / RECRUIT_CONFIG.length;
-  const map = new Map<number, number>();
-  RECRUIT_CONFIG.forEach(item => {
-    map.set(item.id, Math.round(prob * 1000) / 1000);
-  });
-  return map;
+// ============================================================
+// 保底配置
+// ============================================================
+
+/** 10 抽内必出紫 */
+export const GUARANTEE_PITY_PURPLE = 10;
+/** 30 抽内必出金 */
+export const GUARANTEE_PITY_GOLD = 30;
+
+// ============================================================
+// 招募概率（用于保底计算）
+// ============================================================
+
+/** 基础抽卡概率权重 */
+export const RARITY_WEIGHT: Record<GeneralRarity, number> = {
+  common: 60,
+  uncommon: 30,
+  rare: 9,
+  legendary: 1,
 };
 
+const TOTAL_WEIGHT = Object.values(RARITY_WEIGHT).reduce((a, b) => a + b, 0);
+
+/** 按权重随机抽取一个稀有度 */
+export const pickRarity = (): GeneralRarity => {
+  let roll = Math.random() * TOTAL_WEIGHT;
+  for (const [rarity, weight] of Object.entries(RARITY_WEIGHT)) {
+    roll -= weight;
+    if (roll <= 0) return rarity as GeneralRarity;
+  }
+  return "common";
+};
+
+/**
+ * 按稀有度从 RECRUIT_CONFIG 中抽取一个武将
+ * @param rarity 指定稀有度（不指定则按概率随机）
+ */
+export const pickGeneralByRarity = (rarity?: GeneralRarity): RecruitConfigItem | null => {
+  const pool = rarity
+    ? RECRUIT_CONFIG.filter((g) => g.rarity === rarity)
+    : RECRUIT_CONFIG;
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+};
+
+// ============================================================
 // 动态获取 fetch 函数
+// ============================================================
+
 export const getFetchFunctionBase = (id: number, API_BASE_URL: string): (() => Promise<import("./types").General | null>) | null => {
-  const config = RECRUIT_CONFIG.find(item => item.id === id);
+  const config = RECRUIT_CONFIG.find((item) => item.id === id);
   if (!config) return null;
 
-  return () => import(`./${config.moduleName}`).then(m => m[config.fetchFnName](API_BASE_URL));
+  return () => import(`./${config.moduleName}`).then((m) => m[config.fetchFnName](API_BASE_URL));
 };
 
-// 所有可招募的特殊武将（用于本地创建）
+// ============================================================
+// 特殊武将（本地创建，用于敌方阵容）
+// ============================================================
+
 export const specialGenerals = {
   yuchiJiong: createYuchiJiong,
   luYanShi: createLuYanShi,
@@ -110,13 +165,11 @@ export const specialGenerals = {
   yuanYan: createYuanYan,
 };
 
-// 获取特殊武将
 export const getSpecialGeneral = (name: string): import("./types").General | null => {
   const creator = specialGenerals[name as keyof typeof specialGenerals];
   return creator ? creator() : null;
 };
 
-// 随机获取一个特殊武将（用于招募）
 export const getRandomSpecialGeneral = (): import("./types").General | null => {
   const keys = Object.keys(specialGenerals);
   if (keys.length === 0) return null;

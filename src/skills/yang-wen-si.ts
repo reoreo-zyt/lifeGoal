@@ -1,4 +1,4 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const YANG_WEN_SI_QUOTES = {
   skill: ["宽政安民，方可久治。", "为政在简，惠及黎庶。"],
@@ -8,6 +8,7 @@ const YANG_WEN_SI_QUOTES = {
 const YANG_WEN_SI_BASE = {
   id: 66,
   name: "杨文思",
+  rarity: "common" as GeneralRarity,
   attack: 46,
   attackGrowth: 0.78,
   defense: 61,
@@ -56,36 +57,32 @@ const DEFAULT_SKILL_EFFECTS = {
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
-export const createYangWenSiSkill = (): Skill => {
-  return {
-    id: "kuanjian-minzheng",
-    name: "宽简民政",
-    type: "command",
-    description:
-      "指挥：每回合开始时，使我军兵力最低单体恢复兵力（恢复率 90%），并获得 10% 减伤，持续 1 回合。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-      const { type, event, allies, addReport } = context;
-      if (type === "command" && event === "turnStart" && allies?.length > 0) {
-        const aliveAllies = allies.filter((a: General) => !a.isDead);
-        if (aliveAllies.length === 0) return { triggered: false };
-        const ally = aliveAllies.reduce((min: General, cur: General) =>
-          cur.troops < min.troops ? cur : min,
-        );
-        const recover = Math.floor(general.strategy * 0.9);
-        ally.troops = Math.min(ally.maxTroops, ally.troops + recover);
-        if (!ally.skillEffects) ally.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-        ally.skillEffects.damageReduction = 0.1;
-        ally.skillEffects.damageReductionSource = `【${general.name}】的【宽简民政】`;
-        if (addReport) {
-          addReport(`【${general.name}】施行【宽简民政】，为【${ally.name}】恢复${recover}兵力并赋予10%减伤！`);
-        }
-        return { triggered: true };
+// 指挥：每回合开始时，为我军兵力最低单体恢复兵力（恢复率 100%）
+export const createYangWenSiSkill = (): Skill => ({
+  id: "kuanjian-minzheng",
+  name: "宽简民政",
+  type: "command",
+  description: "指挥：每回合开始时，为我军兵力最低单体恢复兵力，恢复率 100%。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    const { type, event, allies, addReport } = context;
+
+    if (type === "command" && event === "turnStart" && allies?.length > 0) {
+      const aliveAllies = allies.filter((a: General) => !a.isDead);
+      if (aliveAllies.length === 0) return { triggered: false };
+      const ally = aliveAllies.reduce((min: General, cur: General) =>
+        cur.troops < min.troops ? cur : min,
+      );
+      const recover = Math.floor(general.strategy);
+      ally.troops = Math.min(ally.maxTroops, ally.troops + recover);
+      if (addReport) {
+        addReport(`【${general.name}】施行【宽简民政】，为【${ally.name}】恢复${recover}点兵力！`);
       }
-      return null;
-    },
-  };
-};
+      return { triggered: true };
+    }
+    return null;
+  },
+});
 
 export const createYangWenSi = (): General => {
   const troops = calculateTroops(YANG_WEN_SI_BASE.command);
@@ -99,9 +96,7 @@ export const createYangWenSi = (): General => {
   };
 };
 
-export const fetchYangWenSiFromDatabase = async (
-  API_BASE_URL: string,
-): Promise<General | null> => {
+export const fetchYangWenSiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/66`);
     if (!response.ok) throw new Error("获取人物信息失败");

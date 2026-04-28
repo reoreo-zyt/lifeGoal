@@ -1,14 +1,14 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const FENG_CI_MING_QUOTES = {
   skill: ["守节不移，虽死犹荣。", "臣心所系，唯在社稷。"],
   death: ["义尽于此，无愧天下。"],
 } as const;
 
-// 冯慈明的基础属性常量
 const FENG_CI_MING_BASE = {
   id: 577,
   name: "冯慈明",
+  rarity: "common" as GeneralRarity,
   attack: 41,
   attackGrowth: 0.71,
   defense: 48,
@@ -31,7 +31,6 @@ const FENG_CI_MING_BASE = {
   avatar: "/images/feng_ci_ming.jpg",
 };
 
-// 冯慈明的 skillEffects 默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0,
   damageReductionSource: "",
@@ -55,84 +54,51 @@ const DEFAULT_SKILL_EFFECTS = {
   cannotNormalAttackSource: "",
 };
 
-const calculateTroops = (commandValue: number): number => {
-  return Math.floor(commandValue * 10);
-};
+const calculateTroops = (commandValue: number): number =>
+  Math.floor(commandValue * 10);
 
-// 冯慈明的自带战法【死节不贰】
-export const createFengCiMingSkill = (): Skill => {
-  return {
-    id: "sijie-buer",
-    name: "死节不贰",
-    type: "active",
-    description:
-      "主动，发动概率 35%，攻击范围 3：对敌军单体造成 120% 策略伤害，并使其陷入“怯战”（无法普攻），持续 2 回合。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) {
-        general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-      }
+// 主动 35%：单体 120% 策略伤害 + 使目标陷入「怯战」（无法普攻）2 回合
+export const createFengCiMingSkill = (): Skill => ({
+  id: "sijie-buer",
+  name: "死节不贰",
+  type: "active",
+  description:
+    "主动，发动概率 35%，攻击范围 3：对敌军单体造成 120% 策略伤害，并使其陷入「怯战」（无法普攻），持续 2 回合。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    const { type, event, addReport, targets } = context;
 
-      const { type, event, addReport, targets } = context;
-
-      // 主动战法触发
-      if (type === "activeSkill" && event === "trigger") {
-        const triggerChance = 0.35;
-        if (addReport) {
-          addReport(
-            `【${general.name}】尝试发动【死节不贰】（发动概率：${(triggerChance * 100).toFixed(0)}%）`,
-          );
-        }
-
-        if (Math.random() < triggerChance) {
-          if (addReport) {
-            addReport(`【${general.name}】成功发动【死节不贰】！`);
-          }
-
-          // 对敌军单体造成 120% 策略伤害并附加怯战
-          if (targets && targets.length > 0) {
-            const target = targets[0];
-            const damage = Math.max(
-              0,
-              Math.floor(general.strategy * 1.2 - target.strategy / 2),
-            );
-            target.troops = Math.max(0, target.troops - damage);
-
-            if (target.troops <= 0) {
-              target.isDead = true;
-            }
-
-            if (!target.skillEffects) {
-              target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-            }
-            target.skillEffects.cannotNormalAttack = true;
-            target.skillEffects.cannotNormalAttackDuration = 2;
-            target.skillEffects.cannotNormalAttackSource = `【${general.name}】的【死节不贰】`;
-
-            if (addReport) {
-              addReport(
-                `【${general.name}】对【${target.name}】造成${damage}点策略伤害，并使其陷入“怯战”（无法普攻）2回合！`,
-              );
-            }
-          }
-
-          return { triggered: true };
-        }
-
-        if (addReport) {
-          addReport(`【${general.name}】的【死节不贰】未触发！`);
-        }
+    if (type === "activeSkill" && event === "trigger") {
+      const chance = 0.35;
+      if (addReport) addReport(`【${general.name}】尝试发动【死节不贰】（发动概率：35%）`);
+      if (Math.random() >= chance) {
+        if (addReport) addReport(`【${general.name}】的【死节不贰】未触发！`);
         return { triggered: false };
       }
+      if (addReport) addReport(`【${general.name}】成功发动【死节不贰】！`);
 
-      return null;
-    },
-  };
-};
+      if (targets?.length > 0) {
+        const target = targets[0];
+        const damage = Math.max(0, Math.floor(general.strategy * 1.2 - target.strategy / 2));
+        target.troops = Math.max(0, target.troops - damage);
+        if (target.troops <= 0) target.isDead = true;
 
-// 创建冯慈明武将数据
+        if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+        target.skillEffects.cannotNormalAttack = true;
+        target.skillEffects.cannotNormalAttackDuration = 2;
+        target.skillEffects.cannotNormalAttackSource = `【${general.name}】的【死节不贰】`;
+
+        if (addReport) addReport(`【${general.name}】对【${target.name}】造成${damage}点策略伤害，并使其陷入「怯战」2回合！`);
+      }
+      return { triggered: true };
+    }
+
+    return null;
+  },
+});
+
 export const createFengCiMing = (): General => {
   const troops = calculateTroops(FENG_CI_MING_BASE.command);
-
   return {
     ...FENG_CI_MING_BASE,
     troops,
@@ -143,19 +109,12 @@ export const createFengCiMing = (): General => {
   };
 };
 
-// 从数据库获取冯慈明的详细信息（包括头像）
-export const fetchFengCiMingFromDatabase = async (
-  API_BASE_URL: string,
-): Promise<General | null> => {
+export const fetchFengCiMingFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/577`);
-    if (!response.ok) {
-      throw new Error("获取人物信息失败");
-    }
+    if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
-
     const troops = calculateTroops(FENG_CI_MING_BASE.command);
-
     return {
       ...FENG_CI_MING_BASE,
       id: characterData.id ?? FENG_CI_MING_BASE.id,

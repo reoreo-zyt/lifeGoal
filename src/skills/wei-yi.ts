@@ -1,4 +1,4 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const WEI_YI_QUOTES = {
   skill: ["边城既定，民心自安。", "戎马为国，亦当抚众。"],
@@ -8,6 +8,7 @@ const WEI_YI_QUOTES = {
 const WEI_YI_BASE = {
   id: 73,
   name: "韦艺",
+  rarity: "common" as GeneralRarity,
   attack: 89,
   attackGrowth: 2.32,
   defense: 83,
@@ -56,45 +57,42 @@ const DEFAULT_SKILL_EFFECTS = {
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
-export const createWeiYiSkill = (): Skill => {
-  return {
-    id: "zhenbian-fumin",
-    name: "镇边抚民",
-    type: "active",
-    description:
-      "主动，发动概率 34%，攻击范围 2：对敌军单体造成 132% 物理伤害，并降低其防御 10%，持续 2 回合。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-      const { type, event, addReport, targets } = context;
-      if (type === "activeSkill" && event === "trigger") {
-        const chance = 0.34;
-        if (addReport) addReport(`【${general.name}】尝试发动【镇边抚民】（发动概率：34%）`);
-        if (Math.random() >= chance) {
-          if (addReport) addReport(`【${general.name}】的【镇边抚民】未触发！`);
-          return { triggered: false };
-        }
-        if (targets?.length > 0) {
-          const target = targets[0];
-          const damage = Math.max(
-            0,
-            Math.floor(general.attack * 1.32 - target.defense / 2),
-          );
-          target.troops = Math.max(0, target.troops - damage);
-          if (target.troops <= 0) target.isDead = true;
-          if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-          target.skillEffects.defenseReduction = 0.1;
-          target.skillEffects.defenseReductionDuration = 2;
-          target.skillEffects.defenseReductionSource = `【${general.name}】的【镇边抚民】`;
-          if (addReport) {
-            addReport(`【${general.name}】重击【${target.name}】造成${damage}点物理伤害，并使其降防10%，持续2回合！`);
-          }
-        }
-        return { triggered: true };
+// 主动 34%：单体 132% 物理伤害 + 降防 10% 持续 2 回合
+export const createWeiYiSkill = (): Skill => ({
+  id: "zhenbian-fumin",
+  name: "镇边抚民",
+  type: "active",
+  description: "主动，发动概率 34%，攻击范围 2：对敌军单体造成 132% 物理伤害，并降低其防御 10%，持续 2 回合。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    const { type, event, addReport, targets } = context;
+
+    if (type === "activeSkill" && event === "trigger") {
+      const chance = 0.34;
+      if (addReport) addReport(`【${general.name}】尝试发动【镇边抚民】（发动概率：34%）`);
+      if (Math.random() >= chance) {
+        if (addReport) addReport(`【${general.name}】的【镇边抚民】未触发！`);
+        return { triggered: false };
       }
-      return null;
-    },
-  };
-};
+      if (addReport) addReport(`【${general.name}】成功发动【镇边抚民】！`);
+
+      if (targets?.length > 0) {
+        const target = targets[0];
+        const damage = Math.max(0, Math.floor(general.attack * 1.32 - target.defense / 2));
+        target.troops = Math.max(0, target.troops - damage);
+        if (target.troops <= 0) target.isDead = true;
+        if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+        target.skillEffects.defenseReduction = 0.1;
+        target.skillEffects.defenseReductionDuration = 2;
+        target.skillEffects.defenseReductionSource = `【${general.name}】的【镇边抚民】`;
+        if (addReport) addReport(`【${general.name}】重击【${target.name}】造成${damage}点物理伤害，并使其降防 10%，持续 2 回合！`);
+      }
+      return { triggered: true };
+    }
+
+    return null;
+  },
+});
 
 export const createWeiYi = (): General => {
   const troops = calculateTroops(WEI_YI_BASE.command);
@@ -108,9 +106,7 @@ export const createWeiYi = (): General => {
   };
 };
 
-export const fetchWeiYiFromDatabase = async (
-  API_BASE_URL: string,
-): Promise<General | null> => {
+export const fetchWeiYiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/73`);
     if (!response.ok) throw new Error("获取人物信息失败");

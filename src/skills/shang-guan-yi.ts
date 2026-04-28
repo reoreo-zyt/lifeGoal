@@ -1,13 +1,14 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const SHANG_GUAN_YI_QUOTES = {
   skill: ["辞锋可折冲，文笔亦安邦。", "文章经国，亦可定策。"],
-  death: ["孤忠难申，徒留清名。"]
+  death: ["孤忠难申，徒留清名。"],
 } as const;
 
 const SHANG_GUAN_YI_BASE = {
   id: 707,
   name: "上官仪",
+  rarity: "common" as GeneralRarity,
   attack: 42,
   attackGrowth: 0.66,
   defense: 52,
@@ -51,45 +52,35 @@ const DEFAULT_SKILL_EFFECTS = {
   cannotNormalAttack: false,
   cannotNormalAttackDuration: 0,
   cannotNormalAttackSource: "",
-  passiveDamageTagValue: 0.15,
-  passiveDamageTagLabel: "文裁",
-  passiveDamageTagSource: "【绮辞裁政】每次伤害前增伤15%",
 };
 
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
-export const createShangGuanYiSkill = (): Skill => {
-  return {
-    id: "qici-caizheng",
-    name: "绮辞裁政",
-    type: "passive",
-    description:
-      "被动：每次造成伤害前，自身增伤 15%；首次兵力低于 50% 时，额外获得 18% 减伤并持续全场。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-      const { type, event, currentTroops, maxTroops, addReport } = context;
+// 指挥：每回合开始时，为我军兵力最低单体恢复兵力（恢复率 85%）
+export const createShangGuanYiSkill = (): Skill => ({
+  id: "qici-caizheng",
+  name: "绮辞裁政",
+  type: "command",
+  description: "指挥：每回合开始时，为我军兵力最低单体恢复兵力，恢复率 85%。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    const { type, event, allies, addReport } = context;
 
-      if (type === "attack" && event === "beforeAttack") {
-        return { damageIncrease: 0.15 };
-      }
-
-      if (type === "attacked" && event === "beforeDamage") {
-        const ratio = maxTroops > 0 ? currentTroops / maxTroops : 1;
-        if (ratio < 0.5 && general.skillEffects.damageReduction < 0.18) {
-          general.skillEffects.damageReduction = 0.18;
-          general.skillEffects.damageReductionSource = `【${general.name}】的【绮辞裁政】`;
-          if (addReport) addReport(`【${general.name}】文心自守，触发【绮辞裁政】，获得18%减伤！`);
-        }
-        if (general.skillEffects.damageReduction > 0) {
-          return { damageReduction: general.skillEffects.damageReduction };
-        }
-      }
-
-      return null;
-    },
-  };
-};
+    if (type === "command" && event === "turnStart" && allies?.length > 0) {
+      const aliveAllies = allies.filter((a: General) => !a.isDead);
+      if (aliveAllies.length === 0) return { triggered: false };
+      const ally = aliveAllies.reduce((min: General, cur: General) =>
+        cur.troops < min.troops ? cur : min,
+      );
+      const recover = Math.floor(general.strategy * 0.85);
+      ally.troops = Math.min(ally.maxTroops, ally.troops + recover);
+      if (addReport) addReport(`【${general.name}】施展【绮辞裁政】，为【${ally.name}】恢复${recover}点兵力！`);
+      return { triggered: true };
+    }
+    return null;
+  },
+});
 
 export const createShangGuanYi = (): General => {
   const troops = calculateTroops(SHANG_GUAN_YI_BASE.command);
@@ -103,9 +94,7 @@ export const createShangGuanYi = (): General => {
   };
 };
 
-export const fetchShangGuanYiFromDatabase = async (
-  API_BASE_URL: string,
-): Promise<General | null> => {
+export const fetchShangGuanYiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/707`);
     if (!response.ok) throw new Error("获取人物信息失败");
@@ -122,10 +111,7 @@ export const fetchShangGuanYiFromDatabase = async (
       maxTroops: troops,
       skills: [createShangGuanYiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: ["辞锋可折冲，文笔亦安邦。", "文章经国，亦可定策。"],
-        death: ["孤忠难申，徒留清名。"],
-      },
+      quotes: SHANG_GUAN_YI_QUOTES,
     };
   } catch (error) {
     console.error("从数据库获取上官仪信息失败:", error);

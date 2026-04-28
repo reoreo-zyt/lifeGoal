@@ -19,6 +19,9 @@
             selected: isActiveSlotGeneral(general),
             resting: isResting(general),
           }"
+          :style="{
+            '--rarity-border': getBorderColor(general),
+          }"
           @click="handleSelect(general)"
           @contextmenu="$emit('show-tooltip', general, $event)"
         >
@@ -36,7 +39,7 @@
               <div class="card-right-top">
                 <div class="card-stars">
                   <span
-                    v-for="i in 5"
+                    v-for="i in getMaxStar(general)"
                     :key="i"
                     class="star"
                     :class="{
@@ -79,7 +82,15 @@
 </template>
 
 <script setup lang="ts">
-import type { General } from "../skills/types";
+import type { General, GeneralRarity } from "../skills/types";
+import { RARITY_CONFIG } from "../skills/types";
+
+const RARITY_BORDER_COLORS: Record<GeneralRarity, string> = {
+  common: "#6b7280",
+  uncommon: "#22c55e",
+  rare: "#a855f7",
+  legendary: "#f59e0b",
+};
 
 const props = defineProps<{
   generals: General[];
@@ -98,6 +109,14 @@ const emit = defineEmits<{
 const getSynthStar = (general: General) => {
   const star = (general as General & { synthStar?: number }).synthStar;
   return typeof star === "number" ? Math.max(0, Math.min(5, star)) : 0;
+};
+
+const getMaxStar = (general: General) => {
+  return RARITY_CONFIG[general.rarity]?.starLimit ?? 5;
+};
+
+const getBorderColor = (general: General) => {
+  return RARITY_BORDER_COLORS[general.rarity] ?? "#8b6914";
 };
 
 const isDeployed = (general: General) => props.deployedGeneralIds.includes(general.id);
@@ -227,6 +246,7 @@ const handleSelect = (general: General) => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  border: 3px solid var(--rarity-border, #8b6914);
 }
 
 .card::before {

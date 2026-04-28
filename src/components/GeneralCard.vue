@@ -24,6 +24,7 @@
       }]"
       :style="{
         backgroundImage: `url(${avatarUrl})`,
+        borderColor: borderColor,
       }"
       :data-card-side="side"
       :data-card-position="position"
@@ -38,7 +39,7 @@
         <div class="card-right-top">
           <div class="card-stars">
             <span
-              v-for="i in 5"
+              v-for="i in maxStar"
               :key="i"
               class="star"
               :class="{
@@ -83,8 +84,16 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { General } from "../skills/types";
+import type { General, GeneralRarity } from "../skills/types";
+import { RARITY_CONFIG } from "../skills/types";
 import StatusEffects from "./StatusEffects.vue";
+
+const RARITY_BORDER_COLORS: Record<GeneralRarity, string> = {
+  common: "#6b7280",
+  uncommon: "#22c55e",
+  rare: "#a855f7",
+  legendary: "#f59e0b",
+};
 
 const props = defineProps<{
   general: General | null | undefined;
@@ -118,13 +127,18 @@ const avatarUrl = computed(() => {
 
 const synthStar = computed(() => {
   if (!props.general) return 0;
-  const effects = props.general.skillEffects || {};
-  const physicalBonus = effects.physicalBonus || 0;
-  const strategyBonus = effects.strategyBonus || 0;
-  const defenseBonus = effects.defenseBonus || 0;
-  const speedBonus = effects.speedBonus || 0;
-  const totalBonus = physicalBonus + strategyBonus + defenseBonus + speedBonus;
-  return Math.min(5, Math.floor(totalBonus / 0.2));
+  const star = (props.general as General & { synthStar?: number }).synthStar;
+  return typeof star === "number" ? Math.max(0, Math.min(5, star)) : 0;
+});
+
+const maxStar = computed(() => {
+  if (!props.general) return 5;
+  return RARITY_CONFIG[props.general.rarity]?.starLimit ?? 5;
+});
+
+const borderColor = computed(() => {
+  if (!props.general) return "#8b6914";
+  return RARITY_BORDER_COLORS[props.general.rarity] ?? "#8b6914";
 });
 
 const handleContextMenu = (event: MouseEvent) => {

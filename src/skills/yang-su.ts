@@ -1,4 +1,4 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const YANG_SU_QUOTES = {
   skill: [
@@ -13,6 +13,7 @@ const YANG_SU_QUOTES = {
 const YANG_SU_BASE = {
   id: 25,
   name: "杨素",
+  rarity: "legendary",
   attack: 92,
   attackGrowth: 2.50,
   defense: 85,
@@ -38,12 +39,12 @@ const YANG_SU_BASE = {
 // 杨素的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0,
-  damageReductionSource: '',
+  damageReductionSource: "",
   attributeBonus: 0,
-  attributeBonusSource: '',
+  attributeBonusSource: "",
   maxAttributeBonus: 4,
   damageIncrease: 0,
-  damageIncreaseSource: '',
+  damageIncreaseSource: "",
   hasTriggeredRecovery: false,
 };
 
@@ -57,65 +58,61 @@ export const createYangSuSkill = (): Skill => {
   return {
     id: "chusai-podi",
     name: "出塞破敌",
-    type: "active",
-    description: "主动，发动概率40%，攻击范围2：对敌方前排造成130%物理伤害；若目标兵力低于50%，额外造成40%伤害。",
+    type: "command",
+    description: "指挥：战斗开始时，为全体友军提供【铁骑】效果：普通攻击对敌方前排目标伤害+25%；自身每回合有40%概率对敌方最高防御目标施加【破甲】10%，持续2回合。",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
       }
 
-      const { type, event, addReport, targets } = context;
+      const { type, event, addReport, allies, enemies } = context;
 
-      // 主动战法触发
-      if (type === "activeSkill" && event === "trigger") {
-        const triggerChance = 0.40;
+      // 战斗开始时触发指挥战法
+      if (type === "battleStart" && event === "init" && !general.skillEffects.hasAppliedCommand) {
+        general.skillEffects.hasAppliedCommand = true;
+
         if (addReport) {
-          addReport(
-            `【${general.name}】尝试发动【出塞破敌】（发动概率：${(triggerChance * 100).toFixed(0)}%）`,
-          );
+          addReport(`【${general.name}】发动【出塞破敌】，铁骑出塞！`);
         }
 
-        if (Math.random() < triggerChance) {
-          if (addReport) {
-            addReport(`【${general.name}】成功发动【出塞破敌】！`);
-          }
+        // 为全体友军提供【铁骑】效果
+        if (allies && allies.length > 0) {
+          allies.forEach((ally: General) => {
+            if (!ally.skillEffects) {
+              ally.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+            }
+            ally.skillEffects.damageIncrease = (ally.skillEffects.damageIncrease || 0) + 0.25;
+            ally.skillEffects.damageIncreaseSource = `【${general.name}】的【出塞破敌】`;
+            if (addReport) {
+              addReport(`【${ally.name}】获得【铁骑】效果，对前排目标伤害+25%！`);
+            }
+          });
+        }
 
-          // 对敌方前排造成130%物理伤害
-          if (targets && targets.length > 0) {
-            // 假设前2个为前排
-            const frontTargets = targets.slice(0, 2);
-            frontTargets.forEach((target: General) => {
-              const baseDamage = Math.max(0, Math.floor(general.attack * 1.30 - target.defense / 2));
+        return { triggered: true };
+      }
 
-              // 若目标兵力低于50%，额外造成40%伤害
-              const troopRatio = target.troops / target.maxTroops;
-              let bonusDamage = 0;
-              if (troopRatio < 0.5) {
-                bonusDamage = Math.floor(baseDamage * 0.40);
-                if (addReport) {
-                  addReport(`【${target.name}】兵力不足50%，受到额外伤害！`);
-                }
+      // 每回合开始时，有40%概率对敌方最高防御目标施加【破甲】
+      if (type === "turnStart") {
+        if (Math.random() < 0.40) {
+          if (enemies && enemies.length > 0) {
+            const aliveEnemies = enemies.filter((e: General) => !e.isDead);
+            if (aliveEnemies.length > 0) {
+              // 找到最高防御目标
+              const highestDefEnemy = aliveEnemies.reduce((max: General, cur: General) =>
+                cur.defense > max.defense ? cur : max
+              );
+              if (!highestDefEnemy.skillEffects) {
+                highestDefEnemy.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
               }
-
-              const totalDamage = baseDamage + bonusDamage;
-              target.troops = Math.max(0, target.troops - totalDamage);
-
-              if (target.troops <= 0) {
-                target.isDead = true;
-              }
-
+              highestDefEnemy.skillEffects.defenseReduction = 0.10;
+              highestDefEnemy.skillEffects.defenseReductionDuration = 2;
+              highestDefEnemy.skillEffects.defenseReductionSource = `【${general.name}】的【出塞破敌】`;
               if (addReport) {
-                addReport(`【${general.name}】对【${target.name}】造成${totalDamage}点物理伤害！`);
+                addReport(`【${general.name}】对【${highestDefEnemy.name}】施加【破甲】，防御降低10%，持续2回合！`);
               }
-            });
+            }
           }
-
-          return { triggered: true };
-        } else {
-          if (addReport) {
-            addReport(`【${general.name}】的【出塞破敌】未触发！`);
-          }
-          return { triggered: false };
         }
       }
 
@@ -134,7 +131,8 @@ export const createYangSu = (): General => {
     maxTroops: troops,
     skills: [createYangSuSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: YANG_SU_QUOTES
+    quotes: YANG_SU_QUOTES,
+    rarity: YANG_SU_BASE.rarity as GeneralRarity
   };
 };
 
@@ -160,7 +158,8 @@ export const fetchYangSuFromDatabase = async (API_BASE_URL: string): Promise<Gen
       maxTroops: troops,
       skills: [createYangSuSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: YANG_SU_QUOTES
+      quotes: YANG_SU_QUOTES,
+      rarity: YANG_SU_BASE.rarity as GeneralRarity
     };
   } catch (error) {
     console.error('从数据库获取杨素信息失败:', error);

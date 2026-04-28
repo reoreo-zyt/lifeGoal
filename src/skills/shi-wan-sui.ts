@@ -1,14 +1,14 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const SHI_WAN_SUI_QUOTES = {
   skill: ["将士们，随我冲杀！", "突厥小儿，吃我一刀！", "冲锋陷阵，所向披靡！"],
   death: ["素贼害我，文帝误我..."]
 } as const;
 
-// 史万岁的基础属性常量
 const SHI_WAN_SUI_BASE = {
   id: 42,
   name: "史万岁",
+  rarity: "rare" as GeneralRarity,
   attack: 98,
   attackGrowth: 2.75,
   defense: 76,
@@ -31,96 +31,93 @@ const SHI_WAN_SUI_BASE = {
   avatar: "/images/shi_wan_sui.jpg",
 };
 
-// 史万岁的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0,
-  damageReductionSource: '',
+  damageReductionSource: "",
   attributeBonus: 0,
-  attributeBonusSource: '',
+  attributeBonusSource: "",
   maxAttributeBonus: 4,
   damageIncrease: 0,
-  damageIncreaseSource: '',
+  damageIncreaseSource: "",
   hasTriggeredRecovery: false,
 };
 
-// 计算兵力
-const calculateTroops = (commandValue: number): number => {
-  return Math.floor(commandValue * 10);
-};
+const calculateTroops = (commandValue: number): number =>
+  Math.floor(commandValue * 10);
 
-// 史万岁的自带战法【冲锋陷阵】
-export const createShiWanSuiSkill = (): Skill => {
-  return {
-    id: "chongfeng-xianzhen",
-    name: "冲锋陷阵",
-    type: "active",
-    description: "主动，发动概率40%，攻击范围2：对敌方前排造成125%物理伤害；自身速度高于目标时，伤害增加35%。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) {
-        general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+/**
+ * 【冲锋陷阵】主动
+ * - 发动概率 42%，攻击范围 2
+ * - 对敌方前排 2 人造成 135% 物理伤害；自身速度高于目标时，伤害额外增加 40%
+ * - 整体定位：前排爆发物理输出手，利用高速度优势压制
+ */
+export const createShiWanSuiSkill = (): Skill => ({
+  id: "chongfeng-xianzhen",
+  name: "冲锋陷阵",
+  type: "active",
+  description:
+    "主动，发动概率 42%，攻击范围 2：对敌方前排造成 135% 物理伤害；自身速度高于目标时，伤害额外增加 40%。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) {
+      general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    }
+
+    const { type, event, addReport, targets } = context;
+
+    if (type === "activeSkill" && event === "trigger") {
+      const triggerChance = 0.42;
+      if (addReport) {
+        addReport(
+          `【${general.name}】尝试发动【冲锋陷阵】（发动概率：${(triggerChance * 100).toFixed(0)}%）`
+        );
       }
 
-      const { type, event, addReport, targets } = context;
-
-      // 主动战法触发
-      if (type === "activeSkill" && event === "trigger") {
-        const triggerChance = 0.40;
+      if (Math.random() < triggerChance) {
         if (addReport) {
-          addReport(
-            `【${general.name}】尝试发动【冲锋陷阵】（发动概率：${(triggerChance * 100).toFixed(0)}%）`,
-          );
+          addReport(`【${general.name}】成功发动【冲锋陷阵】！`);
         }
 
-        if (Math.random() < triggerChance) {
-          if (addReport) {
-            addReport(`【${general.name}】成功发动【冲锋陷阵】！`);
-          }
-
-          // 对敌方前排造成125%物理伤害
-          if (targets && targets.length > 0) {
-            const frontTargets = targets.slice(0, 2);
-            frontTargets.forEach((target: General) => {
-              let damage = Math.max(0, Math.floor(general.attack * 1.25 - target.defense / 2));
-
-              // 自身速度高于目标时，伤害增加35%
-              if (general.speed > target.speed) {
-                const bonusDamage = Math.floor(damage * 0.35);
-                damage += bonusDamage;
-                if (addReport) {
-                  addReport(`【${general.name}】速度压制【${target.name}】，伤害额外增加35%！`);
-                }
-              }
-
-              target.troops = Math.max(0, target.troops - damage);
-
-              if (target.troops <= 0) {
-                target.isDead = true;
-              }
-
+        if (targets && targets.length > 0) {
+          const frontTargets = targets.slice(0, 2);
+          frontTargets.forEach((target: General) => {
+            let damage = Math.max(
+              0,
+              Math.floor(general.attack * 1.35 - target.defense / 2)
+            );
+            if (general.speed > target.speed) {
+              const bonusDamage = Math.floor(damage * 0.40);
+              damage += bonusDamage;
               if (addReport) {
-                addReport(`【${general.name}】对【${target.name}】造成${damage}点物理伤害！`);
+                addReport(
+                  `【${general.name}】速度压制【${target.name}】，伤害额外增加 40%！`
+                );
               }
-            });
-          }
-
-          return { triggered: true };
-        } else {
-          if (addReport) {
-            addReport(`【${general.name}】的【冲锋陷阵】未触发！`);
-          }
-          return { triggered: false };
+            }
+            target.troops = Math.max(0, target.troops - damage);
+            if (target.troops <= 0) target.isDead = true;
+            if (addReport) {
+              addReport(
+                `【${general.name}】对【${target.name}】造成 ${damage} 点物理伤害！`
+              );
+            }
+          });
         }
+
+        return { triggered: true };
+      } else {
+        if (addReport) {
+          addReport(`【${general.name}】的【冲锋陷阵】未触发！`);
+        }
+        return { triggered: false };
       }
+    }
 
-      return null;
-    },
-  };
-};
+    return null;
+  },
+});
 
-// 创建史万岁武将数据
 export const createShiWanSui = (): General => {
   const troops = calculateTroops(SHI_WAN_SUI_BASE.command);
-
   return {
     ...SHI_WAN_SUI_BASE,
     troops,
@@ -131,17 +128,14 @@ export const createShiWanSui = (): General => {
   };
 };
 
-// 从数据库获取史万岁的详细信息
-export const fetchShiWanSuiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
+export const fetchShiWanSuiFromDatabase = async (
+  API_BASE_URL: string
+): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/42`);
-    if (!response.ok) {
-      throw new Error('获取人物信息失败');
-    }
+    if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
-
     const troops = calculateTroops(SHI_WAN_SUI_BASE.command);
-
     return {
       ...SHI_WAN_SUI_BASE,
       id: characterData.id,
@@ -153,17 +147,10 @@ export const fetchShiWanSuiFromDatabase = async (API_BASE_URL: string): Promise<
       maxTroops: troops,
       skills: [createShiWanSuiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: {
-        skill: [
-          "将士们，随我冲杀！",
-          "突厥小儿，吃我一刀！",
-          "冲锋陷阵，所向披靡！"
-        ],
-        death: ["素贼害我，文帝误我..."]
-      }
+      quotes: SHI_WAN_SUI_QUOTES,
     };
   } catch (error) {
-    console.error('从数据库获取史万岁信息失败:', error);
+    console.error("从数据库获取史万岁信息失败:", error);
     return createShiWanSui();
   }
 };

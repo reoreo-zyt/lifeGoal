@@ -1,4 +1,4 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const YANG_JIAN_QUOTES = {
   skill: [
@@ -13,6 +13,7 @@ const YANG_JIAN_QUOTES = {
 const YANG_JIAN_BASE = {
   id: 21,
   name: "杨坚",
+  rarity: "legendary",
   attack: 82,
   attackGrowth: 2.20,
   defense: 90,
@@ -38,17 +39,16 @@ const YANG_JIAN_BASE = {
 // 杨坚的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0,
-  damageReductionSource: '',
+  damageReductionSource: "",
   attributeBonus: 0,
-  attributeBonusSource: '',
+  attributeBonusSource: "",
   maxAttributeBonus: 4,
   damageIncrease: 0,
-  damageIncreaseSource: '',
+  damageIncreaseSource: "",
   hasTriggeredRecovery: false,
   strategyDamageReduction: 0,
-  strategyDamageReductionSource: '',
+  strategyDamageReductionSource: "",
   hasAppliedBuff: false,
-  buffDuration: 3,
 };
 
 // 计算兵力
@@ -62,7 +62,7 @@ export const createYangJianSkill = (): Skill => {
     id: "kaihuang-yuji",
     name: "开皇御极",
     type: "command",
-    description: "指挥：战斗开始时，全体友军攻击+12%、防御+12%，持续3回合；自身受到谋略伤害减免15%。",
+    description: "指挥：战斗开始时，全体友军攻击、防御、谋略、速度各+20%，持续全场；自身受到谋略伤害减免25%。",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -70,7 +70,7 @@ export const createYangJianSkill = (): Skill => {
 
       const { type, event, addReport, allies } = context;
 
-      // 战斗开始时触发指挥战法
+      // 战斗开始时触发指挥战法（全属性增益，无持续时间限制）
       if (type === "battleStart" && event === "init" && !general.skillEffects.hasAppliedBuff) {
         general.skillEffects.hasAppliedBuff = true;
 
@@ -78,25 +78,25 @@ export const createYangJianSkill = (): Skill => {
           addReport(`【${general.name}】发动【开皇御极】，号令天下！`);
         }
 
-        // 为全体友军施加增益
+        // 为全体友军施加全属性+20%增益（攻击、防御、谋略、速度）
         if (allies && allies.length > 0) {
           allies.forEach((ally: General) => {
             if (!ally.skillEffects) {
               ally.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
             }
-            // 攻击+12%
-            ally.attack = Math.floor(ally.attack * 1.12);
-            // 防御+12%
-            ally.defense = Math.floor(ally.defense * 1.12);
+            ally.attack = Math.floor(ally.attack * 1.20);
+            ally.defense = Math.floor(ally.defense * 1.20);
+            ally.strategy = Math.floor(ally.strategy * 1.20);
+            ally.speed = Math.floor(ally.speed * 1.20);
 
             if (addReport) {
-              addReport(`【${ally.name}】受到【开皇御极】加持，攻击、防御提升12%！`);
+              addReport(`【${ally.name}】受到【开皇御极】加持，攻击、防御、谋略、速度各提升20%！`);
             }
           });
         }
 
-        // 自身谋略伤害减免
-        general.skillEffects.strategyDamageReduction = 0.15;
+        // 自身谋略伤害减免25%（从15%提升至25%）
+        general.skillEffects.strategyDamageReduction = 0.25;
         general.skillEffects.strategyDamageReductionSource = `【${general.name}】的【开皇御极】`;
 
         return { triggered: true };
@@ -124,7 +124,8 @@ export const createYangJian = (): General => {
     maxTroops: troops,
     skills: [createYangJianSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: YANG_JIAN_QUOTES
+    quotes: YANG_JIAN_QUOTES,
+    rarity: YANG_JIAN_BASE.rarity as GeneralRarity
   };
 };
 
@@ -150,7 +151,8 @@ export const fetchYangJianFromDatabase = async (API_BASE_URL: string): Promise<G
       maxTroops: troops,
       skills: [createYangJianSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: YANG_JIAN_QUOTES
+      quotes: YANG_JIAN_QUOTES,
+      rarity: YANG_JIAN_BASE.rarity as GeneralRarity
     };
   } catch (error) {
     console.error('从数据库获取杨坚信息失败:', error);

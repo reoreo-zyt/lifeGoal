@@ -185,9 +185,15 @@
 
         <!-- 底部操作按钮 -->
         <div v-if="showBattleBoard" class="game-footer">
-          <button class="action-button recruit" @click="recruitCard" :disabled="money < recruitCost || isBattleActive"
+          <button class="action-button recruit" @click="recruitCard" :disabled="money < RECRUIT_SINGLE_COST || isBattleActive"
             @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
-            <img src="/assets/open.webp" alt="卡包招募" class="button-icon">
+            <img src="/assets/open.webp" alt="单抽招募" class="button-icon">
+            <span class="recruit-label">单抽</span>
+          </button>
+          <button class="action-button recruit-ten" @click="recruitTenCards" :disabled="money < RECRUIT_TEN_COST || isBattleActive"
+            @mouseenter="showHeaderTooltip($event, 'recruitTen')" @mouseleave="hideHeaderTooltip">
+            <img src="/assets/open.webp" alt="十连招募" class="button-icon">
+            <span class="recruit-label">十连</span>
           </button>
           <button class="action-button end-turn" @click="endTurn"
             @mouseenter="showBattleControlTooltip($event)" @mouseleave="hideHeaderTooltip">
@@ -219,7 +225,7 @@ import BattleReport from "../components/BattleReport.vue";
 import FormationPanel from "../components/FormationPanel.vue";
 import RunMap from "../components/RunMap.vue";
 import RewardSelector from "../components/RewardSelector.vue";
-import type { General, FormationPosition } from "../skills/types";
+import type { General, GeneralRarity, FormationPosition } from "../skills/types";
 import type {
   GamePhase,
   NodeType,
@@ -229,7 +235,7 @@ import type {
   GeneralBattleSnapshot,
 } from "../types/game";
 import { RELIC_POOL, ENEMY_WAVE_RELIC_CONFIG, pickWeightedRelics, type Relic, type RelicEffects } from "../relics";
-import { RECRUIT_CONFIG, getFetchFunctionBase } from '../skills/index';
+import { RECRUIT_CONFIG, getFetchFunctionBase, pickRarity, pickGeneralByRarity } from '../skills/index';
 
 // ========== 认证与初始化 ==========
 // 是否已登录（通过 localStorage 中的 user 数据判断）
@@ -260,7 +266,8 @@ const tooltipTexts: Record<string, string> = {
   wave: '当前波次/总波次',
   command: '当前统率/最大统率',
   conscript: '可分配征召兵/总征召兵（开局3000）',
-  recruit: '消耗金币招募新的武将卡牌',
+  recruit: '消耗100金币单抽招募武将，已拥有则升星',
+  recruitTen: '消耗1000金币十连招募，必出紫色及以上稀有度，已拥有升星，超限返金币',
   start: '开始战斗',
   next: '进入下一轮战斗',
 };
@@ -315,12 +322,30 @@ const currentWave = ref(initialGameData.currentWave);
 const totalWaves = ref(300);
 // 当前战斗回合数（每场战斗共 8 回合）
 const currentTurn = ref(0);
-// 招募武将卡牌消耗的金币
-const recruitCost = ref(100);
+// ========== 招募消耗与保底 ==========
+// 单抽消耗金币（10连抽 = 消耗 * 10，保底触发时只扣单抽费用）
+const RECRUIT_SINGLE_COST = 100;
+// 10连抽消耗金币
+const RECRUIT_TEN_COST = 1000;
+// 当前保底计数器（保底触发后清零）
+const pityCount = ref(0);
+// 保底触发标识（本抽次内不可再次触发）
+const pityTriggered = ref(false);
+// 保底阈值：每 N 抽内必出对应稀有度
+const PITY_PURPLE_TRIGGER = 10; // 10抽内必出紫
+const PITY_GOLD_TRIGGER = 30;  // 30抽内必出金
+
 // 玩家最大统率上限
 const maxCommand = ref(100);
 // 当前上阵武将的统率消耗总和
 const currentCommand = ref(0);
+// 每种稀有度武将的最高星级上限
+const MAX_STAR_BY_RARITY: Record<string, number> = {
+  common: 5,
+  uncommon: 5,
+  rare: 5,
+  legendary: 5,
+};
 // 征召兵上限（固定 3000）
 const maxConscripts = 3000;
 // 当前总征召兵数量（含已分配和可分配的）
@@ -2199,47 +2224,115 @@ const selectPlayerRelic = (relic: Relic) => {
 };
 
 // ========== 招募武将 ==========
-// 消耗金币随机招募一名武将：若已拥有则升星，否则加入麾下
+// 核心招募函数：根据传入的稀有度抽取武将，已拥有则升星（已达星级上限时改为返还金币）
+const doRecruit = (rarity: GeneralRarity) => {
+  const config = pickGeneralByRarity(rarity);
+  if (!config) return;
+
+  const fetchFn = getFetchFunction(config.id);
+  if (!fetchFn) return;
+
+  fetchFn().then((general) => {
+    if (!general) return;
+
+    const existed = generals.value.find((g) => g.id === general.id);
+    if (existed) {
+      const maxStar = MAX_STAR_BY_RARITY[general.rarity] ?? 5;
+      const currentStar = getSynthStar(existed);
+      if (currentStar >= maxStar) {
+        // 星级已达上限，金币返还
+        money.value += RECRUIT_SINGLE_COST;
+        addReport(`【${general.name}】已达最高星级，返还${RECRUIT_SINGLE_COST}金币！`);
+      } else {
+        promoteExistingGeneral(existed);
+        addReport(`【${general.name}】升星成功，当前星级：★${getSynthStar(existed) + 1}！`);
+      }
+    } else {
+      setSynthStar(general, 0);
+      general.troops = 0;
+      general.isDead = false;
+      general.skillEffects = {};
+      generals.value.push(general);
+      formatGeneralReport(general);
+    }
+  });
+};
+
+// 执行单抽：扣费 → 触发保底判断 → 抽取武将
 const recruitCard = () => {
-  if (money.value < recruitCost.value) {
-    addReport("金额不足，无法招募！");
+  if (money.value < RECRUIT_SINGLE_COST) {
+    addReport("金额不足，无法单抽！");
     return;
   }
+  money.value -= RECRUIT_SINGLE_COST;
 
-  money.value -= recruitCost.value;
+  let targetRarity: GeneralRarity = "common";
 
-  // 根据概率随机选择武将
-  const random = Math.random();
-  let cumulativeProbability = 0;
-  let selectedGeneralId = RECRUIT_CONFIG_BASE[0].id;
+  if (pityCount.value >= PITY_GOLD_TRIGGER) {
+    // 30抽保底：必出金色传奇
+    targetRarity = "legendary";
+    pityCount.value = 0;
+    pityTriggered.value = true;
+    addReport(`保底触发！【${PITY_GOLD_TRIGGER}抽必出传奇】`);
+  } else if (pityCount.value >= PITY_PURPLE_TRIGGER) {
+    // 10抽保底：必出紫色稀有
+    targetRarity = "rare";
+    pityCount.value = 0;
+    pityTriggered.value = true;
+    addReport(`保底触发！【${PITY_PURPLE_TRIGGER}抽必出稀有】`);
+  } else {
+    // 正常概率抽取（使用 skills/index.ts 的 pickRarity）
+    targetRarity = pickRarity();
+  }
 
-  for (const config of RECRUIT_CONFIG_BASE) {
-    cumulativeProbability += config.probability;
-    if (random < cumulativeProbability) {
-      selectedGeneralId = config.id;
-      break;
+  // 保底未触发时，累加计数器
+  if (!pityTriggered.value) {
+    pityCount.value += 1;
+  }
+  pityTriggered.value = false;
+
+  doRecruit(targetRarity);
+};
+
+// 执行10连抽：逐次调用doRecruit（金币一次性扣除）
+const recruitTenCards = () => {
+  if (money.value < RECRUIT_TEN_COST) {
+    addReport("金额不足，无法十连！");
+    return;
+  }
+  money.value -= RECRUIT_TEN_COST;
+  addReport("============= 十连招募 ===========");
+
+  for (let i = 0; i < 10; i++) {
+    let targetRarity: GeneralRarity = "common";
+
+    // 前9抽只触发紫色保底，最后1抽才考虑金色保底
+    if (pityCount.value >= PITY_GOLD_TRIGGER) {
+      targetRarity = "legendary";
+      pityCount.value = 0;
+      pityTriggered.value = true;
+    } else if (pityCount.value >= PITY_PURPLE_TRIGGER) {
+      targetRarity = "rare";
+      pityCount.value = 0;
+      pityTriggered.value = true;
+    } else {
+      targetRarity = pickRarity();
     }
+
+    if (!pityTriggered.value) {
+      pityCount.value += 1;
+    }
+    pityTriggered.value = false;
+
+    // 最后一抽时额外提示
+    if (i === 9) {
+      addReport("第10抽：");
+    }
+
+    doRecruit(targetRarity);
   }
 
-  // 获取对应武将的fetch函数并执行
-  const fetchFn = getFetchFunction(selectedGeneralId);
-  if (fetchFn) {
-    fetchFn().then((general) => {
-      if (general) {
-        const existedGeneral = generals.value.find((item) => item.id === general.id);
-        if (existedGeneral) {
-          promoteExistingGeneral(existedGeneral);
-        } else {
-          setSynthStar(general, 0);
-          general.troops = 0;
-          general.isDead = false;
-          general.skillEffects = {};
-          generals.value.push(general);
-          formatGeneralReport(general);
-        }
-      }
-    });
-  }
+  addReport("=================================");
 };
 
 // ========== 战斗控制 ==========

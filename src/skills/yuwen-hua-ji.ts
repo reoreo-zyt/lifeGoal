@@ -1,18 +1,14 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const YU_WEN_HUA_JI_QUOTES = {
-  skill: [
-    "江都之变，天命在我。",
-    "杨广无道，当诛之。",
-    "弑君夺位，舍我其谁。"
-  ],
+  skill: ["江都之变，天命在我。", "杨广无道，当诛之。", "弑君夺位，舍我其谁。"],
   death: ["本想称帝，竟至于此..."]
 } as const;
 
-// 宇文化及的基础属性常量
 const YU_WEN_HUA_JI_BASE = {
   id: 26,
   name: "宇文化及",
+  rarity: "uncommon",
   attack: 90,
   attackGrowth: 2.40,
   defense: 82,
@@ -35,108 +31,79 @@ const YU_WEN_HUA_JI_BASE = {
   avatar: "/images/yu_wen_hua_ji.jpg",
 };
 
-// 宇文化及的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0,
-  damageReductionSource: '',
+  damageReductionSource: "",
   attributeBonus: 0,
-  attributeBonusSource: '',
+  attributeBonusSource: "",
   maxAttributeBonus: 4,
   damageIncrease: 0,
-  damageIncreaseSource: '',
+  damageIncreaseSource: "",
   hasTriggeredRecovery: false,
   isFeared: false,
-  fearSource: '',
+  fearSource: "",
 };
 
-// 计算兵力
-const calculateTroops = (commandValue: number): number => {
-  return Math.floor(commandValue * 10);
-};
+const calculateTroops = (commandValue: number): number =>
+  Math.floor(commandValue * 10);
 
-// 宇文化及的自带战法【弑君之刃】
-export const createYuWenHuaJiSkill = (): Skill => {
-  return {
-    id: "shijun-zhiren",
-    name: "弑君之刃",
-    type: "passive",
-    description: "被动：普通攻击有30%概率使目标陷入【恐惧】（下回合无法行动）；自身兵力低于30%时，攻击伤害增加40%。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) {
-        general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+export const createYuWenHuaJiSkill = (): Skill => ({
+  id: "shijun-zhiren",
+  name: "弑君之刃",
+  type: "passive",
+  description: "被动：普通攻击有35%概率使目标陷入【恐惧】（下回合无法行动）；自身兵力低于30%时，攻击伤害+42%。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    const { type, event, addReport, currentTroops, maxTroops, target } = context;
+
+    if (type === "attack" && event === "beforeAttack") {
+      // 35%概率使目标恐惧
+      if (Math.random() < 0.35 && target) {
+        if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+        target.skillEffects.isFeared = true;
+        target.skillEffects.fearSource = `【${general.name}】的【弑君之刃】`;
+        if (addReport) addReport(`【${target.name}】陷入【恐惧】，下回合无法行动！`);
       }
 
-      const { type, event, addReport, currentTroops, maxTroops, target } = context;
-
-      // 普通攻击前触发恐惧效果
-      if (type === "attack" && event === "beforeAttack") {
-        if (Math.random() < 0.30) {
-          if (target) {
-            if (!target.skillEffects) {
-              target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-            }
-            target.skillEffects.isFeared = true;
-            target.skillEffects.fearSource = `【${general.name}】的【弑君之刃】`;
-
-            if (addReport) {
-              addReport(`【${general.name}】的【弑君之刃】使【${target.name}】陷入【恐惧】，下回合无法行动！`);
-            }
-          }
-        }
+      // 兵力低于30%时，伤害+42%
+      const ratio = maxTroops > 0 ? currentTroops / maxTroops : 1;
+      if (ratio < 0.30) {
+        if (addReport) addReport(`【${general.name}】兵力危急，【弑君之刃】激发，伤害+42%！`);
+        return { damageIncrease: 0.42 };
       }
+    }
 
-      // 攻击时，自身兵力低于30%时伤害增加40%
-      if (type === "attack" && event === "beforeAttack") {
-        const troopRatio = currentTroops / maxTroops;
-        if (troopRatio < 0.30) {
-          if (addReport) {
-            addReport(`【${general.name}】兵力危急，【弑君之刃】触发，攻击伤害大幅提升！`);
-          }
-          return { damageIncrease: 0.40 };
-        }
+    if (type === "turnStart") {
+      if (general.skillEffects.isFeared) {
+        if (addReport) addReport(`【${general.name}】处于【恐惧】状态，本回合无法行动！`);
+        general.skillEffects.isFeared = false;
+        return { skipTurn: true };
       }
+    }
 
-      // 回合开始时检查恐惧效果
-      if (type === "turnStart") {
-        if (general.skillEffects?.isFeared) {
-          if (addReport) {
-            addReport(`【${general.name}】处于【恐惧】状态，本回合无法行动！`);
-          }
-          general.skillEffects.isFeared = false;
-          return { skipTurn: true };
-        }
-      }
+    return null;
+  },
+});
 
-      return null;
-    },
-  };
-};
-
-// 创建宇文化及武将数据
 export const createYuWenHuaJi = (): General => {
   const troops = calculateTroops(YU_WEN_HUA_JI_BASE.command);
-
   return {
     ...YU_WEN_HUA_JI_BASE,
     troops,
     maxTroops: troops,
     skills: [createYuWenHuaJiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: YU_WEN_HUA_JI_QUOTES
+    quotes: YU_WEN_HUA_JI_QUOTES,
+    rarity: YU_WEN_HUA_JI_BASE.rarity as GeneralRarity,
   };
 };
 
-// 从数据库获取宇文化及的详细信息
 export const fetchYuWenHuaJiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/26`);
-    if (!response.ok) {
-      throw new Error('获取人物信息失败');
-    }
+    if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
-
     const troops = calculateTroops(YU_WEN_HUA_JI_BASE.command);
-
     return {
       ...YU_WEN_HUA_JI_BASE,
       id: characterData.id,
@@ -148,10 +115,11 @@ export const fetchYuWenHuaJiFromDatabase = async (API_BASE_URL: string): Promise
       maxTroops: troops,
       skills: [createYuWenHuaJiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: YU_WEN_HUA_JI_QUOTES
+      quotes: YU_WEN_HUA_JI_QUOTES,
+      rarity: "uncommon" as GeneralRarity,
     };
   } catch (error) {
-    console.error('从数据库获取宇文化及信息失败:', error);
+    console.error("从数据库获取宇文化及信息失败:", error);
     return createYuWenHuaJi();
   }
 };

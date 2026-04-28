@@ -1,14 +1,14 @@
-import type { Skill, General } from "./types";
+import type { Skill, General, GeneralRarity } from "./types";
 
 const LI_DE_LIN_QUOTES = {
   skill: ["掌笔裁策，以定天下。", "经国大略，运筹帷幄。", "文墨安邦，智衡时局。"],
   death: ["一生秉笔，尽事三朝，功名浮沉，皆为天命。"],
 } as const;
 
-// 李德林的基础属性常量
 const LI_DE_LIN_BASE = {
   id: 69,
   name: "李德林",
+  rarity: "uncommon",
   attack: 47,
   attackGrowth: 0.81,
   defense: 59,
@@ -21,9 +21,9 @@ const LI_DE_LIN_BASE = {
   siege: 11,
   siegeGrowth: 0.55,
   level: 5,
-  command: 91, // 统御值
+  command: 91,
   commandGrowth: 2.43,
-  leadership: 3.0, // 统率值，用于组建队伍
+  leadership: 3.0,
   isDead: false,
   dynasty: "北齐",
   soldierType: "弓兵" as const,
@@ -31,132 +31,80 @@ const LI_DE_LIN_BASE = {
   avatar: "/images/li_de_lin.jpg",
 };
 
-// 李德林的skillEffects默认值
 const DEFAULT_SKILL_EFFECTS = {
   damageReduction: 0,
+  damageReductionSource: "",
   attributeBonus: 0,
+  attributeBonusSource: "",
   maxAttributeBonus: 4,
   damageIncrease: 0,
+  damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  damageOutputReduction: 0, // 伤害输出降低
-  damageOutputReductionDuration: 0, // 伤害输出降低持续回合
-  damageOutputReductionSource: '', // 伤害输出降低效果来源
+  damageOutputReduction: 0,
+  damageOutputReductionDuration: 0,
+  damageOutputReductionSource: "",
 };
 
-// 计算兵力
-const calculateTroops = (commandValue: number): number => {
-  return Math.floor(commandValue * 10);
-};
+const calculateTroops = (commandValue: number): number =>
+  Math.floor(commandValue * 10);
 
-// 李德林的自带战法【鸿笔定略】
-export const createLiDeLinSkill = (): Skill => {
-  return {
-    id: "hongbi-dinglve",
-    name: "鸿笔定略",
-    type: "active",
-    description: "主动，发动概率 42%，攻击范围 4：对敌军群体 2 人造成 152% 策略伤害，降低目标 14% 伤害输出，持续 2 回合。",
-    effect: (general: General, context: any) => {
-      if (!general.skillEffects) {
-        general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+export const createLiDeLinSkill = (): Skill => ({
+  id: "hongbi-dinglve",
+  name: "鸿笔定略",
+  type: "active",
+  description: "主动，发动概率48%，攻击范围4：对敌军随机2人造成155%策略伤害，降低目标15%伤害输出，持续2回合。",
+  effect: (general: General, context: any) => {
+    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    const { type, event, addReport, targets } = context;
+
+    if (type === "activeSkill" && event === "trigger") {
+      const chance = 0.48;
+      if (addReport) addReport(`【${general.name}】尝试发动【鸿笔定略】（48%）`);
+      if (Math.random() >= chance) {
+        if (addReport) addReport(`【${general.name}】的【鸿笔定略】未触发！`);
+        return { triggered: false };
       }
 
-      const { type, event, addReport, targets } = context;
+      if (addReport) addReport(`【${general.name}】成功发动【鸿笔定略】！`);
+      if (targets && targets.length > 0) {
+        targets.slice(0, 2).forEach((target: General) => {
+          const damage = Math.max(0, Math.floor(general.strategy * 1.55 - target.strategy / 2));
+          target.troops = Math.max(0, target.troops - damage);
+          if (target.troops <= 0) target.isDead = true;
+          if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+          target.skillEffects.damageOutputReduction = 0.15;
+          target.skillEffects.damageOutputReductionDuration = 2;
+          target.skillEffects.damageOutputReductionSource = `【${general.name}】的【鸿笔定略】`;
+          if (addReport) addReport(`【${target.name}】受到${damage}点策略伤害，伤害输出降低15%！`);
+        });
+      }
+      return { triggered: true };
+    }
 
-      // 主动战法触发
-      if (type === "activeSkill" && event === "trigger") {
-        // 42% 的发动概率
-        const triggerChance = 0.42;
-        if (addReport) {
-          addReport(
-            `【${general.name}】尝试发动【鸿笔定略】（发动概率：${(triggerChance * 100).toFixed(0)}%）`,
-          );
-        }
-        
-        if (Math.random() < triggerChance) {
-          if (addReport) {
-            addReport(
-              `【${general.name}】成功发动【鸿笔定略】！`,
-            );
-          }
-
-          // 对敌军群体 2 人造成 152% 策略伤害
-          if (targets && targets.length > 0) {
-            const selectedTargets = targets.slice(0, 2); // 选择前2个目标
-            selectedTargets.forEach((target: General) => {
-              // 计算策略伤害：攻击方策略值 * 152% - 防御方策略值 / 2
-              const damage = Math.max(0, Math.floor(general.strategy * 1.52 - target.strategy / 2));
-              target.troops = Math.max(0, target.troops - damage);
-              
-              // 兵力降为0时标记死亡
-              if (target.troops <= 0) {
-                target.isDead = true;
-              }
-
-              // 降低目标 14% 伤害输出，持续 2 回合
-              if (!target.skillEffects) {
-                target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-              }
-              target.skillEffects.damageOutputReduction = 0.14;
-              target.skillEffects.damageOutputReductionDuration = 2;
-              target.skillEffects.damageOutputReductionSource = `【${general.name}】的【鸿笔定略】`;
-
-              if (addReport) {
-                addReport(
-                  `【${general.name}】对【${target.name}】造成${damage}点策略伤害，并降低其14%伤害输出，持续2回合！`,
-                );
-              }
-            });
-          }
-
-          return { triggered: true };
-        } else {
-          if (addReport) {
-            addReport(
-              `【${general.name}】的【鸿笔定略】未触发！`,
-            );
-          }
-          return { triggered: false };
+    // 回合开始时减少持续时间
+    if (type === "turnStart") {
+      if (general.skillEffects.damageOutputReductionDuration > 0) {
+        general.skillEffects.damageOutputReductionDuration -= 1;
+        if (general.skillEffects.damageOutputReductionDuration === 0) {
+          if (addReport) addReport(`【${general.name}】的降攻效果结束！`);
+          general.skillEffects.damageOutputReduction = 0;
         }
       }
+    }
 
-      // 角色回合开始时减少伤害输出降低的持续回合
-      if (type === "turnStart") {
-        if (general.skillEffects.damageOutputReductionDuration > 0) {
-          general.skillEffects.damageOutputReductionDuration -= 1;
-          if (addReport) {
-            addReport(
-              `【${general.name}】的降攻效果剩余${general.skillEffects.damageOutputReductionDuration}回合`,
-            );
-          }
-          if (general.skillEffects.damageOutputReductionDuration === 0) {
-            const source = general.skillEffects.damageOutputReductionSource || "";
-            general.skillEffects.damageOutputReduction = 0;
-            general.skillEffects.damageOutputReductionSource = '';
-            if (addReport) {
-              addReport(
-                `【${general.name}】${source}的伤害输出降低效果结束！`,
-              );
-            }
-          }
-        }
+    // 攻击时应用降攻效果
+    if (type === "attack" && event === "beforeAttack") {
+      if (general.skillEffects.damageOutputReduction > 0) {
+        return { damageIncrease: -general.skillEffects.damageOutputReduction };
       }
+    }
 
-      // 攻击前应用伤害输出降低效果
-      if (type === "attack" && event === "beforeAttack") {
-        if (general.skillEffects.damageOutputReduction > 0) {
-          return { damageReduction: general.skillEffects.damageOutputReduction };
-        }
-      }
+    return null;
+  },
+});
 
-      return null;
-    },
-  };
-};
-
-// 创建李德林武将数据
 export const createLiDeLin = (): General => {
   const troops = calculateTroops(LI_DE_LIN_BASE.command);
-
   return {
     ...LI_DE_LIN_BASE,
     troops,
@@ -164,36 +112,32 @@ export const createLiDeLin = (): General => {
     skills: [createLiDeLinSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
     quotes: LI_DE_LIN_QUOTES,
+    rarity: LI_DE_LIN_BASE.rarity as GeneralRarity,
   };
 };
 
-// 从数据库获取李德林的详细信息（包括头像）
 export const fetchLiDeLinFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/69`);
-    if (!response.ok) {
-      throw new Error('获取人物信息失败');
-    }
+    if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
-
     const troops = calculateTroops(LI_DE_LIN_BASE.command);
-
     return {
       ...LI_DE_LIN_BASE,
       id: characterData.id,
       name: characterData.name,
       dynasty: characterData.dynasty,
       gender: characterData.gender,
-      avatar: characterData.avatar, // 使用数据库中的头像
+      avatar: characterData.avatar,
       troops,
       maxTroops: troops,
       skills: [createLiDeLinSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
       quotes: LI_DE_LIN_QUOTES,
+      rarity: "uncommon" as GeneralRarity,
     };
   } catch (error) {
-    console.error('从数据库获取李德林信息失败:', error);
-    // 如果获取失败，返回默认数据
+    console.error("从数据库获取李德林信息失败:", error);
     return createLiDeLin();
   }
 };
