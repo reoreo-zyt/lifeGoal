@@ -11,19 +11,19 @@ const LI_JING_BASE = {
   name: "李靖",
   rarity: "legendary",
   attack: 88,
-  attackGrowth: 2.30,
-  defense: 88,
-  defenseGrowth: 2.30,
+  attackGrowth: 2.82,
+  defense: 92,
+  defenseGrowth: 3.00,
   strategy: 95,
-  strategyGrowth: 2.60,
-  speed: 50,
-  speedGrowth: 0.75,
-  attackRange: 3,
-  siege: 16,
-  siegeGrowth: 0.80,
+  strategyGrowth: 3.00,
+  speed: 86,
+  speedGrowth: 2.58,
+  attackRange: 4,
+  siege: 85,
+  siegeGrowth: 2.72,
   level: 5,
-  command: 96,
-  commandGrowth: 2.50,
+  command: 88,
+  commandGrowth: 2.82,
   leadership: 3.5,
   isDead: false,
   dynasty: "唐朝",
@@ -57,7 +57,7 @@ export const createLiJingSkill = (): Skill => {
     id: "weigong-bingfa",
     name: "卫公兵法",
     type: "command",
-    description: "指挥：战斗开始时，自身获得【神机】：普通攻击附带50%谋略伤害；全体友军防御+20%（持续全场）；每回合开始时，有35%概率使敌方随机单体陷入【震慑】（跳过下回合行动）。",
+    description: "指挥：我方全体物防+24%，自身攻击附加55%策略伤害，每回合35%概率震慑随机敌方1回合",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -71,18 +71,18 @@ export const createLiJingSkill = (): Skill => {
         general.skillEffects.divineStrategyActive = true;
 
         if (addReport) {
-          addReport(`【${general.name}】发动【卫公兵法】，运筹帷幄，神机妙算！`);
+          addReport(`【${general.name}】发动【卫公兵法】，运筹帷幄！`);
         }
 
-        // 全体友军防御+20%（通过 teamDefenseBonus 实现）
+        // 全体友军物防+24%（通过 teamDefenseBonus 实现）
         if (allies && allies.length > 0) {
           allies.forEach((ally: General) => {
             if (!ally.teamDefenseBonus) {
               ally.teamDefenseBonus = 0;
             }
-            ally.teamDefenseBonus += 0.20;
+            ally.teamDefenseBonus += 0.24;
             if (addReport) {
-              addReport(`【${ally.name}】防御提升20%！`);
+              addReport(`【${ally.name}】物防提升24%！`);
             }
           });
         }
@@ -90,13 +90,13 @@ export const createLiJingSkill = (): Skill => {
         return { triggered: true };
       }
 
-      // 攻击时触发【神机】效果，附加谋略伤害
+      // 攻击时触发【神机】效果，附加55%策略伤害
       if (type === "attack" && event === "beforeAttack") {
-        if (general.skillEffects.divineStrategyActive) {
+        if (general.skillEffects?.divineStrategyActive) {
           if (addReport) {
-            addReport(`【${general.name}】触发【神机】，攻击附带谋略伤害！`);
+            addReport(`【${general.name}】触发【神机】，攻击附加策略伤害！`);
           }
-          return { strategyDamageBonus: 0.50 };
+          return { strategyDamageBonus: 0.55 };
         }
       }
 

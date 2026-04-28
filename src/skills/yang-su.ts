@@ -15,19 +15,19 @@ const YANG_SU_BASE = {
   name: "杨素",
   rarity: "legendary",
   attack: 92,
-  attackGrowth: 2.50,
-  defense: 85,
-  defenseGrowth: 2.20,
-  strategy: 80,
-  strategyGrowth: 2.00,
-  speed: 55,
-  speedGrowth: 0.80,
-  attackRange: 2,
-  siege: 15,
-  siegeGrowth: 0.75,
+  attackGrowth: 3.00,
+  defense: 80,
+  defenseGrowth: 2.52,
+  strategy: 68,
+  strategyGrowth: 1.92,
+  speed: 95,
+  speedGrowth: 3.00,
+  attackRange: 4,
+  siege: 85,
+  siegeGrowth: 2.72,
   level: 5,
-  command: 94,
-  commandGrowth: 2.40,
+  command: 92,
+  commandGrowth: 3.00,
   leadership: 3.5,
   isDead: false,
   dynasty: "隋朝",
@@ -58,8 +58,10 @@ export const createYangSuSkill = (): Skill => {
   return {
     id: "chusai-podi",
     name: "出塞破敌",
-    type: "command",
-    description: "指挥：战斗开始时，为全体友军提供【铁骑】效果：普通攻击对敌方前排目标伤害+25%；自身每回合有40%概率对敌方最高防御目标施加【破甲】10%，持续2回合。",
+    type: "active",
+    distance: 4,
+    probability: 0.52,
+    description: "主动：突击兵力最少目标造成260%物理伤害，距离4，概率52%，首回合我方前排攻击+35%",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -67,51 +69,39 @@ export const createYangSuSkill = (): Skill => {
 
       const { type, event, addReport, allies, enemies } = context;
 
-      // 战斗开始时触发指挥战法
+      // 首回合战斗开始时，为我方前排施加攻击+35%
       if (type === "battleStart" && event === "init" && !general.skillEffects.hasAppliedCommand) {
         general.skillEffects.hasAppliedCommand = true;
 
-        if (addReport) {
-          addReport(`【${general.name}】发动【出塞破敌】，铁骑出塞！`);
-        }
-
-        // 为全体友军提供【铁骑】效果
         if (allies && allies.length > 0) {
+          if (addReport) {
+            addReport(`【${general.name}】发动【出塞破敌】，我方前排攻击+35%！`);
+          }
           allies.forEach((ally: General) => {
             if (!ally.skillEffects) {
               ally.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
             }
-            ally.skillEffects.damageIncrease = (ally.skillEffects.damageIncrease || 0) + 0.25;
-            ally.skillEffects.damageIncreaseSource = `【${general.name}】的【出塞破敌】`;
-            if (addReport) {
-              addReport(`【${ally.name}】获得【铁骑】效果，对前排目标伤害+25%！`);
-            }
+            ally.skillEffects.damageIncrease = (ally.skillEffects.damageIncrease || 0) + 0.35;
+            ally.skillEffects.damageIncreaseSource = `【${general.name}】的【出塞破敌】首回合加成`;
           });
         }
 
         return { triggered: true };
       }
 
-      // 每回合开始时，有40%概率对敌方最高防御目标施加【破甲】
-      if (type === "turnStart") {
-        if (Math.random() < 0.40) {
-          if (enemies && enemies.length > 0) {
-            const aliveEnemies = enemies.filter((e: General) => !e.isDead);
-            if (aliveEnemies.length > 0) {
-              // 找到最高防御目标
-              const highestDefEnemy = aliveEnemies.reduce((max: General, cur: General) =>
-                cur.defense > max.defense ? cur : max
-              );
-              if (!highestDefEnemy.skillEffects) {
-                highestDefEnemy.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-              }
-              highestDefEnemy.skillEffects.defenseReduction = 0.10;
-              highestDefEnemy.skillEffects.defenseReductionDuration = 2;
-              highestDefEnemy.skillEffects.defenseReductionSource = `【${general.name}】的【出塞破敌】`;
-              if (addReport) {
-                addReport(`【${general.name}】对【${highestDefEnemy.name}】施加【破甲】，防御降低10%，持续2回合！`);
-              }
+      // 主动战法触发：突击兵力最少目标，造成260%物理伤害
+      if (type === "activeSkill" && event === "trigger") {
+        if (enemies && enemies.length > 0) {
+          const aliveEnemies = enemies.filter((e: General) => !e.isDead);
+          if (aliveEnemies.length > 0) {
+            // 找到兵力最少目标
+            const lowestTroopsEnemy = aliveEnemies.reduce((min: General, cur: General) =>
+              cur.troops < min.troops ? cur : min
+            );
+            if (addReport) {
+              addReport(`【${general.name}】发动【出塞破敌】，突击【${lowestTroopsEnemy.name}】！`);
             }
+            return { targetedEnemy: lowestTroopsEnemy, damageMultiplier: 2.60, damageType: "physical" };
           }
         }
       }

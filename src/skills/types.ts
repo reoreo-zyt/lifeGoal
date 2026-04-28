@@ -46,6 +46,8 @@ export interface Skill {
   name: string;
   type: "command" | "active" | "passive";
   description: string;
+  distance?: number;      // 主动战法释放距离
+  probability?: number;    // 主动战法发动概率
   effect: (general: General, context: any) => void;
 }
 

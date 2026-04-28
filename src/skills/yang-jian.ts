@@ -14,20 +14,20 @@ const YANG_JIAN_BASE = {
   id: 21,
   name: "杨坚",
   rarity: "legendary",
-  attack: 82,
-  attackGrowth: 2.20,
+  attack: 96,
+  attackGrowth: 3.00,
   defense: 90,
-  defenseGrowth: 2.30,
-  strategy: 88,
-  strategyGrowth: 2.30,
-  speed: 35,
-  speedGrowth: 0.60,
-  attackRange: 2,
-  siege: 14,
-  siegeGrowth: 0.70,
+  defenseGrowth: 2.85,
+  strategy: 65,
+  strategyGrowth: 1.88,
+  speed: 86,
+  speedGrowth: 2.58,
+  attackRange: 4,
+  siege: 88,
+  siegeGrowth: 2.88,
   level: 5,
-  command: 95,
-  commandGrowth: 2.40,
+  command: 96,
+  commandGrowth: 3.00,
   leadership: 3.5,
   isDead: false,
   dynasty: "隋朝",
@@ -62,7 +62,7 @@ export const createYangJianSkill = (): Skill => {
     id: "kaihuang-yuji",
     name: "开皇御极",
     type: "command",
-    description: "指挥：战斗开始时，全体友军攻击、防御、谋略、速度各+20%，持续全场；自身受到谋略伤害减免25%。",
+    description: "指挥：我方全体攻/防/谋/速+20%，自身承受我方全体30%策略伤害",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -95,18 +95,15 @@ export const createYangJianSkill = (): Skill => {
           });
         }
 
-        // 自身谋略伤害减免25%（从15%提升至25%）
-        general.skillEffects.strategyDamageReduction = 0.25;
-        general.skillEffects.strategyDamageReductionSource = `【${general.name}】的【开皇御极】`;
-
         return { triggered: true };
       }
 
-      // 自身受到谋略伤害时减免
-      if (type === "attacked" && event === "beforeDamage") {
-        if (general.skillEffects.strategyDamageReduction > 0) {
-          return { strategyDamageReduction: general.skillEffects.strategyDamageReduction };
+      // 自身承受我方全体30%策略伤害（被策略攻击时，友军也会承受部分伤害）
+      if (type === "attacked" && event === "strategyDamage" && allies && allies.length > 0) {
+        if (addReport) {
+          addReport(`【${general.name}】承受我方全体30%策略伤害！`);
         }
+        return { allyStrategyDamageReflect: 0.30 };
       }
 
       return null;

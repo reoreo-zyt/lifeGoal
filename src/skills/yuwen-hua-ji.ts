@@ -2,31 +2,31 @@ import type { Skill, General, GeneralRarity } from "./types";
 
 const YU_WEN_HUA_JI_QUOTES = {
   skill: ["江都之变，天命在我。", "杨广无道，当诛之。", "弑君夺位，舍我其谁。"],
-  death: ["本想称帝，竟至于此..."]
+  death: ["本想称帝，竟至于此..."],
 } as const;
 
 const YU_WEN_HUA_JI_BASE = {
   id: 26,
   name: "宇文化及",
-  rarity: "uncommon",
-  attack: 90,
-  attackGrowth: 2.40,
-  defense: 82,
-  defenseGrowth: 2.00,
-  strategy: 50,
-  strategyGrowth: 1.10,
-  speed: 38,
-  speedGrowth: 0.60,
-  attackRange: 2,
-  siege: 12,
-  siegeGrowth: 0.60,
-  level: 5,
-  command: 88,
-  commandGrowth: 2.20,
-  leadership: 3.0,
+  rarity: "uncommon" as GeneralRarity,
+  attack: 52,
+  attackGrowth: 1.58,
+  defense: 50,
+  defenseGrowth: 1.48,
+  strategy: 52,
+  strategyGrowth: 1.52,
+  speed: 56,
+  speedGrowth: 1.82,
+  attackRange: 3,
+  siege: 52,
+  siegeGrowth: 1.58,
+  level: 4,
+  command: 52,
+  commandGrowth: 1.58,
+  leadership: 2.0,
   isDead: false,
   dynasty: "隋朝",
-  soldierType: "步兵" as const,
+  soldierType: "骑兵" as const,
   gender: "男",
   avatar: "/images/yu_wen_hua_ji.jpg",
 };
@@ -40,45 +40,58 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  isFeared: false,
-  fearSource: "",
 };
 
-const calculateTroops = (commandValue: number): number =>
-  Math.floor(commandValue * 10);
+const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
+// 弑逆逞凶 — 主动：消耗25%兵力对敌方全体造成70%物理伤害，距离3，概率35%，敌方全体怯战1回合
 export const createYuWenHuaJiSkill = (): Skill => ({
-  id: "shijun-zhiren",
-  name: "弑君之刃",
-  type: "passive",
-  description: "被动：普通攻击有35%概率使目标陷入【恐惧】（下回合无法行动）；自身兵力低于30%时，攻击伤害+42%。",
+  id: "shini-chengxiong",
+  name: "弑逆逞凶",
+  type: "active",
+  distance: 3,
+  probability: 0.35,
+  description: "主动：消耗25%兵力对敌方全体造成70%物理伤害，距离3，概率35%，敌方全体怯战1回合",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    const { type, event, addReport, currentTroops, maxTroops, target } = context;
+    const { type, event, addReport, enemies } = context;
 
-    if (type === "attack" && event === "beforeAttack") {
-      // 35%概率使目标恐惧
-      if (Math.random() < 0.35 && target) {
-        if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-        target.skillEffects.isFeared = true;
-        target.skillEffects.fearSource = `【${general.name}】的【弑君之刃】`;
-        if (addReport) addReport(`【${target.name}】陷入【恐惧】，下回合无法行动！`);
-      }
+    if (type === "activeSkill" && event === "trigger") {
+      // 消耗25%当前兵力
+      const cost = Math.floor(general.maxTroops * 0.25);
+      general.troops = Math.max(0, general.troops - cost);
+      if (addReport) addReport(`【${general.name}】消耗${cost}兵力发动【弑逆逞凶】！`);
 
-      // 兵力低于30%时，伤害+42%
-      const ratio = maxTroops > 0 ? currentTroops / maxTroops : 1;
-      if (ratio < 0.30) {
-        if (addReport) addReport(`【${general.name}】兵力危急，【弑君之刃】激发，伤害+42%！`);
-        return { damageIncrease: 0.42 };
+      // 对敌方全体造成70%物理伤害
+      if (enemies && enemies.length > 0) {
+        enemies.forEach((enemy: General) => {
+          if (enemy.isDead) return;
+          const damage = Math.max(0, Math.floor(general.attack * 0.70 - enemy.defense / 4));
+          enemy.troops = Math.max(0, enemy.troops - damage);
+          if (enemy.troops <= 0) enemy.isDead = true;
+          if (!enemy.skillEffects) enemy.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+          enemy.skillEffects.cannotPhysicalAttack = true;
+          enemy.skillEffects.cannotPhysicalAttackDuration = 1;
+          enemy.skillEffects.cannotPhysicalAttackSource = `【${general.name}】的【弑逆逞凶】`;
+          if (addReport) {
+            addReport(`【${general.name}】对【${enemy.name}】造成${damage}点物理伤害，并使其怯战1回合！`);
+          }
+        });
       }
+      return { triggered: true };
     }
 
+    // 回合开始减少怯战持续时间
     if (type === "turnStart") {
-      if (general.skillEffects.isFeared) {
-        if (addReport) addReport(`【${general.name}】处于【恐惧】状态，本回合无法行动！`);
-        general.skillEffects.isFeared = false;
-        return { skipTurn: true };
-      }
+      enemies?.forEach((enemy: General) => {
+        if (enemy.skillEffects?.cannotPhysicalAttackDuration) {
+          enemy.skillEffects.cannotPhysicalAttackDuration -= 1;
+          if (enemy.skillEffects.cannotPhysicalAttackDuration <= 0) {
+            enemy.skillEffects.cannotPhysicalAttack = false;
+            enemy.skillEffects.cannotPhysicalAttackDuration = 0;
+          }
+        }
+      });
     }
 
     return null;
@@ -94,7 +107,7 @@ export const createYuWenHuaJi = (): General => {
     skills: [createYuWenHuaJiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
     quotes: YU_WEN_HUA_JI_QUOTES,
-    rarity: YU_WEN_HUA_JI_BASE.rarity as GeneralRarity,
+    rarity: YU_WEN_HUA_JI_BASE.rarity,
   };
 };
 

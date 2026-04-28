@@ -7,28 +7,28 @@ const WEI_SHI_KANG_QUOTES = {
 
 const WEI_SHI_KANG_BASE = {
   id: 71,
-  name: "韦世康",
+  name: "尉士康",
   rarity: "common" as GeneralRarity,
-  attack: 41,
-  attackGrowth: 0.72,
-  defense: 60,
-  defenseGrowth: 1.12,
-  strategy: 85,
-  strategyGrowth: 2.48,
-  speed: 25,
-  speedGrowth: 0.66,
-  attackRange: 3,
-  siege: 10,
-  siegeGrowth: 0.48,
-  level: 5,
-  command: 82,
-  commandGrowth: 1.95,
-  leadership: 3.0,
+  attack: 56,
+  attackGrowth: 1.78,
+  defense: 70,
+  defenseGrowth: 2.48,
+  strategy: 52,
+  strategyGrowth: 1.52,
+  speed: 44,
+  speedGrowth: 1.28,
+  attackRange: 2,
+  siege: 55,
+  siegeGrowth: 1.72,
+  level: 4,
+  command: 56,
+  commandGrowth: 1.78,
+  leadership: 1.5,
   isDead: false,
-  dynasty: "隋",
+  dynasty: "隋朝",
   soldierType: "步兵" as const,
   gender: "男",
-  avatar: "/assets/ui_frame.png",
+  avatar: "/images/wei_shi_kang.webp",
 };
 
 const DEFAULT_SKILL_EFFECTS = {
@@ -40,64 +40,33 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  damageOutputReduction: 0,
-  damageOutputReductionDuration: 0,
-  damageOutputReductionSource: "",
-  skillTriggerReduction: 0,
-  skillTriggerReductionDuration: 0,
-  skillTriggerReductionSource: "",
-  defenseReduction: 0,
-  defenseReductionDuration: 0,
-  defenseReductionSource: "",
-  cannotNormalAttack: false,
-  cannotNormalAttackDuration: 0,
-  cannotNormalAttackSource: "",
 };
 
-const calculateTroops = (commandValue: number): number =>
-  Math.floor(commandValue * 10);
+const calculateTroops = (commandValue: number): number => {
+  return Math.floor(commandValue * 10);
+};
 
-// 主动 33%：单体 100% 策略伤害 + 为兵力最低友军恢复 85% 兵力
+// 被动：物理伤害-25%，策略防御-15%
 export const createWeiShiKangSkill = (): Skill => ({
-  id: "shende-anzhong",
-  name: "慎德安众",
-  type: "active",
-  description: "主动，发动概率 33%，攻击范围 3：对敌军单体造成 100% 策略伤害；为我军兵力最低者恢复兵力，恢复率 85%。",
+  id: "tiebi-jianshou",
+  name: "铁壁坚守",
+  type: "passive",
+  description: "被动：物理伤害-25%，策略防御-15%",
   effect: (general: General, context: any) => {
-    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    const { type, event, addReport, targets, allies } = context;
+    if (!general.skillEffects) {
+      general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    }
 
-    if (type === "activeSkill" && event === "trigger") {
-      const chance = 0.33;
-      if (addReport) addReport(`【${general.name}】尝试发动【慎德安众】（发动概率：33%）`);
-      if (Math.random() >= chance) {
-        if (addReport) addReport(`【${general.name}】的【慎德安众】未触发！`);
-        return { triggered: false };
+    const { type, addReport } = context;
+
+    if (type === "passive") {
+      general.skillEffects.physicalDamageReduction = 0.25;
+      general.skillEffects.physicalDamageReductionSource = `【${general.name}】的【铁壁坚守】`;
+      general.skillEffects.strategyDefenseReduction = 0.15;
+      general.skillEffects.strategyDefenseReductionSource = `【${general.name}】的【铁壁坚守】`;
+      if (addReport) {
+        addReport(`【${general.name}】的【铁壁坚守】生效：物理伤害-25%，策略防御-15%！`);
       }
-      if (addReport) addReport(`【${general.name}】成功发动【慎德安众】！`);
-
-      // 对敌军单体造成 100% 策略伤害
-      if (targets?.length > 0) {
-        const target = targets[0];
-        const damage = Math.max(0, Math.floor(general.strategy - target.strategy / 2));
-        target.troops = Math.max(0, target.troops - damage);
-        if (target.troops <= 0) target.isDead = true;
-        if (addReport) addReport(`【${general.name}】对【${target.name}】造成${damage}点策略伤害！`);
-      }
-
-      // 为兵力最低友军恢复兵力
-      if (allies?.length > 0) {
-        const alive = allies.filter((a: General) => !a.isDead);
-        if (alive.length > 0) {
-          const ally = alive.reduce((min: General, cur: General) =>
-            cur.troops < min.troops ? cur : min,
-          );
-          const recover = Math.floor(general.strategy * 0.85);
-          ally.troops = Math.min(ally.maxTroops, ally.troops + recover);
-          if (addReport) addReport(`【${general.name}】安抚【${ally.name}】，恢复${recover}点兵力！`);
-        }
-      }
-
       return { triggered: true };
     }
 
@@ -120,7 +89,7 @@ export const createWeiShiKang = (): General => {
 export const fetchWeiShiKangFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/71`);
-    if (!response.ok) throw new Error("获取人物信息失败");
+    if (!response.ok) throw new Error('获取人物信息失败');
     const characterData = await response.json();
     const troops = calculateTroops(WEI_SHI_KANG_BASE.command);
     return {
@@ -137,7 +106,7 @@ export const fetchWeiShiKangFromDatabase = async (API_BASE_URL: string): Promise
       quotes: WEI_SHI_KANG_QUOTES,
     };
   } catch (error) {
-    console.error("从数据库获取韦世康信息失败:", error);
+    console.error('从数据库获取尉士康信息失败:', error);
     return createWeiShiKang();
   }
 };

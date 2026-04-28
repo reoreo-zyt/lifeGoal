@@ -1,8 +1,8 @@
 import type { Skill, General, GeneralRarity } from "./types";
 
 const DI_XIAO_WEI_QUOTES = {
-  skill: ["临阵不退，吾往矣！", "宁为百夫长，不为一书生！"],
-  death: ["死战报国，马革裹尸！"],
+  skill: ["赴死突击，不胜无归！", "以血肉之躯，换敌军覆灭！"],
+  death: ["马革裹尸，此生无憾。"],
 } as const;
 
 const DI_XIAO_WEI_BASE = {
@@ -25,10 +25,10 @@ const DI_XIAO_WEI_BASE = {
   commandGrowth: 2.08,
   leadership: 1.5,
   isDead: false,
-  dynasty: "唐朝",
+  dynasty: "隋朝",
   soldierType: "步兵" as const,
   gender: "男",
-  avatar: "/images/di_xiao_wei.webp",
+  avatar: "/images/di_xiao_wei.jpg",
 };
 
 const DEFAULT_SKILL_EFFECTS = {
@@ -47,38 +47,43 @@ const calculateTroops = (commandValue: number): number => {
 };
 
 // 主动：消耗20%当前兵力对单体造成消耗量×3的物理伤害，距离2，概率40%
-export const createDiXiaoWeiSkill = (): Skill => ({
-  id: "fusi-tuji",
-  name: "赴死突击",
-  type: "active",
-  distance: 2,
-  probability: 0.40,
-  description: "主动：消耗20%当前兵力对单体造成消耗量×3的物理伤害，距离2，概率40%",
-  effect: (general: General, context: any) => {
-    if (!general.skillEffects) {
-      general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    }
-
-    const { type, event, addReport, targets } = context;
-
-    if (type === "activeSkill" && event === "trigger") {
-      if (targets && targets.length > 0) {
-        const target = targets[0];
-        const cost = Math.floor(general.troops * 0.20);
-        general.troops = Math.max(1, general.troops - cost);
-        const damage = cost * 3;
-        target.troops = Math.max(0, target.troops - damage);
-        if (target.troops <= 0) target.isDead = true;
-        if (addReport) {
-          addReport(`【${general.name}】发动【赴死突击】，消耗${cost}点兵力，对【${target.name}】造成${damage}点物理伤害！`);
-        }
-        return { triggered: true };
+export const createDiXiaoWeiSkill = (): Skill => {
+  return {
+    id: "fusi-tuji",
+    name: "赴死突击",
+    type: "active",
+    distance: 2,
+    probability: 0.40,
+    description: "主动：消耗20%当前兵力对单体造成消耗量×3的物理伤害，距离2，概率40%",
+    effect: (general: General, context: any) => {
+      if (!general.skillEffects) {
+        general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
       }
-    }
 
-    return null;
-  },
-});
+      const { type, event, addReport, targets } = context;
+
+      if (type === "activeSkill" && event === "trigger") {
+        if (targets && targets.length > 0) {
+          const target = targets[0];
+          // 消耗20%当前兵力
+          const cost = Math.floor(general.troops * 0.20);
+          general.troops = Math.max(1, general.troops - cost);
+          // 造成消耗量×3的物理伤害
+          const damage = cost * 3 + Math.floor(general.attack - target.defense / 2);
+          const finalDamage = Math.max(0, damage);
+          target.troops = Math.max(0, target.troops - finalDamage);
+          if (target.troops <= 0) target.isDead = true;
+          if (addReport) {
+            addReport(`【${general.name}】发动【赴死突击】，消耗${cost}点兵力，对【${target.name}】造成${finalDamage}点物理伤害！`);
+          }
+          return { triggered: true };
+        }
+      }
+
+      return null;
+    },
+  };
+};
 
 export const createDiXiaoWei = (): General => {
   const troops = calculateTroops(DI_XIAO_WEI_BASE.command);

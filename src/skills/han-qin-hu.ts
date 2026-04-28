@@ -1,35 +1,31 @@
 import type { Skill, General, GeneralRarity } from "./types";
 
 const HAN_QIN_HU_QUOTES = {
-  skill: [
-    "胡服骑射，天下无双！",
-    "匈奴未灭，何以家为！",
-    "铁骑纵横，扫荡胡尘！"
-  ],
-  death: ["马蹄所至，尽为汉土..."]
+  skill: ["渡江灭陈，此其时也！", "江南虽远，必有归期。", "擒贼擒王，一战而定！"],
+  death: ["南朝旧事，终成泡影..."]
 } as const;
 
 const HAN_QIN_HU_BASE = {
   id: 12,
-  name: "韩信虎",
+  name: "韩擒虎",
   rarity: "rare" as GeneralRarity,
   attack: 88,
-  attackGrowth: 2.40,
-  defense: 82,
-  defenseGrowth: 2.00,
+  attackGrowth: 2.82,
+  defense: 72,
+  defenseGrowth: 2.22,
   strategy: 60,
-  strategyGrowth: 1.30,
-  speed: 52,
-  speedGrowth: 0.80,
+  strategyGrowth: 1.85,
+  speed: 86,
+  speedGrowth: 2.82,
   attackRange: 2,
-  siege: 16,
-  siegeGrowth: 0.80,
+  siege: 65,
+  siegeGrowth: 1.98,
   level: 5,
-  command: 90,
-  commandGrowth: 2.30,
-  leadership: 3.0,
+  command: 88,
+  commandGrowth: 2.82,
+  leadership: 2.5,
   isDead: false,
-  dynasty: "汉朝",
+  dynasty: "隋朝",
   soldierType: "骑兵" as const,
   gender: "男",
   avatar: "/images/han_qin_hu.jpg",
@@ -49,72 +45,55 @@ const DEFAULT_SKILL_EFFECTS = {
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
-/**
- * 【胡服骑射】被动
- * - 战斗开始时，永久获得 50% 反击率，自身受到攻击时反击
- * - HP < 60%：额外获得 18% 伤害增加（永久）
- * - 整体定位：稳定的反伤肉盾，高反击率压制敌人
- */
 export const createHanQinHuSkill = (): Skill => ({
-  id: "hufu-qishe",
-  name: "胡服骑射",
-  type: "passive",
-  description:
-    "被动：永久获得 50% 反击率，受到攻击时自动反击；HP 低于 60% 时，伤害增加 18%（永久）。",
+  id: "du-jiang-qin-di",
+  name: "渡江擒敌",
+  type: "active",
+  distance: 4,
+  probability: 0.46,
+  description: "主动：对敌方单体造成180%物理伤害，40%概率震慑1回合",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) {
       general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     }
 
-    const { type, event, addReport, attacker } = context;
+    const { type, event, addReport, targets } = context;
 
-    // 战斗开始 → 获得反击能力（标记在 skillEffects 中，后续被攻击时反击）
-    if (type === "battleStart") {
-      // 通过被动标志让战斗系统识别反击
-      if (!general.skillEffects.attributeBonus) {
-        general.skillEffects.attributeBonus = 50; // 复用字段存储反击率%
-        general.skillEffects.attributeBonusSource = "hufu-qishe";
-      }
+    if (type === "activeSkill" && event === "trigger") {
       if (addReport) {
-        addReport(`【${general.name}】发动【胡服骑射】，获得 50% 永久反击率！`);
+        addReport(`【${general.name}】发动【渡江擒敌】！`);
       }
-      return null;
-    }
-
-    // 受到攻击时 → 触发反击（复用 attacked 事件）
-    if (type === "attacked" && event === "beforeDamage") {
-      const counterChance = general.skillEffects.attributeBonus / 100;
-      if (Math.random() < counterChance && attacker) {
-        const counterDamage = Math.max(
-          0,
-          Math.floor(general.attack * 0.40 - attacker.defense / 4)
-        );
-        attacker.troops = Math.max(0, attacker.troops - counterDamage);
+      if (targets && targets.length > 0) {
+        const target = targets[0];
+        const damage = Math.max(0, Math.floor(general.attack * 1.80 - target.defense / 2));
+        target.troops = Math.max(0, target.troops - damage);
+        if (target.troops <= 0) {
+          target.isDead = true;
+        }
         if (addReport) {
-          addReport(
-            `【${general.name}】反击！对【${attacker.name}】造成 ${counterDamage} 点物理伤害！`
-          );
+          addReport(`【${general.name}】对【${target.name}】造成${damage}点物理伤害！`);
+        }
+        // 40%概率震慑1回合
+        if (Math.random() < 0.40) {
+          if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+          target.skillEffects.cannotNormalAttack = true;
+          target.skillEffects.cannotNormalAttackDuration = 1;
+          target.skillEffects.cannotNormalAttackSource = `【${general.name}】的【渡江擒敌】`;
+          if (addReport) {
+            addReport(`【${target.name}】被震慑，无法普通攻击，持续1回合！`);
+          }
         }
       }
-      return null;
+      return { triggered: true };
     }
 
-    // 兵力低于 60% → 永久增伤 18%
-    if (type === "turnStart") {
-      const hpThreshold = 0.6;
-      if (
-        general.troops <= general.maxTroops * hpThreshold &&
-        !general.skillEffects.damageIncrease
-      ) {
-        general.skillEffects.damageIncrease = 18;
-        general.skillEffects.damageIncreaseSource = "hufu-qishe-lowhp";
-        if (addReport) {
-          addReport(
-            `【${general.name}】HP 低于 60%，【胡服骑射】使伤害增加 18%（永久）！`
-          );
-        }
+    // 震慑时间递减
+    if (type === "turnEnd" && general.skillEffects?.cannotNormalAttackDuration) {
+      general.skillEffects.cannotNormalAttackDuration -= 1;
+      if (general.skillEffects.cannotNormalAttackDuration <= 0) {
+        general.skillEffects.cannotNormalAttack = false;
+        general.skillEffects.cannotNormalAttackSource = "";
       }
-      return null;
     }
 
     return null;
@@ -133,9 +112,7 @@ export const createHanQinHu = (): General => {
   };
 };
 
-export const fetchHanQinHuFromDatabase = async (
-  API_BASE_URL: string
-): Promise<General | null> => {
+export const fetchHanQinHuFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/12`);
     if (!response.ok) throw new Error("获取人物信息失败");
@@ -155,7 +132,7 @@ export const fetchHanQinHuFromDatabase = async (
       quotes: HAN_QIN_HU_QUOTES,
     };
   } catch (error) {
-    console.error("从数据库获取韩信虎信息失败:", error);
+    console.error("从数据库获取韩擒虎信息失败:", error);
     return createHanQinHu();
   }
 };

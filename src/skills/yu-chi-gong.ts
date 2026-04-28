@@ -27,7 +27,7 @@ const YU_CHI_GONG_BASE = {
   level: 5,
   command: 92,
   commandGrowth: 2.50,
-  leadership: 4.0,
+  leadership: 2.5,
   isDead: false,
   dynasty: "唐朝",
   soldierType: "骑兵" as const,

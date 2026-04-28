@@ -1,29 +1,29 @@
 import type { Skill, General, GeneralRarity } from "./types";
 
 const LU_YAN_SHI_QUOTES = {
-  skill: ["整肃风纪，以正朝纲。", "敦礼明伦，修身匡世。", "清身守道，不以权势屈节。"],
+  skill: ["整肃风纪，以正朝纲。", "敦礼明伦，修身匡世。"],
   death: ["正道难行，清节犹在，此生无愧名教。"],
 } as const;
 
 const LU_YAN_SHI_BASE = {
-  id: 588,
+  id: 70,
   name: "陆彦师",
   rarity: "common" as GeneralRarity,
-  attack: 39,
-  attackGrowth: 0.70,
-  defense: 53,
-  defenseGrowth: 1.00,
-  strategy: 88,
-  strategyGrowth: 2.55,
-  speed: 22,
-  speedGrowth: 0.65,
-  attackRange: 3,
-  siege: 9,
-  siegeGrowth: 0.45,
-  level: 5,
-  command: 83,
-  commandGrowth: 2.00,
-  leadership: 2.5,
+  attack: 52,
+  attackGrowth: 1.58,
+  defense: 52,
+  defenseGrowth: 1.62,
+  strategy: 52,
+  strategyGrowth: 1.54,
+  speed: 52,
+  speedGrowth: 1.64,
+  attackRange: 2,
+  siege: 48,
+  siegeGrowth: 1.38,
+  level: 4,
+  command: 52,
+  commandGrowth: 1.58,
+  leadership: 1.5,
   isDead: false,
   dynasty: "北周",
   soldierType: "步兵" as const,
@@ -40,46 +40,30 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  damageOutputReduction: 0,
-  damageOutputReductionDuration: 0,
-  damageOutputReductionSource: "",
-  skillTriggerReduction: 0,
-  skillTriggerReductionDuration: 0,
-  skillTriggerReductionSource: "",
 };
 
-const calculateTroops = (commandValue: number): number =>
-  Math.floor(commandValue * 10);
+const calculateTroops = (commandValue: number): number => {
+  return Math.floor(commandValue * 10);
+};
 
-// 主动 32%：对 2 名敌军单体各造成 100% 策略伤害（群体 AOE，简单实用）
+// 被动：全属性+10
 export const createLuYanShiSkill = (): Skill => ({
-  id: "qinggui-shouzheng",
-  name: "清规守正",
-  type: "active",
-  description: "主动，发动概率 32%，攻击范围 3：对 2 名敌军单体各造成 100% 策略伤害。",
+  id: "zhongyong-zishou",
+  name: "中庸自守",
+  type: "passive",
+  description: "被动：全属性+10",
   effect: (general: General, context: any) => {
-    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    const { type, event, addReport, targets } = context;
+    if (!general.skillEffects) {
+      general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    }
 
-    if (type === "activeSkill" && event === "trigger") {
-      const chance = 0.32;
-      if (addReport) addReport(`【${general.name}】尝试发动【清规守正】（发动概率：32%）`);
-      if (Math.random() >= chance) {
-        if (addReport) addReport(`【${general.name}】的【清规守正】未触发！`);
-        return { triggered: false };
-      }
-      if (addReport) addReport(`【${general.name}】成功发动【清规守正】！`);
+    const { type, addReport } = context;
 
-      // 对最多 2 名敌军造成 100% 策略伤害
-      if (targets && targets.length > 0) {
-        const count = Math.min(targets.length, 2);
-        for (let i = 0; i < count; i++) {
-          const target = targets[i];
-          const damage = Math.max(0, Math.floor(general.strategy * 1.0 - target.strategy / 2));
-          target.troops = Math.max(0, target.troops - damage);
-          if (target.troops <= 0) target.isDead = true;
-          if (addReport) addReport(`【${general.name}】对【${target.name}】造成${damage}点策略伤害！`);
-        }
+    if (type === "passive") {
+      general.skillEffects.attributeBonus = 10;
+      general.skillEffects.attributeBonusSource = `【${general.name}】的【中庸自守】`;
+      if (addReport) {
+        addReport(`【${general.name}】的【中庸自守】生效：全属性+10！`);
       }
       return { triggered: true };
     }
@@ -103,15 +87,15 @@ export const createLuYanShi = (): General => {
 export const fetchLuYanShiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/70`);
-    if (!response.ok) throw new Error("获取人物信息失败");
+    if (!response.ok) throw new Error('获取人物信息失败');
     const characterData = await response.json();
     const troops = calculateTroops(LU_YAN_SHI_BASE.command);
     return {
       ...LU_YAN_SHI_BASE,
-      id: LU_YAN_SHI_BASE.id,
-      name: LU_YAN_SHI_BASE.name,
-      dynasty: LU_YAN_SHI_BASE.dynasty,
-      gender: LU_YAN_SHI_BASE.gender,
+      id: characterData.id ?? LU_YAN_SHI_BASE.id,
+      name: characterData.name ?? LU_YAN_SHI_BASE.name,
+      dynasty: characterData.dynasty ?? LU_YAN_SHI_BASE.dynasty,
+      gender: characterData.gender ?? LU_YAN_SHI_BASE.gender,
       avatar: characterData.avatar || LU_YAN_SHI_BASE.avatar,
       troops,
       maxTroops: troops,
@@ -120,7 +104,7 @@ export const fetchLuYanShiFromDatabase = async (API_BASE_URL: string): Promise<G
       quotes: LU_YAN_SHI_QUOTES,
     };
   } catch (error) {
-    console.error("从数据库获取陆彦师信息失败:", error);
+    console.error('从数据库获取陆彦师信息失败:', error);
     return createLuYanShi();
   }
 };

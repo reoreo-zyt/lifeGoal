@@ -10,24 +10,24 @@ const GAO_JIONG_BASE = {
   id: 24,
   name: "高颎",
   rarity: "legendary",
-  attack: 48,
-  attackGrowth: 0.85,
-  defense: 62,
-  defenseGrowth: 1.20,
-  strategy: 100,
-  strategyGrowth: 2.80,
-  speed: 30,
-  speedGrowth: 0.50,
+  attack: 82,
+  attackGrowth: 2.58,
+  defense: 88,
+  defenseGrowth: 2.82,
+  strategy: 96,
+  strategyGrowth: 3.00,
+  speed: 78,
+  speedGrowth: 2.28,
   attackRange: 4,
-  siege: 12,
-  siegeGrowth: 0.60,
+  siege: 82,
+  siegeGrowth: 2.62,
   level: 5,
-  command: 90,
-  commandGrowth: 2.20,
+  command: 82,
+  commandGrowth: 2.58,
   leadership: 3.5,
   isDead: false,
   dynasty: "隋朝",
-  soldierType: "弓兵" as const,
+  soldierType: "步兵" as const,
   gender: "男",
   avatar: "/images/gao_jiong.jpg",
 };
@@ -55,7 +55,7 @@ export const createGaoJiongSkill = (): Skill => {
     id: "zaifu-zhimou",
     name: "宰辅之谋",
     type: "command",
-    description: "指挥：战斗开始时，全体友军策略伤害+15%；敌方全体陷入【谋伤易伤】15%，持续2回合。",
+    description: "指挥：我方全体策略伤害+22%，敌方全体策防-18%全场",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -69,27 +69,27 @@ export const createGaoJiongSkill = (): Skill => {
           addReport(`【${general.name}】发动【宰辅之谋】，运筹庙堂！`);
         }
 
-        // 全体友军策略伤害+15%（通过 teamStrategyDamageIncrease 实现）
+        // 全体友军策略伤害+22%（通过 teamStrategyDamageIncrease 实现）
         if (allies && allies.length > 0) {
           allies.forEach((ally: General) => {
             if (!ally.teamStrategyDamageIncrease) {
               ally.teamStrategyDamageIncrease = 0;
             }
-            ally.teamStrategyDamageIncrease += 0.15;
+            ally.teamStrategyDamageIncrease += 0.22;
             if (addReport) {
-              addReport(`【${ally.name}】策略伤害提升15%！`);
+              addReport(`【${ally.name}】策略伤害提升22%！`);
             }
           });
         }
 
-        // 敌方全体陷入【谋伤易伤】15%，持续2回合
+        // 敌方全体策防-18%全场（通过 enemyStrategyVulnerability 实现，永久效果无duration）
         if (enemies && enemies.length > 0) {
           enemies.forEach((enemy: General) => {
-            enemy.enemyStrategyVulnerability = 0.15;
-            enemy.enemyStrategyVulnerabilityDuration = 2;
+            enemy.enemyStrategyVulnerability = 0.18;
+            enemy.enemyStrategyVulnerabilityDuration = 999; // 近似全场永久
             enemy.enemyStrategyVulnerabilitySource = `【${general.name}】的【宰辅之谋】`;
             if (addReport) {
-              addReport(`【${enemy.name}】陷入谋伤易伤，承受策略伤害增加15%，持续2回合！`);
+              addReport(`【${enemy.name}】策防降低18%！`);
             }
           });
         }

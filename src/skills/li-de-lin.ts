@@ -1,32 +1,32 @@
 import type { Skill, General, GeneralRarity } from "./types";
 
 const LI_DE_LIN_QUOTES = {
-  skill: ["掌笔裁策，以定天下。", "经国大略，运筹帷幄。", "文墨安邦，智衡时局。"],
+  skill: ["典谟润色，以文辅政。", "经国大略，运筹帷幄。", "文墨安邦，智衡时局。"],
   death: ["一生秉笔，尽事三朝，功名浮沉，皆为天命。"],
 } as const;
 
 const LI_DE_LIN_BASE = {
   id: 69,
   name: "李德林",
-  rarity: "uncommon",
-  attack: 47,
-  attackGrowth: 0.81,
-  defense: 59,
-  defenseGrowth: 1.15,
-  strategy: 97,
-  strategyGrowth: 2.92,
-  speed: 56,
-  speedGrowth: 0.73,
-  attackRange: 4,
-  siege: 11,
-  siegeGrowth: 0.55,
-  level: 5,
-  command: 91,
-  commandGrowth: 2.43,
-  leadership: 3.0,
+  rarity: "uncommon" as GeneralRarity,
+  attack: 55,
+  attackGrowth: 1.78,
+  defense: 58,
+  defenseGrowth: 1.88,
+  strategy: 72,
+  strategyGrowth: 2.48,
+  speed: 52,
+  speedGrowth: 1.62,
+  attackRange: 3,
+  siege: 48,
+  siegeGrowth: 1.32,
+  level: 4,
+  command: 55,
+  commandGrowth: 1.78,
+  leadership: 2.0,
   isDead: false,
   dynasty: "北齐",
-  soldierType: "弓兵" as const,
+  soldierType: "步兵" as const,
   gender: "男",
   avatar: "/images/li_de_lin.jpg",
 };
@@ -40,63 +40,30 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  damageOutputReduction: 0,
-  damageOutputReductionDuration: 0,
-  damageOutputReductionSource: "",
 };
 
-const calculateTroops = (commandValue: number): number =>
-  Math.floor(commandValue * 10);
+const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
+// 典谟润色 — 被动：自身受到谋略伤害-12%、物理伤害-18%
 export const createLiDeLinSkill = (): Skill => ({
-  id: "hongbi-dinglve",
-  name: "鸿笔定略",
-  type: "active",
-  description: "主动，发动概率48%，攻击范围4：对敌军随机2人造成155%策略伤害，降低目标15%伤害输出，持续2回合。",
+  id: "dianmo-runse",
+  name: "典谟润色",
+  type: "passive",
+  description: "被动：自身受到谋略伤害-12%、受到物理伤害-18%",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    const { type, event, addReport, targets } = context;
+    const { type, event, addReport } = context;
 
-    if (type === "activeSkill" && event === "trigger") {
-      const chance = 0.48;
-      if (addReport) addReport(`【${general.name}】尝试发动【鸿笔定略】（48%）`);
-      if (Math.random() >= chance) {
-        if (addReport) addReport(`【${general.name}】的【鸿笔定略】未触发！`);
-        return { triggered: false };
-      }
-
-      if (addReport) addReport(`【${general.name}】成功发动【鸿笔定略】！`);
-      if (targets && targets.length > 0) {
-        targets.slice(0, 2).forEach((target: General) => {
-          const damage = Math.max(0, Math.floor(general.strategy * 1.55 - target.strategy / 2));
-          target.troops = Math.max(0, target.troops - damage);
-          if (target.troops <= 0) target.isDead = true;
-          if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-          target.skillEffects.damageOutputReduction = 0.15;
-          target.skillEffects.damageOutputReductionDuration = 2;
-          target.skillEffects.damageOutputReductionSource = `【${general.name}】的【鸿笔定略】`;
-          if (addReport) addReport(`【${target.name}】受到${damage}点策略伤害，伤害输出降低15%！`);
-        });
+    if (type === "battleStart" && event === "init") {
+      if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+      general.skillEffects.strategyDamageReduction = (general.skillEffects.strategyDamageReduction || 0) + 12;
+      general.skillEffects.strategyDamageReductionSource = `【${general.name}】的【典谟润色】`;
+      general.skillEffects.physicalDamageReduction = (general.skillEffects.physicalDamageReduction || 0) + 18;
+      general.skillEffects.physicalDamageReductionSource = `【${general.name}】的【典谟润色】`;
+      if (addReport) {
+        addReport(`【${general.name}】发动【典谟润色】，谋伤-12%、物伤-18%！`);
       }
       return { triggered: true };
-    }
-
-    // 回合开始时减少持续时间
-    if (type === "turnStart") {
-      if (general.skillEffects.damageOutputReductionDuration > 0) {
-        general.skillEffects.damageOutputReductionDuration -= 1;
-        if (general.skillEffects.damageOutputReductionDuration === 0) {
-          if (addReport) addReport(`【${general.name}】的降攻效果结束！`);
-          general.skillEffects.damageOutputReduction = 0;
-        }
-      }
-    }
-
-    // 攻击时应用降攻效果
-    if (type === "attack" && event === "beforeAttack") {
-      if (general.skillEffects.damageOutputReduction > 0) {
-        return { damageIncrease: -general.skillEffects.damageOutputReduction };
-      }
     }
 
     return null;
@@ -112,7 +79,7 @@ export const createLiDeLin = (): General => {
     skills: [createLiDeLinSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
     quotes: LI_DE_LIN_QUOTES,
-    rarity: LI_DE_LIN_BASE.rarity as GeneralRarity,
+    rarity: LI_DE_LIN_BASE.rarity,
   };
 };
 

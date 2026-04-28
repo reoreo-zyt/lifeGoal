@@ -1,32 +1,32 @@
 import type { Skill, General, GeneralRarity } from "./types";
 
 const YU_SHI_JI_QUOTES = {
-  skill: ["陛下圣明，臣遵旨。", "顺天者昌，逆天者亡。", "谄媚逢迎，乃生存之道。"],
-  death: ["化及反贼，不得好死..."]
+  skill: ["机衡之任，某当其责。", "朝堂博弈，进退有度。", "察言观色，方能立于不败。"],
+  death: ["伴君如伴虎，此言不虚..."]
 } as const;
 
 const YU_SHI_JI_BASE = {
-  id: 561,
+  id: 562,
   name: "虞世基",
-  rarity: "uncommon",
-  attack: 42,
-  attackGrowth: 0.80,
-  defense: 55,
-  defenseGrowth: 1.00,
-  strategy: 90,
-  strategyGrowth: 2.40,
-  speed: 28,
-  speedGrowth: 0.50,
+  rarity: "rare" as GeneralRarity,
+  attack: 65,
+  attackGrowth: 2.08,
+  defense: 62,
+  defenseGrowth: 1.98,
+  strategy: 78,
+  strategyGrowth: 2.78,
+  speed: 68,
+  speedGrowth: 2.18,
   attackRange: 3,
-  siege: 9,
-  siegeGrowth: 0.45,
-  level: 5,
-  command: 80,
-  commandGrowth: 1.90,
+  siege: 55,
+  siegeGrowth: 1.62,
+  level: 4,
+  command: 65,
+  commandGrowth: 2.08,
   leadership: 2.5,
   isDead: false,
   dynasty: "隋朝",
-  soldierType: "弓兵" as const,
+  soldierType: "步兵" as const,
   gender: "男",
   avatar: "/images/yu_shi_ji.jpg",
 };
@@ -40,63 +40,53 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  isCharmed: false,
-  charmSource: "",
 };
 
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
 export const createYuShiJiSkill = (): Skill => ({
-  id: "meishang-zhice",
-  name: "媚上之策",
-  type: "active",
-  description: "主动，发动概率52%，攻击范围3：使敌方统御最高者陷入魅惑，下回合有50%概率攻击友军；自身每回合额外回复5%兵力。",
+  id: "ji-heng-zhi-ren",
+  name: "机衡之任",
+  type: "passive",
+  description: "被动：回合开始时使友军+10%物防和策防；第5回合对敌军全体150%策略攻击",
   effect: (general: General, context: any) => {
-    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    const { type, event, addReport, targets, currentTroops, maxTroops } = context;
-
-    // 主动战法触发
-    if (type === "activeSkill" && event === "trigger") {
-      const chance = 0.52;
-      if (addReport) addReport(`【${general.name}】尝试发动【媚上之策】（52%）`);
-      if (Math.random() >= chance) {
-        if (addReport) addReport(`【${general.name}】的【媚上之策】未触发！`);
-        return { triggered: false };
-      }
-
-      if (addReport) addReport(`【${general.name}】成功发动【媚上之策】！`);
-      if (targets && targets.length > 0) {
-        const target = targets.reduce((prev: General, cur: General) =>
-          prev.command > cur.command ? prev : cur
-        );
-        if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-        target.skillEffects.isCharmed = true;
-        target.skillEffects.charmSource = `【${general.name}】的【媚上之策】`;
-        if (addReport) addReport(`【${target.name}】陷入魅惑，下回合有50%概率攻击友军！`);
-      }
-      return { triggered: true };
+    if (!general.skillEffects) {
+      general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     }
 
-    // 自身每回合额外回复5%兵力
-    if (type === "turnEnd") {
-      const ratio = currentTroops / maxTroops;
-      if (ratio < 1) {
-        const recover = Math.floor(maxTroops * 0.05);
-        general.troops = Math.min(maxTroops, general.troops + recover);
-        if (addReport) addReport(`【${general.name}】受【媚上之策】回复${recover}点兵力！`);
-      }
-    }
+    const { type, addReport, allies, enemies, currentRound } = context;
 
-    // 检查自身被魅惑
+    // 回合开始时使友军+10%物防和策防
     if (type === "turnStart") {
-      if (general.skillEffects.isCharmed) {
-        if (Math.random() < 0.5) {
-          if (addReport) addReport(`【${general.name}】受魅惑影响，攻击友军！`);
-        } else {
-          if (addReport) addReport(`【${general.name}】抵抗了魅惑效果！`);
+      if (allies && allies.length > 0) {
+        allies.forEach((ally: General) => {
+          if (ally.isDead) return;
+          if (!ally.skillEffects) ally.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+          ally.skillEffects.defenseBonus = (ally.skillEffects.defenseBonus || 0) + 10;
+          ally.skillEffects.defenseBonusSource = `【${general.name}】的【机衡之任】`;
+          if (addReport) {
+            addReport(`【${ally.name}】受【机衡之任】物防和策防+10%！`);
+          }
+        });
+      }
+    }
+
+    // 第5回合对敌军全体150%策略攻击
+    if (type === "turnStart" && currentRound === 5) {
+      if (enemies && enemies.length > 0) {
+        if (addReport) {
+          addReport(`【${general.name}】发动【机衡之任】，第5回合对敌军全体发起策略攻击！`);
         }
-        general.skillEffects.isCharmed = false;
+        enemies.forEach((enemy: General) => {
+          if (enemy.isDead) return;
+          const damage = Math.max(0, Math.floor(general.strategy * 1.50 - enemy.strategy / 2));
+          enemy.troops = Math.max(0, enemy.troops - damage);
+          if (enemy.troops <= 0) enemy.isDead = true;
+          if (addReport) {
+            addReport(`【${general.name}】对【${enemy.name}】造成${damage}点策略伤害！`);
+          }
+        });
       }
     }
 
@@ -113,13 +103,12 @@ export const createYuShiJi = (): General => {
     skills: [createYuShiJiSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
     quotes: YU_SHI_JI_QUOTES,
-    rarity: YU_SHI_JI_BASE.rarity as GeneralRarity,
   };
 };
 
 export const fetchYuShiJiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/561`);
+    const response = await fetch(`${API_BASE_URL}/characters/562`);
     if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
     const troops = calculateTroops(YU_SHI_JI_BASE.command);
@@ -135,7 +124,6 @@ export const fetchYuShiJiFromDatabase = async (API_BASE_URL: string): Promise<Ge
       skills: [createYuShiJiSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
       quotes: YU_SHI_JI_QUOTES,
-      rarity: "uncommon" as GeneralRarity,
     };
   } catch (error) {
     console.error("从数据库获取虞世基信息失败:", error);

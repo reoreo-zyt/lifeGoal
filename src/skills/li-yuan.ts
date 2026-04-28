@@ -2,28 +2,28 @@ import type { Skill, General, GeneralRarity } from "./types";
 
 const LI_YUAN_QUOTES = {
   skill: ["晋阳起兵，匡扶天下。", "李唐基业，始于今日。", "天下大乱，当取而代之。"],
-  death: ["玄武门之事，朕之过矣..."]
+  death: ["玄武门之事，朕之过矣..."],
 } as const;
 
 const LI_YUAN_BASE = {
   id: 1,
   name: "李渊",
-  rarity: "uncommon",
-  attack: 80,
-  attackGrowth: 2.10,
-  defense: 88,
-  defenseGrowth: 2.30,
-  strategy: 86,
-  strategyGrowth: 2.20,
-  speed: 36,
-  speedGrowth: 0.60,
-  attackRange: 2,
-  siege: 14,
-  siegeGrowth: 0.70,
-  level: 5,
-  command: 95,
-  commandGrowth: 2.40,
-  leadership: 3.5,
+  rarity: "uncommon" as GeneralRarity,
+  attack: 65,
+  attackGrowth: 2.28,
+  defense: 60,
+  defenseGrowth: 2.08,
+  strategy: 52,
+  strategyGrowth: 1.58,
+  speed: 50,
+  speedGrowth: 1.52,
+  attackRange: 3,
+  siege: 72,
+  siegeGrowth: 2.28,
+  level: 4,
+  command: 65,
+  commandGrowth: 2.28,
+  leadership: 2.5,
   isDead: false,
   dynasty: "唐朝",
   soldierType: "骑兵" as const,
@@ -42,44 +42,55 @@ const DEFAULT_SKILL_EFFECTS = {
   hasTriggeredRecovery: false,
 };
 
-const calculateTroops = (commandValue: number): number =>
-  Math.floor(commandValue * 10);
+const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
+// 晋阳起兵 — 指挥：前两回合我方全体防御+22%，同时自身攻击+18%
 export const createLiYuanSkill = (): Skill => ({
-  id: "longxing-jinyang",
-  name: "龙兴晋阳",
+  id: "jinyang-qibing",
+  name: "晋阳起兵",
   type: "command",
-  description: "指挥：战斗开始时，使我军全体获得12%永久伤害减免；每回合结束，我军全体回复3%兵力。",
+  description: "指挥：前两回合我方全体防御+22%，同时自身攻击+18%",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     const { type, event, addReport, allies } = context;
 
-    // 战斗开始时：全体友军获得12%永久伤害减免
+    // 战斗开始时：全体友军防御+22%，自身攻击+18%
     if (type === "battleStart" && event === "init") {
-      if (addReport) addReport(`【${general.name}】发动【龙兴晋阳】，唐室基业，始于今日！`);
       if (allies && allies.length > 0) {
         allies.forEach((ally: General) => {
           if (!ally.skillEffects) ally.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-          ally.skillEffects.damageReduction = 0.12;
-          ally.skillEffects.damageReductionSource = `【${general.name}】的【龙兴晋阳】`;
-          if (addReport) addReport(`【${ally.name}】获得12%永久伤害减免！`);
+          ally.skillEffects.defenseBonus = (ally.skillEffects.defenseBonus || 0) + 22;
+          ally.skillEffects.defenseBonusSource = `【${general.name}】的【晋阳起兵】`;
+          ally.skillEffects.defenseBonusDuration = 2;
+          if (addReport) addReport(`【${ally.name}】受【晋阳起兵】防御+22%！`);
         });
+      }
+      general.skillEffects.attackBonus = (general.skillEffects.attackBonus || 0) + 18;
+      general.skillEffects.attackBonusSource = `【${general.name}】的【晋阳起兵】`;
+      general.skillEffects.attackBonusDuration = 2;
+      if (addReport) {
+        addReport(`【${general.name}】发动【晋阳起兵】，唐室基业，始于今日！自身攻击+18%！`);
       }
       return { triggered: true };
     }
 
-    // 每回合结束：我军全体回复3%兵力
+    // 回合结束减少持续时间
     if (type === "turnEnd") {
-      if (allies && allies.length > 0) {
-        allies.forEach((ally: General) => {
-          if (ally.isDead) return;
-          const recover = Math.floor(ally.maxTroops * 0.03);
-          ally.troops = Math.min(ally.maxTroops, ally.troops + recover);
-          if (addReport) addReport(`【${ally.name}】回复${recover}点兵力！`);
-        });
-        const selfRecover = Math.floor(general.maxTroops * 0.03);
-        general.troops = Math.min(general.maxTroops, general.troops + selfRecover);
-        if (addReport) addReport(`【${general.name}】回复${selfRecover}点兵力！`);
+      if (general.skillEffects?.defenseBonusDuration) {
+        general.skillEffects.defenseBonusDuration -= 1;
+        if (general.skillEffects.defenseBonusDuration <= 0) {
+          general.skillEffects.defenseBonus = 0;
+          general.skillEffects.defenseBonusSource = "";
+          general.skillEffects.defenseBonusDuration = 0;
+        }
+      }
+      if (general.skillEffects?.attackBonusDuration) {
+        general.skillEffects.attackBonusDuration -= 1;
+        if (general.skillEffects.attackBonusDuration <= 0) {
+          general.skillEffects.attackBonus = 0;
+          general.skillEffects.attackBonusSource = "";
+          general.skillEffects.attackBonusDuration = 0;
+        }
       }
     }
 
@@ -96,7 +107,7 @@ export const createLiYuan = (): General => {
     skills: [createLiYuanSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
     quotes: LI_YUAN_QUOTES,
-    rarity: LI_YUAN_BASE.rarity as GeneralRarity,
+    rarity: LI_YUAN_BASE.rarity,
   };
 };
 

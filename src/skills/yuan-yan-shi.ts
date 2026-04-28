@@ -1,29 +1,29 @@
 import type { Skill, General, GeneralRarity } from "./types";
 
-const YUAN_YAN_QUOTES = {
-  skill: ["直谏辅政，忠义为先。", "直言不讳，方为臣道。"],
-  death: ["吾虽身死，志节不渝。"]
+const YUAN_YAN_SHI_QUOTES = {
+  skill: ["洛阳固守，万夫莫开。", "城在人在，城破人亡。"],
+  death: ["洛阳已失，吾死得其所。"],
 } as const;
 
-const YUAN_YAN_BASE = {
+const YUAN_YAN_SHI_BASE = {
   id: 515,
-  name: "元岩",
-  rarity: "uncommon",
-  attack: 37,
-  attackGrowth: 0.65,
-  defense: 56,
-  defenseGrowth: 1.03,
-  strategy: 87,
-  strategyGrowth: 2.58,
-  speed: 22,
-  speedGrowth: 0.60,
+  name: "元延嗣",
+  rarity: "uncommon" as GeneralRarity,
+  attack: 60,
+  attackGrowth: 2.08,
+  defense: 76,
+  defenseGrowth: 2.58,
+  strategy: 64,
+  strategyGrowth: 2.08,
+  speed: 42,
+  speedGrowth: 1.28,
   attackRange: 3,
-  siege: 8,
-  siegeGrowth: 0.42,
-  level: 5,
-  command: 84,
-  commandGrowth: 1.90,
-  leadership: 3.0,
+  siege: 65,
+  siegeGrowth: 2.08,
+  level: 4,
+  command: 60,
+  commandGrowth: 2.08,
+  leadership: 2.0,
   isDead: false,
   dynasty: "北魏",
   soldierType: "步兵" as const,
@@ -42,44 +42,47 @@ const DEFAULT_SKILL_EFFECTS = {
   hasTriggeredRecovery: false,
 };
 
-const calculateTroops = (commandValue: number): number =>
-  Math.floor(commandValue * 10);
+const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
+// 固守洛阳 — 被动：物防+28%、治疗效果+20%，降低50点速度
 export const createYuanYanSkill = (): Skill => ({
-  id: "zhijian-guchao",
-  name: "直谏固朝",
-  type: "command",
-  description: "指挥：每回合使全体友军回复3%兵力。",
+  id: "gushou-luoyang",
+  name: "固守洛阳",
+  type: "passive",
+  description: "被动：物理防御+28%、治疗效果+20%，降低50点速度",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    const { type, addReport, allies } = context;
+    const { type, event, addReport } = context;
 
-    if (type === "turnEnd" && allies && allies.length > 0) {
-      allies.forEach((ally: General) => {
-        if (ally.isDead) return;
-        const recover = Math.floor(ally.maxTroops * 0.03);
-        ally.troops = Math.min(ally.maxTroops, ally.troops + recover);
-        if (addReport) addReport(`【${ally.name}】受【直谏固朝】回复${recover}点兵力！`);
-      });
-      const selfRecover = Math.floor(general.maxTroops * 0.03);
-      general.troops = Math.min(general.maxTroops, general.troops + selfRecover);
-      if (addReport) addReport(`【${general.name}】回复${selfRecover}点兵力！`);
+    if (type === "battleStart" && event === "init") {
+      if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+      general.skillEffects.defenseBonus = (general.skillEffects.defenseBonus || 0) + 28;
+      general.skillEffects.defenseBonusSource = `【${general.name}】的【固守洛阳】`;
+      general.skillEffects.healingBonus = (general.skillEffects.healingBonus || 0) + 20;
+      general.skillEffects.healingBonusSource = `【${general.name}】的【固守洛阳】`;
+      // 降低50点速度（固定减值）
+      general.skillEffects.speedPenaltyFlat = 50;
+      general.skillEffects.speedPenaltyFlatSource = `【${general.name}】的【固守洛阳】`;
+      if (addReport) {
+        addReport(`【${general.name}】发动【固守洛阳】，物防+28%、治疗效果+20%，速度-50！`);
+      }
       return { triggered: true };
     }
+
     return null;
   },
 });
 
 export const createYuanYan = (): General => {
-  const troops = calculateTroops(YUAN_YAN_BASE.command);
+  const troops = calculateTroops(YUAN_YAN_SHI_BASE.command);
   return {
-    ...YUAN_YAN_BASE,
+    ...YUAN_YAN_SHI_BASE,
     troops,
     maxTroops: troops,
     skills: [createYuanYanSkill()],
     skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-    quotes: YUAN_YAN_QUOTES,
-    rarity: "uncommon" as GeneralRarity,
+    quotes: YUAN_YAN_SHI_QUOTES,
+    rarity: YUAN_YAN_SHI_BASE.rarity,
   };
 };
 
@@ -88,9 +91,9 @@ export const fetchYuanYanFromDatabase = async (API_BASE_URL: string): Promise<Ge
     const response = await fetch(`${API_BASE_URL}/characters/515`);
     if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
-    const troops = calculateTroops(YUAN_YAN_BASE.command);
+    const troops = calculateTroops(YUAN_YAN_SHI_BASE.command);
     return {
-      ...YUAN_YAN_BASE,
+      ...YUAN_YAN_SHI_BASE,
       id: characterData.id,
       name: characterData.name,
       dynasty: characterData.dynasty,
@@ -100,11 +103,11 @@ export const fetchYuanYanFromDatabase = async (API_BASE_URL: string): Promise<Ge
       maxTroops: troops,
       skills: [createYuanYanSkill()],
       skillEffects: { ...DEFAULT_SKILL_EFFECTS },
-      quotes: YUAN_YAN_QUOTES,
+      quotes: YUAN_YAN_SHI_QUOTES,
       rarity: "uncommon" as GeneralRarity,
     };
   } catch (error) {
-    console.error("从数据库获取元岩信息失败:", error);
+    console.error("从数据库获取元延嗣信息失败:", error);
     return createYuanYan();
   }
 };

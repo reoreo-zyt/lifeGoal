@@ -9,21 +9,21 @@ const WEI_YI_BASE = {
   id: 73,
   name: "韦艺",
   rarity: "common" as GeneralRarity,
-  attack: 89,
-  attackGrowth: 2.32,
-  defense: 83,
-  defenseGrowth: 2.06,
-  strategy: 62,
-  strategyGrowth: 1.4,
-  speed: 61,
-  speedGrowth: 1.2,
+  attack: 72,
+  attackGrowth: 2.48,
+  defense: 52,
+  defenseGrowth: 1.82,
+  strategy: 38,
+  strategyGrowth: 0.98,
+  speed: 62,
+  speedGrowth: 2.05,
   attackRange: 2,
-  siege: 14,
-  siegeGrowth: 0.72,
-  level: 5,
-  command: 91,
-  commandGrowth: 2.28,
-  leadership: 3.5,
+  siege: 58,
+  siegeGrowth: 1.82,
+  level: 4,
+  command: 72,
+  commandGrowth: 2.48,
+  leadership: 1.5,
   isDead: false,
   dynasty: "隋朝",
   soldierType: "骑兵" as const,
@@ -40,54 +40,40 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  damageOutputReduction: 0,
-  damageOutputReductionDuration: 0,
-  damageOutputReductionSource: "",
-  skillTriggerReduction: 0,
-  skillTriggerReductionDuration: 0,
-  skillTriggerReductionSource: "",
-  defenseReduction: 0,
-  defenseReductionDuration: 0,
-  defenseReductionSource: "",
-  cannotNormalAttack: false,
-  cannotNormalAttackDuration: 0,
-  cannotNormalAttackSource: "",
 };
 
-const calculateTroops = (commandValue: number): number =>
-  Math.floor(commandValue * 10);
+const calculateTroops = (commandValue: number): number => {
+  return Math.floor(commandValue * 10);
+};
 
-// 主动 34%：单体 132% 物理伤害 + 降防 10% 持续 2 回合
+// 主动：单体120%物攻，目标HP<50%时伤害+60%，距离2，概率45%
 export const createWeiYiSkill = (): Skill => ({
-  id: "zhenbian-fumin",
-  name: "镇边抚民",
+  id: "gongma-xianshu",
+  name: "弓马娴熟",
   type: "active",
-  description: "主动，发动概率 34%，攻击范围 2：对敌军单体造成 132% 物理伤害，并降低其防御 10%，持续 2 回合。",
+  distance: 2,
+  probability: 0.45,
+  description: "主动：单体120%物攻，目标HP<50%时伤害+60%，距离2，概率45%",
   effect: (general: General, context: any) => {
-    if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    if (!general.skillEffects) {
+      general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+    }
+
     const { type, event, addReport, targets } = context;
 
     if (type === "activeSkill" && event === "trigger") {
-      const chance = 0.34;
-      if (addReport) addReport(`【${general.name}】尝试发动【镇边抚民】（发动概率：34%）`);
-      if (Math.random() >= chance) {
-        if (addReport) addReport(`【${general.name}】的【镇边抚民】未触发！`);
-        return { triggered: false };
-      }
-      if (addReport) addReport(`【${general.name}】成功发动【镇边抚民】！`);
-
-      if (targets?.length > 0) {
+      if (targets && targets.length > 0) {
         const target = targets[0];
-        const damage = Math.max(0, Math.floor(general.attack * 1.32 - target.defense / 2));
-        target.troops = Math.max(0, target.troops - damage);
+        const baseDamage = Math.max(0, Math.floor(general.attack * 1.20 - target.defense / 2));
+        const bonusMultiplier = target.troops < target.maxTroops * 0.5 ? 1.60 : 1.0;
+        const totalDamage = Math.floor(baseDamage * bonusMultiplier);
+        target.troops = Math.max(0, target.troops - totalDamage);
         if (target.troops <= 0) target.isDead = true;
-        if (!target.skillEffects) target.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-        target.skillEffects.defenseReduction = 0.1;
-        target.skillEffects.defenseReductionDuration = 2;
-        target.skillEffects.defenseReductionSource = `【${general.name}】的【镇边抚民】`;
-        if (addReport) addReport(`【${general.name}】重击【${target.name}】造成${damage}点物理伤害，并使其降防 10%，持续 2 回合！`);
+        if (addReport) {
+          addReport(`【${general.name}】发动【弓马娴熟】，对【${target.name}】造成${totalDamage}点物理伤害！`);
+        }
+        return { triggered: true };
       }
-      return { triggered: true };
     }
 
     return null;
@@ -109,7 +95,7 @@ export const createWeiYi = (): General => {
 export const fetchWeiYiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/73`);
-    if (!response.ok) throw new Error("获取人物信息失败");
+    if (!response.ok) throw new Error('获取人物信息失败');
     const characterData = await response.json();
     const troops = calculateTroops(WEI_YI_BASE.command);
     return {
@@ -126,7 +112,7 @@ export const fetchWeiYiFromDatabase = async (API_BASE_URL: string): Promise<Gene
       quotes: WEI_YI_QUOTES,
     };
   } catch (error) {
-    console.error("从数据库获取韦艺信息失败:", error);
+    console.error('从数据库获取韦艺信息失败:', error);
     return createWeiYi();
   }
 };

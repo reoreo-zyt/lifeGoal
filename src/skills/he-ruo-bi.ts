@@ -1,29 +1,29 @@
 import type { Skill, General, GeneralRarity } from "./types";
 
 const HE_RUO_BI_QUOTES = {
-  skill: ["先锋之职，当破坚阵。", "建康城下，敌主授首。", "擒龙破阵，一击必杀。"],
-  death: ["功高震主，古今同然..."],
+  skill: ["灭陈大业，某当先锋！", "建康城破，敌主将擒！", "先锋之任，必不辱命！"],
+  death: ["平陈之功，付诸东流..."]
 } as const;
 
 const HE_RUO_BI_BASE = {
   id: 44,
   name: "贺若弼",
   rarity: "rare" as GeneralRarity,
-  attack: 96,
-  attackGrowth: 2.70,
-  defense: 78,
-  defenseGrowth: 1.90,
-  strategy: 58,
-  strategyGrowth: 1.20,
-  speed: 62,
-  speedGrowth: 1.00,
+  attack: 86,
+  attackGrowth: 2.85,
+  defense: 70,
+  defenseGrowth: 2.18,
+  strategy: 62,
+  strategyGrowth: 1.92,
+  speed: 84,
+  speedGrowth: 2.78,
   attackRange: 2,
-  siege: 14,
-  siegeGrowth: 0.70,
+  siege: 68,
+  siegeGrowth: 2.08,
   level: 5,
-  command: 91,
-  commandGrowth: 2.30,
-  leadership: 3.0,
+  command: 86,
+  commandGrowth: 2.85,
+  leadership: 2.5,
   isDead: false,
   dynasty: "隋朝",
   soldierType: "骑兵" as const,
@@ -40,24 +40,18 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
-  hasExtraAttack: false,
 };
 
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
-/**
- * 【擒龙破阵】主动
- * - 发动概率 48%，攻击范围 2
- * - 对敌方单体造成 160% 物理伤害；若击杀目标，立即再次发动（每回合最多 1 次）
- * - 整体定位：高爆发单体物理伤害，收割型输出
- */
 export const createHeRuoBiSkill = (): Skill => ({
-  id: "qinlong-pozhen",
-  name: "擒龙破阵",
+  id: "mie-chen-shuangji",
+  name: "灭陈双击",
   type: "active",
-  description:
-    "主动，发动概率 48%，攻击范围 2：对敌方单体造成 160% 物理伤害；若击杀目标，立即再次发动（每回合最多 1 次）。",
+  distance: 4,
+  probability: 0.42,
+  description: "主动：连续攻击同一目标2次，每次90%物理伤害，伤害逐次+22%",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) {
       general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -66,61 +60,31 @@ export const createHeRuoBiSkill = (): Skill => ({
     const { type, event, addReport, targets } = context;
 
     if (type === "activeSkill" && event === "trigger") {
-      // 每回合最多额外攻击 1 次
-      if (general.skillEffects.hasExtraAttack) {
-        general.skillEffects.hasExtraAttack = false;
-        return null;
-      }
-
-      const triggerChance = 0.48;
       if (addReport) {
-        addReport(
-          `【${general.name}】尝试发动【擒龙破阵】（发动概率：${(triggerChance * 100).toFixed(0)}%）`
-        );
+        addReport(`【${general.name}】发动【灭陈双击】！`);
       }
+      if (targets && targets.length > 0) {
+        const target = targets[0];
+        const baseMultiplier = 0.90;
+        const increment = 0.22;
 
-      if (Math.random() < triggerChance) {
-        if (addReport) {
-          addReport(`【${general.name}】成功发动【擒龙破阵】！`);
-        }
-
-        let hasKilled = false;
-
-        if (targets && targets.length > 0) {
-          const target = targets[0];
-          const damage = Math.max(
-            0,
-            Math.floor(general.attack * 1.60 - target.defense / 2)
-          );
+        for (let i = 0; i < 2; i++) {
+          const multiplier = baseMultiplier + increment * i;
+          const damage = Math.max(0, Math.floor(general.attack * multiplier - target.defense / 2));
           target.troops = Math.max(0, target.troops - damage);
+          if (addReport) {
+            addReport(`【${general.name}】第${i + 1}次攻击对【${target.name}】造成${damage}点物理伤害！`);
+          }
           if (target.troops <= 0) {
             target.isDead = true;
-            hasKilled = true;
-          }
-          if (addReport) {
-            addReport(
-              `【${general.name}】对【${target.name}】造成 ${damage} 点物理伤害！`
-            );
+            if (addReport) {
+              addReport(`【${target.name}】阵亡！`);
+            }
+            break;
           }
         }
-
-        // 若击杀目标，立即再次发动
-        if (hasKilled) {
-          if (addReport) {
-            addReport(
-              `【${general.name}】击杀目标，【擒龙破阵】再次发动！`
-            );
-          }
-          general.skillEffects.hasExtraAttack = true;
-        }
-
-        return { triggered: true, extraAttack: hasKilled };
-      } else {
-        if (addReport) {
-          addReport(`【${general.name}】的【擒龙破阵】未触发！`);
-        }
-        return { triggered: false };
       }
+      return { triggered: true };
     }
 
     return null;
@@ -139,9 +103,7 @@ export const createHeRuoBi = (): General => {
   };
 };
 
-export const fetchHeRuoBiFromDatabase = async (
-  API_BASE_URL: string
-): Promise<General | null> => {
+export const fetchHeRuoBiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
     const response = await fetch(`${API_BASE_URL}/characters/44`);
     if (!response.ok) throw new Error("获取人物信息失败");
