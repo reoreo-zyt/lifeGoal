@@ -62,46 +62,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-
-type NodeType =
-  | "battle"
-  | "elite"
-  | "event"
-  | "treasure"
-  | "rest"
-  | "shop"
-  | "boss";
-
-interface MapNode {
-  id: string;
-  floor: number;
-  lane: number;
-  yOffset: number;
-  type: NodeType;
-  linksTo: string[];
-  visited: boolean;
-}
-
-interface RunMap {
-  act: number;
-  floors: number;
-  lanes: number;
-  nodes: MapNode[];
-  currentNodeId: string;
-}
-
-interface MapLinkLine {
-  id: string;
-  path: string;
-  reachable: boolean;
-  visited: boolean;
-}
-
-interface LegendItem {
-  type: NodeType;
-  label: string;
-  icon: string;
-}
+import type { NodeType, MapNode, RunMap, LegendItem, MapLinkLine } from "../types/game";
 
 const props = defineProps<{
   runMap: RunMap | null;
@@ -123,9 +84,6 @@ const MAP_CONFIG = {
   maxFloors: 12,
   maxNodesPerFloor: 3,
 };
-
-// 生成唯一楼层键
-const floorKey = (floor: number) => floor;
 
 // 按楼层分组节点
 const groupByFloor = (nodes: MapNode[]) => {

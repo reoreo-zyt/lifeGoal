@@ -54,67 +54,36 @@
         </div>
 
         <div class="game-area">
-          <div v-if="showRelicSelector" class="relic-selector-mask">
-            <div class="relic-selector-panel">
-              <h3>请选择本局遗物（3选1）</h3>
-              <div class="cui-jue-dialog">
-                <img class="cui-jue-portrait" :src="cuiJuePortrait" alt="崔珏" />
-                <div class="cui-jue-bubble">
-                  {{ cuiJueRelicDialogLine }}
-                </div>
-              </div>
-              <div class="relic-candidate-list">
-                <div v-for="relic in playerRelicCandidates" :key="relic.id" class="relic-candidate-card" :class="`rarity-${relic.rarity}`"
-                  @click="selectPlayerRelic(relic)">
-                  <div class="relic-candidate-icon">{{ relic.icon }}</div>
-                  <div class="relic-candidate-name">{{ relic.name }}</div>
-                  <div class="relic-candidate-effect">{{ relic.effectText }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-if="showVictoryRewardSelector" class="relic-selector-mask">
-            <div class="relic-selector-panel reward-panel">
-              <h3>战斗胜利 · 崔珏裁赏（三选一）</h3>
-              <div class="cui-jue-dialog">
-                <img class="cui-jue-portrait" :src="cuiJuePortrait" alt="崔珏" />
-                <div class="cui-jue-bubble">{{ cuiJueRewardDialogLine }}</div>
-              </div>
-              <div class="relic-candidate-list">
-                <div
-                  v-for="reward in victoryRewardOptions"
-                  :key="reward.id"
-                  class="relic-candidate-card reward-candidate-card"
-                  @click="selectVictoryReward(reward)"
-                >
-                  <div class="relic-candidate-icon">{{ reward.icon }}</div>
-                  <div class="relic-candidate-name">{{ reward.name }}</div>
-                  <div class="relic-candidate-effect">{{ reward.description }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-if="showLayerRewardSelector" class="relic-selector-mask">
-            <div class="relic-selector-panel reward-panel layer-reward-panel">
-              <h3>第 {{ currentAct }} 层完成 · 崔珏犒赏</h3>
-              <div class="cui-jue-dialog">
-                <img class="cui-jue-portrait" :src="cuiJuePortrait" alt="崔珏" />
-                <div class="cui-jue-bubble">{{ layerRewardDialogLine }}</div>
-              </div>
-              <div class="relic-candidate-list">
-                <div
-                  v-for="reward in layerRewardOptions"
-                  :key="reward.id"
-                  class="relic-candidate-card reward-candidate-card"
-                  @click="selectLayerReward(reward)"
-                >
-                  <div class="relic-candidate-icon">{{ reward.icon }}</div>
-                  <div class="relic-candidate-name">{{ reward.name }}</div>
-                  <div class="relic-candidate-effect">{{ reward.description }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- 初始遗物选择 -->
+          <RewardSelector
+            :visible="showRelicSelector"
+            title="请选择本局遗物（3选1）"
+            :dialog-line="cuiJueRelicDialogLine"
+            :portrait="cuiJuePortrait"
+            :candidates="playerRelicCandidates"
+            mode="relic"
+            @select="selectPlayerRelic"
+          />
+          <!-- 战斗胜利奖励选择 -->
+          <RewardSelector
+            :visible="showVictoryRewardSelector"
+            title="战斗胜利 · 崔珏裁赏（三选一）"
+            :dialog-line="cuiJueRewardDialogLine"
+            :portrait="cuiJuePortrait"
+            :candidates="victoryRewardOptions"
+            mode="reward"
+            @select="selectVictoryReward"
+          />
+          <!-- 层完成奖励选择 -->
+          <RewardSelector
+            :visible="showLayerRewardSelector"
+            :title="`第 ${currentAct} 层完成 · 崔珏犒赏`"
+            :dialog-line="layerRewardDialogLine"
+            :portrait="cuiJuePortrait"
+            :candidates="layerRewardOptions"
+            mode="reward"
+            @select="selectLayerReward"
+          />
           <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text"
             :class="[`damage-${damageText.kind || 'normal'}`, { crit: !!damageText.critical }]" :style="{
             left: damageText.x + 'px',
@@ -233,10 +202,6 @@
               {{ skipBattleAnimation ? "跳过战斗:开" : "跳过战斗:关" }}
             </button>
           </div>
-          <!-- <button class="action-button next-wave" @click="nextWave" :disabled="isBattleActive" @mouseenter="showHeaderTooltip($event, 'next')"
-            @mouseleave="hideHeaderTooltip">
-            <img src="/assets/next.webp" alt="下一轮" class="button-icon">
-          </button> -->
         </div>
       </div>
 
@@ -246,16 +211,23 @@
 </template>
 
 <script setup lang="ts">
-// @ts-nocheck - 跳过此文件的类型检查以允许未使用的变量
 import { ref, computed, onMounted, watch } from "vue";
 import AuthModal from "../components/AuthModal.vue";
 import GeneralTooltip from "../components/GeneralTooltip.vue";
 import GeneralList from "../components/GeneralList.vue";
 import BattleReport from "../components/BattleReport.vue";
-import StatusEffects from "../components/StatusEffects.vue";
 import FormationPanel from "../components/FormationPanel.vue";
 import RunMap from "../components/RunMap.vue";
-import type { General, FormationPosition, SpeedUnit } from "../skills/types";
+import RewardSelector from "../components/RewardSelector.vue";
+import type { General, FormationPosition } from "../skills/types";
+import type {
+  GamePhase,
+  NodeType,
+  MapNode,
+  RunMap as RunMapType,
+  VictoryRewardOption,
+  GeneralBattleSnapshot,
+} from "../types/game";
 import { RELIC_POOL, ENEMY_WAVE_RELIC_CONFIG, pickWeightedRelics, type Relic, type RelicEffects } from "../relics";
 import { RECRUIT_CONFIG, getFetchFunctionBase } from '../skills/index';
 
@@ -350,12 +322,6 @@ const soldierType克制 = {
   弓兵: "骑兵",
 };
 
-// 随机兵种
-const _getRandomSoldierType = (): "步兵" | "弓兵" | "骑兵" => {
-  const types: Array<"步兵" | "弓兵" | "骑兵"> = ["步兵", "弓兵", "骑兵"];
-  return types[Math.floor(Math.random() * types.length)];
-};
-
 // 监听登录状态变化，登录成功后开始游戏加载
 watch(isLoggedIn, (newValue) => {
   if (newValue) {
@@ -402,9 +368,8 @@ const fetchCharacters = async () => {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // 构建查询参数，只获取夏朝人物
+    // 构建查询参数，获取前 50 个人物数据
     const params = new URLSearchParams();
-    // params.append('dynasty', '夏朝')
     params.append("page", "1");
     params.append("pageSize", "50");
 
@@ -421,7 +386,7 @@ const fetchCharacters = async () => {
 
     const data = await response.json();
     characters.value = data.data || [];
-    console.log("获取到夏朝人物:", characters.value.length);
+    console.log("获取到人物:", characters.value.length);
   } catch (error) {
     console.error("获取人物失败:", error);
   } finally {
@@ -440,19 +405,6 @@ const enemyFormation = ref({
   中军: null as General | null,
   前锋: null as General | null,
 });
-
-type FormationPosition = keyof typeof playerFormation.value;
-type GeneralBattleSnapshot = {
-  attack: number;
-  defense: number;
-  strategy: number;
-  speed: number;
-  siege: number;
-  troops: number;
-  maxTroops: number;
-  isDead: boolean;
-  skillEffects: Record<string, any>;
-};
 
 const battleStartSnapshot = ref<{
   player: Record<FormationPosition, GeneralBattleSnapshot | null>;
@@ -548,7 +500,6 @@ const playerRecoveryRounds = ref<Record<number, number>>({});
 const selectedSlot = ref<string | null>(null);
 const showGeneralList = ref(false);
 const battleReports = ref<string[]>([]);
-const speedUnits = ref<any[]>([]);
 const isBattleActive = ref(false);
 const isBattlePaused = ref(false);
 const isBattleStarting = ref(false);
@@ -785,43 +736,6 @@ const triggerTargetHitReaction = (
   );
 };
 
-interface VictoryRewardOption {
-  id: string;
-  type: "gold" | "conscript" | "promote" | "layerHeal";
-  icon: string;
-  name: string;
-  description: string;
-  value: number;
-}
-
-type NodeType =
-  | "battle"
-  | "elite"
-  | "event"
-  | "treasure"
-  | "rest"
-  | "shop"
-  | "boss";
-type GamePhase = "map_select" | "encounter_resolve" | "reward_resolve" | "map_advance";
-
-interface MapNode {
-  id: string;
-  floor: number;
-  lane: number;
-  yOffset: number;
-  type: NodeType;
-  linksTo: string[];
-  visited: boolean;
-}
-
-interface RunMap {
-  act: number;
-  floors: number;
-  lanes: number;
-  nodes: MapNode[];
-  currentNodeId: string;
-}
-
 const playerRelicCandidates = ref<Relic[]>([]);
 const playerRelics = ref<Relic[]>([]);
 const enemyRelics = ref<Relic[]>([]);
@@ -832,15 +746,13 @@ const isResolvingVictoryReward = ref(false);
 const cuiJueRewardDialogLine = ref("此战有功，生死簿前，许你择其一赏。");
 const gamePhase = ref<GamePhase>("map_select");
 const showEventMap = ref(true);
-const runMap = ref<RunMap | null>(null);
+const runMap = ref<RunMapType | null>(null);
 const pendingNodeId = ref<string | null>(null);
 const pendingBattleNodeType = ref<NodeType | null>(null);
 const currentAct = ref(1);
-const _isLayerComplete = ref(false);
 const layerRewardOptions = ref<VictoryRewardOption[]>([]);
 const showLayerRewardSelector = ref(false);
 const layerRewardDialogLine = ref("");
-const _cuiJueLayerQuote = ref("");
 
 const MAP_CONFIG = {
   minFloors: 8,
@@ -981,7 +893,7 @@ const connectTwoFloorsNoCross = (left: MapNode[], right: MapNode[], rng: () => n
   }
 };
 
-const generateRunMap = (seed?: number): RunMap => {
+const generateRunMap = (seed?: number): RunMapType => {
   const baseSeed = typeof seed === "number" ? seed : Date.now();
   const rng = hashSeed(baseSeed);
   const floorCount = randInt(rng, MAP_CONFIG.minFloors, MAP_CONFIG.maxFloors);
@@ -1014,7 +926,7 @@ const generateRunMap = (seed?: number): RunMap => {
     connectTwoFloorsNoCross(floorNodes[floor], floorNodes[floor + 1], rng);
   }
 
-  const map: RunMap = {
+  const map: RunMapType = {
     act: 1,
     floors: floorCount,
     lanes: MAP_CONFIG.maxNodesPerFloor,
@@ -1025,15 +937,9 @@ const generateRunMap = (seed?: number): RunMap => {
 };
 
 const generateNextLayerNodes = (existingNodes: MapNode[]): MapNode[] => {
-  const baseSeed = Date.now();
-  const _rng = hashSeed(baseSeed);
   const newFloor = (existingNodes.reduce((m, n) => Math.max(m, n.floor), 0)) + 1;
   const newNodes: MapNode[] = [];
-  const _bossFloor = newFloor;
   const nodeCount = 1;
-  const _lastFloorMaxLane = existingNodes
-    .filter((n) => n.floor === newFloor - 1)
-    .reduce((m, n) => Math.max(m, n.lane), -1);
 
   for (let lane = 0; lane < nodeCount; lane++) {
     const node: MapNode = {
@@ -1127,90 +1033,7 @@ watch(isBattleActive, (active) => {
   unlockBattleConscriptSnapshot();
 });
 
-const _mapFloors = computed(() => {
-  if (!runMap.value) return [] as Array<{ floor: number; nodes: MapNode[] }>;
-  const floors: Array<{ floor: number; nodes: MapNode[] }> = [];
-  for (let floor = 1; floor <= runMap.value.floors; floor++) {
-    floors.push({
-      floor,
-      nodes: runMap.value.nodes.filter((node) => node.floor === floor),
-    });
-  }
-  return floors;
-});
-
-const getNodePoint = (node: MapNode) => {
-  const floors = runMap.value?.floors || MAP_CONFIG.maxFloors;
-  const nodesOnFloor =
-    runMap.value?.nodes.filter((item) => item.floor === node.floor).length || MAP_CONFIG.maxNodesPerFloor;
-  const xMin = 8;
-  const xMax = 82;
-  const yMin = 10;
-  const yMax = 92;
-  const x = floors <= 1 ? xMin : xMin + ((node.floor - 1) / (floors - 1)) * (xMax - xMin);
-  const baseY = yMin + ((node.lane + 1) / (nodesOnFloor + 1)) * (yMax - yMin);
-  const y = Math.min(yMax, Math.max(yMin, baseY + node.yOffset));
-  return { x, y };
-};
-
-const mapLinkLines = computed(() => {
-  if (!runMap.value)
-    return [] as Array<{
-      id: string;
-      fromId: string;
-      toId: string;
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      path: string;
-      reachable: boolean;
-      visited: boolean;
-    }>;
-  const lines: Array<{
-    id: string;
-    fromId: string;
-    toId: string;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    path: string;
-    reachable: boolean;
-    visited: boolean;
-  }> = [];
-  for (const node of runMap.value.nodes) {
-    const from = getNodePoint(node);
-    node.linksTo.forEach((targetId) => {
-      const target = getNodeById(targetId);
-      if (!target) return;
-      const to = getNodePoint(target);
-      lines.push({
-        id: `${node.id}-${targetId}`,
-        fromId: node.id,
-        toId: targetId,
-        x1: from.x,
-        y1: from.y,
-        x2: to.x,
-        y2: to.y,
-        path: `M ${from.x} ${from.y} C ${from.x + (to.x - from.x) * 0.38} ${from.y + (to.y > from.y ? 3.6 : -3.6)} ${from.x + (to.x - from.x) * 0.62} ${to.y + (to.y > from.y ? -3.6 : 3.6)} ${to.x} ${to.y}`,
-        reachable:
-          runMap.value?.currentNodeId === node.id &&
-          allowedNextNodeIds.value.includes(targetId),
-        visited: node.visited && target.visited,
-      });
-    });
-  }
-  return lines;
-});
-
-const getNodeStyle = (node: MapNode) => {
-  const point = getNodePoint(node);
-  return {
-    left: `${point.x}%`,
-    top: `${point.y}%`,
-  };
-};
+// Map utilities moved to RunMap.vue component
 
 const mapLegendItems = computed(() => [
   { type: "event" as NodeType, label: "事件", icon: mapNodeIconByType.event },
@@ -1665,15 +1488,6 @@ const applyPlayerRecoveryForDeaths = () => {
     },
   );
   updateCurrentCommand();
-};
-
-const _tickPlayerRecoveryRounds = () => {
-  const next: Record<number, number> = {};
-  Object.entries(playerRecoveryRounds.value).forEach(([id, rounds]) => {
-    const left = Math.max(0, rounds - 1);
-    if (left > 0) next[Number(id)] = left;
-  });
-  playerRecoveryRounds.value = next;
 };
 
 const areAllOwnedGeneralsResting = () => {
@@ -2555,10 +2369,10 @@ const performAttack = (
     const targetType = target.general.soldierType;
 
     if (soldierType克制[attackerType] === targetType) {
-      // 克制关系，伤害额外降低30%
-      damage *= 0.7;
+      // 克制关系，伤害额外增加30%
+      damage *= 1.3;
       addReport(
-        `【${attacker.general.name}】的${attackerType}克制【${target.general.name}】的${targetType}，伤害降低30%！`,
+        `【${attacker.general.name}】的${attackerType}克制【${target.general.name}】的${targetType}，伤害增加30%！`,
       );
     }
   }
@@ -2936,16 +2750,6 @@ const checkGameOverByTurns = () => {
   }
 };
 
-const _advanceTime = () => {
-  currentYear.value += 10;
-  currentWave.value += 1;
-
-  if (currentYear.value > -1600) {
-    addReport("恭喜通关夏朝！");
-    resetGame();
-  }
-};
-
 const addReport = (
   message: string,
   general?: General,
@@ -3080,71 +2884,6 @@ const getAllAllies = (side: "player" | "enemy"): Array<{
   });
 
   return allies;
-};
-
-const _initializeSpeedUnits = () => {
-  const units: SpeedUnit[] = [];
-
-  // 添加我方武将
-  Object.entries(playerFormation.value).forEach(([position, general]) => {
-    if (general && !general.isDead) {
-      units.push({
-        id: `player-${position}-${general.id}`,
-        general,
-        side: "player" as const,
-        position,
-        speed: Math.random() * 50, // 给一些初始速度，0-50随机
-        isActive: false,
-      });
-    }
-  });
-
-  // 添加敌方武将
-  Object.entries(enemyFormation.value).forEach(([position, general]) => {
-    if (general && !general.isDead) {
-      units.push({
-        id: `enemy-${position}-${general.id}`,
-        general,
-        side: "enemy" as const,
-        position,
-        speed: Math.random() * 50, // 给一些初始速度，0-50随机
-        isActive: false,
-      });
-    }
-  });
-
-  // 按速度排序（初始状态）
-  units.sort((a, b) => b.speed - a.speed);
-  speedUnits.value = units;
-};
-
-const _updateSpeed = () => {
-  speedUnits.value.forEach((unit) => {
-    if (!unit.general.isDead) {
-      unit.speed += unit.general.speed / 20; // 降低速度增长速率，使其更慢
-      if (unit.speed >= 100) {
-        unit.speed = 100;
-      }
-    }
-  });
-
-  // 按当前速度排序
-  speedUnits.value.sort((a, b) => b.speed - a.speed);
-};
-
-const _checkSpeedThreshold = () => {
-  const readyUnit = speedUnits.value.find(
-    (unit) => unit.speed >= 100 && !unit.general.isDead,
-  );
-  if (readyUnit) {
-    return readyUnit;
-  }
-  return null;
-};
-
-const _resetUnitSpeed = (unit: SpeedUnit) => {
-  unit.speed = 0;
-  unit.isActive = false;
 };
 
 const startBattle = async () => {
@@ -3569,10 +3308,6 @@ const startBattle = async () => {
   isBattleActive.value = false;
   isBattlePaused.value = false;
   clearAllBattleFx();
-};
-
-const _nextWave = async () => {
-  await enterNextBattleAfterReward();
 };
 </script>
 
@@ -4120,106 +3855,6 @@ const _nextWave = async () => {
   align-items: center;
   flex: 1;
   gap: 10px;
-}
-
-.relic-selector-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.relic-selector-panel {
-  width: min(980px, 92vw);
-  background: #f6f1e6;
-  border-radius: 12px;
-  border: 2px solid #b98d52;
-  padding: 18px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-.relic-selector-panel h3 {
-  margin: 0 0 14px;
-  text-align: center;
-  color: #6b4b1e;
-}
-
-.cui-jue-dialog {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
-  padding: 10px;
-  border-radius: 10px;
-  background: rgba(34, 24, 12, 0.08);
-}
-
-.cui-jue-portrait {
-  width: 88px;
-  height: 118px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #8b6a3f;
-  background: #eee;
-}
-
-.cui-jue-bubble {
-  flex: 1;
-  line-height: 1.6;
-  color: #4b3921;
-  font-size: 14px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #cfb17f;
-  background: #fffaf0;
-}
-
-.relic-candidate-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.relic-candidate-card {
-  border: 1px solid #c9a56a;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fffdf7;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.relic-candidate-card.rarity-common {
-  border-color: #d9dee6;
-  box-shadow: inset 0 0 0 1px rgba(217, 222, 230, 0.35);
-}
-
-.relic-candidate-card.rarity-uncommon {
-  border-color: #5ecb73;
-  box-shadow: inset 0 0 0 1px rgba(94, 203, 115, 0.3);
-}
-
-.relic-candidate-card.rarity-rare {
-  border-color: #8d6df7;
-  box-shadow: inset 0 0 0 1px rgba(141, 109, 247, 0.35);
-}
-
-.relic-candidate-card.rarity-legendary {
-  border-color: #f5bf4f;
-  box-shadow: inset 0 0 0 1px rgba(245, 191, 79, 0.45);
-}
-
-.reward-panel .relic-candidate-card {
-  min-height: 180px;
-}
-
-.layer-reward-panel h3 {
-  color: #c0392b;
-  font-size: 22px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .event-map-panel {
@@ -5395,60 +5030,6 @@ const _nextWave = async () => {
   .action-button {
     padding: 15px;
   }
-}
-
-/* 状态标记样式 */
-.card-status {
-  position: absolute;
-  top: 40px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 4;
-}
-
-.status-icon {
-  background: rgba(102, 126, 234, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  padding: 2px 4px;
-  font-size: 10px;
-  color: white;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  cursor: help;
-  transition: all 0.2s ease;
-}
-
-.status-icon:hover {
-  background: rgba(118, 75, 162, 0.9);
-  transform: scale(1.05);
-}
-
-.status-icon-inner {
-  display: block;
-  text-align: center;
-}
-
-/* Debuff状态标记 - 红色 */
-.status-icon.debuff {
-  background: rgba(220, 53, 69, 0.85);
-  border: 1px solid rgba(255, 200, 200, 0.4);
-}
-
-.status-icon.debuff:hover {
-  background: rgba(180, 40, 50, 0.9);
-}
-
-/* Buff状态标记 - 绿色 */
-.status-icon.buff {
-  background: rgba(40, 180, 80, 0.85);
-  border: 1px solid rgba(150, 255, 150, 0.4);
-}
-
-.status-icon.buff:hover {
-  background: rgba(30, 150, 60, 0.9);
 }
 
 /* 游戏开始界面 */
