@@ -151,7 +151,6 @@
               @show-tooltip="(slotKey, event) => showTooltip(slotKey, event)"
               @hide-tooltip="hideTooltip"
               @troops-bar-mousedown="(position, event) => handleTroopsBarMouseDown(position, event)"
-              @auto-allocate-troops="autoAllocateTroopsEvenly"
             />
           <BattleReport :reports="battleReports" />
           <BattleStats
@@ -192,6 +191,13 @@
 
         <!-- 底部操作按钮 -->
         <div v-if="showBattleBoard" class="game-footer">
+          <button
+            class="relic-auto-btn"
+            :disabled="isBattleActive"
+            @click="autoAllocateTroopsEvenly"
+          >
+            自动分配兵力
+          </button>
           <button class="action-button recruit" @click="recruitCard" :disabled="money < RECRUIT_SINGLE_COST || isBattleActive"
             @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
             <img src="/assets/open.webp" alt="招募" class="button-icon">
@@ -218,9 +224,11 @@
       <RecruitPanel
         ref="recruitPanel"
         v-model="money"
-        v-model:pity-count="pityCount"
+        v-model:purple-pity-count="purplePityCount"
+        v-model:gold-pity-count="goldPityCount"
         @close="handleRecruitPanelClose"
         @recruit-done="handleRecruitDone"
+        @auto-allocate-troops="autoAllocateTroopsEvenly"
       />
     </div>
   </div>
@@ -338,8 +346,9 @@ const currentTurn = ref(0);
 // ========== 招募消耗与保底 ==========
 // 单抽消耗金币（10连抽 = 消耗 * 10，保底触发时只扣单抽费用）
 const RECRUIT_SINGLE_COST = 100;
-// 当前保底计数器（保底触发后清零）
-const pityCount = ref(0);
+// 当前保底计数器（保底触发后独立清零）
+const purplePityCount = ref(0);
+const goldPityCount = ref(0);
 
 // 玩家最大统率上限
 const maxCommand = ref(100);
@@ -4912,13 +4921,34 @@ const startBattle = async () => {
   background-size: cover;
 }
 
+.game-footer .relic-auto-btn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
+  border: 2px solid #8b7355;
+  border-radius: 4px;
+  color: #f5f5dc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.game-footer .relic-auto-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a4738 0%, #7b6354 100%);
+  border-color: #a08060;
+}
+
+.game-footer .relic-auto-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .speed-controls {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
 }
 
 .speed-btn {
@@ -4968,7 +4998,7 @@ const startBattle = async () => {
 }
 
 .action-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
 }
@@ -4980,12 +5010,12 @@ const startBattle = async () => {
 }
 
 .action-button.recruit {
-  background: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
   color: white;
 }
 
 .action-button.recruit:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
 }
 
 .action-button.recruit:disabled {
@@ -4995,21 +5025,21 @@ const startBattle = async () => {
 }
 
 .action-button.end-turn {
-  background: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
   color: white;
 }
 
 .action-button.end-turn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
 }
 
 .action-button.next-wave {
-  background: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
   color: white;
 }
 
 .action-button.next-wave:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
 }
 
 .button-icon {

@@ -35,7 +35,7 @@
           <div class="fx-stats-zone">
             <div class="fx-stats-inner" :class="{ entering: statsEntered }">
               <div class="fx-stats-title">战法</div>
-              <div class="fx-skill-name">{{ fiveStarTarget.general.name }}</div>
+              <div class="fx-skill-name">{{ fiveStarTarget.general.skills?.[0]?.name || '兵法' }}</div>
               <div class="fx-skill-desc">
                 {{ fiveStarTarget.general.skills?.[0]?.description || '上古兵法，奥妙无穷，统领三军，攻无不克。' }}
               </div>
@@ -94,6 +94,88 @@
         </div>
       </Transition>
 
+      <!-- 全屏紫将特效 -->
+      <Transition name="purple-fx">
+        <div v-if="showFullScreenPurpleFx && purpleStarTarget" class="purple-star-cinematic">
+          <div class="purple-fx-bg"></div>
+          <div class="purple-fx-particles">
+            <div v-for="n in 30" :key="n" class="purple-fx-particle" :style="getPurpleFxParticleStyle(n)"></div>
+          </div>
+          <div class="purple-fx-card-zone">
+            <div class="purple-fx-card-scene">
+              <div class="purple-fx-card-3d" :class="{ entering: cardEntered }">
+                <div class="fx-card-face fx-card-back"></div>
+                <div class="fx-card-face fx-card-front">
+                  <div class="fx-card-banner purple-banner">
+                    <span class="fx-banner-stars">★★★★</span>
+                    <span class="fx-banner-label">四星级武将</span>
+                  </div>
+                  <div class="fx-card-portrait" :style="{ backgroundImage: `url(${purpleStarTarget.avatarUrl})` }"></div>
+                  <div class="fx-card-name">{{ purpleStarTarget.name }}</div>
+                  <div class="fx-card-subtitle">{{ purpleStarTarget.general.leadership }}c {{ purpleStarTarget.general.command }}c</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：属性与战法 -->
+          <div class="purple-fx-stats-zone">
+            <div class="fx-stats-inner" :class="{ entering: statsEntered }">
+              <div class="fx-stats-title">战法</div>
+              <div class="fx-skill-name">{{ purpleStarTarget.general.skills?.[0]?.name || '兵法' }}</div>
+              <div class="fx-skill-desc">
+                {{ purpleStarTarget.general.skills?.[0]?.description || '兵贵神速，出奇制胜。' }}
+              </div>
+              <div class="fx-attr-section">
+                <div class="fx-attr-title">属性</div>
+                <div class="fx-attr-grid">
+                  <div class="fx-attr-row">
+                    <span class="fx-attr-label att">攻击</span>
+                    <div class="fx-attr-bar-wrap">
+                      <div class="fx-attr-bar att" :style="{ width: getAttrPct(purpleStarTarget.general.attack) + '%' }"></div>
+                    </div>
+                    <span class="fx-attr-val">{{ purpleStarTarget.general.attack }}</span>
+                  </div>
+                  <div class="fx-attr-row">
+                    <span class="fx-attr-label def">防御</span>
+                    <div class="fx-attr-bar-wrap">
+                      <div class="fx-attr-bar def" :style="{ width: getAttrPct(purpleStarTarget.general.defense) + '%' }"></div>
+                    </div>
+                    <span class="fx-attr-val">{{ purpleStarTarget.general.defense }}</span>
+                  </div>
+                  <div class="fx-attr-row">
+                    <span class="fx-attr-label str">谋略</span>
+                    <div class="fx-attr-bar-wrap">
+                      <div class="fx-attr-bar str" :style="{ width: getAttrPct(purpleStarTarget.general.strategy) + '%' }"></div>
+                    </div>
+                    <span class="fx-attr-val">{{ purpleStarTarget.general.strategy }}</span>
+                  </div>
+                  <div class="fx-attr-row">
+                    <span class="fx-attr-label spd">速度</span>
+                    <div class="fx-attr-bar-wrap">
+                      <div class="fx-attr-bar spd" :style="{ width: getAttrPct(purpleStarTarget.general.speed) + '%' }"></div>
+                    </div>
+                    <span class="fx-attr-val">{{ purpleStarTarget.general.speed }}</span>
+                  </div>
+                  <div class="fx-attr-row">
+                    <span class="fx-attr-label seg">攻城</span>
+                    <div class="fx-attr-bar-wrap">
+                      <div class="fx-attr-bar seg" :style="{ width: getAttrPct(purpleStarTarget.general.siege) + '%' }"></div>
+                    </div>
+                    <span class="fx-attr-val">{{ purpleStarTarget.general.siege }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="purple-fx-text-zone">
+            <div class="purple-fx-line" :class="{ popping: textEntered }">{{ purpleStarTarget.name }}</div>
+          </div>
+          <div class="fx-hint">点击任意处继续</div>
+        </div>
+      </Transition>
+
       <!-- 背景层：古典卷轴质感 -->
       <div class="recruit-bg"></div>
 
@@ -107,14 +189,14 @@
             <div class="pity-gold" :style="{ width: goldPityPercent + '%' }"></div>
           </div>
           <div class="pity-text">
-            <span class="purple-text">紫 {{ pityCount }}/{{ PITY_PURPLE_TRIGGER }}</span>
-            <span class="gold-text">金 {{ pityCount }}/{{ PITY_GOLD_TRIGGER }}</span>
+            <span class="purple-text">紫 {{ purplePityCount }}/{{ PITY_PURPLE_TRIGGER }}</span>
+            <span class="gold-text">金 {{ goldPityCount }}/{{ PITY_GOLD_TRIGGER }}</span>
           </div>
         </div>
       </div>
 
       <!-- 关闭按钮 -->
-      <button class="recruit-close" @click.stop="closePanel">×</button>
+      <button v-if="phase === 'idle' || phase === 'done'" class="recruit-close" @click.stop="closePanel">×</button>
 
       <!-- 主内容区 -->
       <div class="recruit-main" @click.stop>
@@ -129,15 +211,17 @@
 
         <!-- 招募模式选择（idle阶段） -->
         <div class="recruit-modes" v-if="phase === 'idle'">
-          <div class="fast-toggle">
-            <span class="fast-label">快速抽卡</span>
-            <button
-              class="fast-switch"
-              :class="{ active: fastMode }"
-              @click="fastMode = !fastMode"
-            >
-              <span class="fast-thumb"></span>
-            </button>
+          <div class="recruit-top-row">
+            <div class="fast-toggle">
+              <span class="fast-label">快速抽卡</span>
+              <button
+                class="fast-switch"
+                :class="{ active: fastMode }"
+                @click="fastMode = !fastMode"
+              >
+                <span class="fast-thumb"></span>
+              </button>
+            </div>
           </div>
 
           <div class="mode-cards-row">
@@ -281,15 +365,18 @@ const RECRUIT_SINGLE_COST = 100;
 const RECRUIT_TEN_COST = 900;
 
 const props = defineProps<{
-  pityCount: number;
+  purplePityCount: number;
+  goldPityCount: number;
   modelValue: number;
 }>();
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: number): void;
-  (e: "update:pityCount", value: number): void;
+  (e: "update:purplePityCount", value: number): void;
+  (e: "update:goldPityCount", value: number): void;
   (e: "close"): void;
   (e: "recruit-done", results: RecruitResult[]): void;
+  (e: "auto-allocate-troops"): void;
 }>();
 
 // 本地金币状态
@@ -319,6 +406,10 @@ const fiveStarTarget = ref<RecruitResult | null>(null);
 const cardEntered = ref(false);
 const statsEntered = ref(false);
 const textEntered = ref(false);
+
+// 全屏紫将特效
+const showFullScreenPurpleFx = ref(false);
+const purpleStarTarget = ref<RecruitResult | null>(null);
 
 const fxLine1 = "天降祥瑞";
 const fxLine2 = "天命所归";
@@ -368,10 +459,7 @@ const getAvatarUrl = (general: General): string => {
   if (general.avatar) {
     return API_BASE_URL + general.avatar;
   }
-  return (
-    API_BASE_URL +
-    `/public/images/ancient_character_${general.gender === "女" ? "women" : "men"}.webp`
-  );
+  return API_BASE_URL + `/public/images/ancient_character_${general.gender === "女" ? "women" : "men"}.webp`;
 };
 
 // 获取星级上限
@@ -407,14 +495,42 @@ const getFxParticleStyle = (_n: number): Record<string, string> => {
   };
 };
 
-// 更新保底计数（揭示时逐步累加）
-const addPityCount = (count: number) => {
-  emit("update:pityCount", Math.min(props.pityCount + count, PITY_GOLD_TRIGGER));
+// 紫色粒子样式
+const getPurpleFxParticleStyle = (_n: number): Record<string, string> => {
+  const angle = Math.random() * 360;
+  const distance = 150 + Math.random() * 250;
+  const x = Math.cos((angle * Math.PI) / 180) * distance;
+  const y = Math.sin((angle * Math.PI) / 180) * distance;
+  const delay = Math.random() * 0.6;
+  const size = 2 + Math.random() * 6;
+  const duration = 1.5 + Math.random() * 1.5;
+  return {
+    "--tx": `${x}px`,
+    "--ty": `${y}px`,
+    "--delay": `${delay}s`,
+    "--size": `${size}px`,
+    "--duration": `${duration}s`,
+  };
 };
 
-// 重置保底
-const resetPityCount = () => {
-  emit("update:pityCount", 0);
+// 更新紫色保底计数（揭示时逐步累加）
+const addPurplePityCount = (count: number) => {
+  emit("update:purplePityCount", Math.min(props.purplePityCount + count, PITY_PURPLE_TRIGGER));
+};
+
+// 更新金色保底计数（揭示时逐步累加）
+const addGoldPityCount = (count: number) => {
+  emit("update:goldPityCount", Math.min(props.goldPityCount + count, PITY_GOLD_TRIGGER));
+};
+
+// 重置紫色保底
+const resetPurplePity = () => {
+  emit("update:purplePityCount", 0);
+};
+
+// 重置金色保底
+const resetGoldPity = () => {
+  emit("update:goldPityCount", 0);
 };
 
 // 开始招募
@@ -454,11 +570,32 @@ const startRecruit = async (m: "single" | "ten") => {
         fiveStarTarget.value = currentResult.value;
         showFullScreenFiveFx.value = true;
         playFiveStarCinematic(currentResult.value);
+        // 五星只重置金色保底
+        resetGoldPity();
+      } else if (currentResult.value.rarity === "rare") {
+        // 紫色只重置紫色保底
+        resetPurplePity();
+      } else {
+        // 白/绿分别累加两个保底
+        addPurplePityCount(1);
+        addGoldPityCount(1);
       }
     } else {
       tenResults.value.forEach((g, i) => {
         flippedIndices.value = new Set([...flippedIndices.value, i]);
         starMap.value[i] = getStarLimit(g.rarity);
+        // 每个卡牌处理保底
+        if (g.rarity === "legendary") {
+          // 五星只重置金色保底
+          resetGoldPity();
+        } else if (g.rarity === "rare") {
+          // 紫色只重置紫色保底
+          resetPurplePity();
+        } else {
+          // 白/绿分别累加两个保底
+          addPurplePityCount(1);
+          addGoldPityCount(1);
+        }
       });
       const hasFive = tenResults.value.some((g) => g.rarity === "legendary");
       if (hasFive) {
@@ -479,11 +616,10 @@ const startRecruit = async (m: "single" | "ten") => {
 // 单抽逻辑
 const doSingleRecruit = async (): Promise<RecruitResult> => {
   let targetRarity: GeneralRarity = "common";
-  const pityCount = props.pityCount;
 
-  if (pityCount >= PITY_GOLD_TRIGGER) {
+  if (props.goldPityCount >= PITY_GOLD_TRIGGER) {
     targetRarity = "legendary";
-  } else if (pityCount >= PITY_PURPLE_TRIGGER) {
+  } else if (props.purplePityCount >= PITY_PURPLE_TRIGGER) {
     targetRarity = "rare";
   } else {
     targetRarity = pickRarity();
@@ -533,7 +669,6 @@ const doSingleRecruit = async (): Promise<RecruitResult> => {
 // 十连逻辑
 const doTenRecruit = async (): Promise<RecruitResult[]> => {
   const results: RecruitResult[] = [];
-  const pityCount = props.pityCount;
   let hasGuaranteedRare = false;
 
   for (let i = 0; i < 10; i++) {
@@ -541,10 +676,12 @@ const doTenRecruit = async (): Promise<RecruitResult[]> => {
 
     if (i === 9 && !hasGuaranteedRare) {
       targetRarity = "rare";
-    } else if (pityCount >= PITY_GOLD_TRIGGER) {
+    } else if (props.goldPityCount >= PITY_GOLD_TRIGGER) {
       targetRarity = "legendary";
-    } else if (pityCount >= PITY_PURPLE_TRIGGER) {
+      emit("update:goldPityCount", 0);
+    } else if (props.purplePityCount >= PITY_PURPLE_TRIGGER) {
       targetRarity = "rare";
+      emit("update:purplePityCount", 0);
     } else {
       targetRarity = pickRarity();
     }
@@ -595,27 +732,32 @@ const doTenRecruit = async (): Promise<RecruitResult[]> => {
 const onSingleHoverEnter = async () => {
   if (!currentResult.value || singleFlipped.value) return;
   singleFlipped.value = true;
-  await playStarReveal("single", currentResult.value.rarity);
 
-  // 五星触发全屏特效
+  // 五星/紫将直接触发全屏特效，跳过星级动画
   if (currentResult.value.rarity === "legendary") {
     fiveStarTarget.value = currentResult.value;
     showFullScreenFiveFx.value = true;
     await playFiveStarCinematic(currentResult.value);
-    // 五星重置保底
-    resetPityCount();
+    // 五星只重置金色保底
+    resetGoldPity();
     if (mode.value === "single") {
       phase.value = "done";
     }
   } else if (currentResult.value.rarity === "rare") {
-    // 紫色保底被消费，重置保底
-    resetPityCount();
+    // 紫将触发全屏特效
+    purpleStarTarget.value = currentResult.value;
+    showFullScreenPurpleFx.value = true;
+    await playPurpleStarCinematic(currentResult.value);
+    // 紫色保底被消费，只重置紫色保底
+    resetPurplePity();
     if (mode.value === "single") {
       phase.value = "done";
     }
   } else {
-    // 非五星非紫色（白/绿）：累加保底
-    addPityCount(1);
+    await playStarReveal("single", currentResult.value.rarity);
+    // 非五星非紫色（白/绿）：分别累加两个保底
+    addPurplePityCount(1);
+    addGoldPityCount(1);
     if (mode.value === "single") {
       phase.value = "done";
     }
@@ -637,33 +779,36 @@ const playStarReveal = async (type: "single" | "ten", rarity: GeneralRarity) => 
 const onCardHoverEnter = async (index: number, general: RecruitResult) => {
   if (flippedIndices.value.has(index)) return;
 
-  // 检查是否五星（需要触发保底更新）
-  const isFiveStar = general.rarity === "legendary";
-
   const newSet = new Set(flippedIndices.value);
   newSet.add(index);
   flippedIndices.value = newSet;
-  starMap.value = { ...starMap.value, [index]: 0 };
 
-  const limit = getStarLimit(general.rarity);
-  for (let s = 1; s <= limit; s++) {
-    starMap.value = { ...starMap.value, [index]: s };
-    await sleep(250);
-  }
-
-  // 五星：先播放全屏特效再更新保底
-  if (isFiveStar) {
+  // 五星/紫将直接触发全屏特效，跳过星级动画
+  if (general.rarity === "legendary") {
+    starMap.value = { ...starMap.value, [index]: 5 };
     fiveStarTarget.value = general;
     showFullScreenFiveFx.value = true;
     await playFiveStarCinematic(general);
-    // 五星重置保底
-    resetPityCount();
+    // 五星只重置金色保底
+    resetGoldPity();
   } else if (general.rarity === "rare") {
-    // 紫色抽到，重置保底（触发紫色保底后不再继续累加）
-    resetPityCount();
+    starMap.value = { ...starMap.value, [index]: 4 };
+    // 紫将：先播放全屏特效再更新保底
+    purpleStarTarget.value = general;
+    showFullScreenPurpleFx.value = true;
+    await playPurpleStarCinematic(general);
+    // 紫色保底被消费，只重置紫色保底
+    resetPurplePity();
   } else {
-    // 白/绿：累加保底
-    addPityCount(1);
+    // 白/绿：播放星级动画
+    const limit = getStarLimit(general.rarity);
+    for (let s = 1; s <= limit; s++) {
+      starMap.value = { ...starMap.value, [index]: s };
+      await sleep(250);
+    }
+    // 白/绿：分别累加两个保底
+    addPurplePityCount(1);
+    addGoldPityCount(1);
   }
 
   // 检查是否全部揭示
@@ -692,11 +837,33 @@ const closeFullScreenFx = () => {
   statsEntered.value = false;
   textEntered.value = false;
 
-  // 五星重置保底
-  resetPityCount();
+  // 检查是否全部揭示完毕
+  checkRevealComplete();
+};
+
+// 全屏紫将点击关闭
+const closePurpleScreenFx = () => {
+  showFullScreenPurpleFx.value = false;
+  purpleStarTarget.value = null;
+  cardEntered.value = false;
+  textEntered.value = false;
 
   // 检查是否全部揭示完毕
   checkRevealComplete();
+};
+
+// 紫将全屏特效时序
+const playPurpleStarCinematic = async (_target: RecruitResult) => {
+  cardEntered.value = false;
+  statsEntered.value = false;
+  textEntered.value = false;
+
+  await sleep(100);
+  textEntered.value = true;
+  await sleep(400);
+  cardEntered.value = true;
+  await sleep(600);
+  statsEntered.value = true;
 };
 
 // 检查揭示是否全部完成
@@ -723,6 +890,11 @@ const onOverlayClick = () => {
     return;
   }
 
+  if (showFullScreenPurpleFx.value) {
+    closePurpleScreenFx();
+    return;
+  }
+
   if (phase.value === "done") {
     onDoneClick();
   }
@@ -740,11 +912,11 @@ const starLimit = computed(() => {
 });
 
 const purplePityPercent = computed(() => {
-  return Math.min(100, (props.pityCount / PITY_PURPLE_TRIGGER) * 100);
+  return Math.min(100, (props.purplePityCount / PITY_PURPLE_TRIGGER) * 100);
 });
 
 const goldPityPercent = computed(() => {
-  return Math.min(100, (props.pityCount / PITY_GOLD_TRIGGER) * 100);
+  return Math.min(100, (props.goldPityCount / PITY_GOLD_TRIGGER) * 100);
 });
 
 // 暴露方法
@@ -921,6 +1093,34 @@ defineExpose({
   flex-direction: column;
   align-items: center;
   gap: 30px;
+}
+
+.recruit-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 500px;
+  gap: 20px;
+}
+
+.btn-auto-allocate {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #c9a96e;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid #5a4520;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+
+.btn-auto-allocate:hover {
+  background: rgba(90, 69, 32, 0.5);
+  color: #ffd700;
+  border-color: #ffd700;
 }
 
 /* 快速抽卡开关 */
@@ -1477,7 +1677,7 @@ defineExpose({
 }
 
 .fx-card-front {
-  transform: rotateY(180deg);
+  /*transform: rotateY(180deg);*/
   background: linear-gradient(145deg, #2d2416, #1a1208);
   border: 4px solid #ffd700;
   box-shadow: 0 0 60px rgba(255, 215, 0, 0.6), 0 0 120px rgba(255, 215, 0, 0.3);
@@ -1519,10 +1719,15 @@ defineExpose({
   width: 200px;
   height: 250px;
   border-radius: 12px;
-  background-size: cover;
-  background-position: center;
   border: 3px solid #8b6914;
   box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #2d2416, #1a1208);
+  background-size: cover;
+  background-position: center;
 }
 
 .fx-card-name {
@@ -1699,6 +1904,149 @@ defineExpose({
 }
 
 @keyframes fiveFxOut {
+  to { opacity: 0; }
+}
+
+/* ========================================
+   全屏紫将特效
+   ======================================== */
+.purple-star-cinematic {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.purple-fx-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(50, 20, 60, 0.97) 0%, rgba(15, 5, 20, 0.99) 100%);
+  animation: fxBgPulse 0.5s ease-out;
+}
+
+.purple-fx-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.purple-fx-particle {
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  background: radial-gradient(circle, #da66ff, #9b59b6);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  animation: fxParticleBurst var(--duration) ease-out var(--delay) infinite;
+}
+
+.purple-fx-card-zone {
+  position: absolute;
+  left: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  perspective: 1200px;
+}
+
+.purple-fx-stats-zone {
+  position: absolute;
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 320px;
+  color: #e0b0ff;
+}
+
+.purple-fx-card-scene {
+  width: 260px;
+  height: 380px;
+}
+
+.purple-fx-card-3d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(-20deg);
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.purple-fx-card-3d.entering {
+  transform: rotateY(0deg);
+}
+
+.purple-banner {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad) !important;
+}
+
+.purple-banner .fx-banner-stars {
+  color: #da66ff !important;
+}
+
+.purple-banner .fx-banner-label {
+  color: #e0b0ff !important;
+}
+
+.purple-fx-text-zone {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.purple-fx-line {
+  font-size: 56px;
+  font-weight: bold;
+  letter-spacing: 6px;
+  opacity: 0;
+  color: #da66ff;
+  text-shadow: 0 0 40px rgba(218, 102, 255, 0.9), 2px 2px 4px rgba(0,0,0,0.8);
+  transform: scale(0);
+}
+
+.purple-fx-line.popping {
+  animation: fxLinePop2 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.purple-fx-hint {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(200, 180, 255, 0.8);
+  font-size: 16px;
+  letter-spacing: 2px;
+  z-index: 100;
+}
+
+.purple-fx-enter-active {
+  animation: purpleFxIn 0.4s ease-out;
+}
+
+.purple-fx-leave-active {
+  animation: purpleFxOut 0.3s ease-in forwards;
+}
+
+@keyframes purpleFxIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes purpleFxOut {
   to { opacity: 0; }
 }
 

@@ -3,21 +3,10 @@
     <div class="side-label">{{ sideLabel }}</div>
 
     <!-- 遗物栏 -->
-    <RelicBar :relics="relics" :empty-text="relicEmptyText" />
-
-    <!-- 兵力操作栏（仅我方显示） -->
-    <div v-if="side === 'player'" class="troop-ops-bar">
-      <button
-        class="relic-auto-btn"
-        :disabled="isBattleActive"
-        @click="$emit('auto-allocate-troops')"
-      >
-        自动分配兵力
-      </button>
-    </div>
+    <RelicBar :relics="relics" :empty-text="relicEmptyText" style="margin-top: 94px;"/>
 
     <!-- 阵型 -->
-    <div class="formation horizontal">
+    <div class="formation horizontal" style="margin-top: 70px;">
       <!-- 大营 -->
       <div class="card-slot" @click="$emit('select-slot', positionMap.大营)">
         <GeneralCard
@@ -103,7 +92,6 @@ defineEmits<{
   (e: "show-tooltip", slotKey: string, event: MouseEvent): void;
   (e: "hide-tooltip"): void;
   (e: "troops-bar-mousedown", position: FormationPosition, event: MouseEvent): void;
-  (e: "auto-allocate-troops"): void;
 }>();
 
 const sideLabel = computed(() => (props.side === "player" ? "我方" : "敌方"));
@@ -145,33 +133,6 @@ const slotKey = computed(() => ({
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(139, 115, 85, 0.5);
-}
-
-.troop-ops-bar {
-  display: flex;
-  justify-content: center;
-  padding: 8px;
-}
-
-.relic-auto-btn {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
-  border: 2px solid #8b7355;
-  border-radius: 4px;
-  color: #f5f5dc;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.relic-auto-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5a4738 0%, #7b6354 100%);
-  border-color: #a08060;
-}
-
-.relic-auto-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .formation {
