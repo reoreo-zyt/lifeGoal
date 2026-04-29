@@ -217,8 +217,8 @@
 
       <RecruitPanel
         ref="recruitPanel"
-        :pity-count="pityCount"
-        :money="money"
+        v-model="money"
+        v-model:pity-count="pityCount"
         @close="handleRecruitPanelClose"
         @recruit-done="handleRecruitDone"
       />
@@ -238,6 +238,7 @@ import RunMap from "../components/RunMap.vue";
 import RecruitPanel from "../components/RecruitPanel.vue";
 import RewardSelector from "../components/RewardSelector.vue";
 import type { General, GeneralRarity, FormationPosition } from "../skills/types";
+import { RARITY_CONFIG } from "../skills/types";
 import type {
   GamePhase,
   NodeType,
@@ -337,8 +338,6 @@ const currentTurn = ref(0);
 // ========== 招募消耗与保底 ==========
 // 单抽消耗金币（10连抽 = 消耗 * 10，保底触发时只扣单抽费用）
 const RECRUIT_SINGLE_COST = 100;
-// 10连抽消耗金币
-const RECRUIT_TEN_COST = 1000;
 // 当前保底计数器（保底触发后清零）
 const pityCount = ref(0);
 
@@ -2268,36 +2267,45 @@ const recruitCard = () => {
   recruitPanel.value?.open();
 };
 
-// 执行10连抽：打开招募面板
-const recruitTenCards = () => {
-  recruitPanel.value?.open();
-};
-
 // ========== 招募面板事件处理 ==========
-const handleRecruitPanelClose = () => {
-  // 面板关闭后不做特殊处理，状态已在 RecruitPanel 内部重置
-};
+const handleRecruitPanelClose = () => {};
 
-const handleRecruitDone = (result: { general: General; rarity: GeneralRarity }) => {
-  const { general } = result;
-  const existed = generals.value.find((g) => g.id === general.id);
-  if (existed) {
-    const maxStar = MAX_STAR_BY_RARITY[general.rarity] ?? 5;
-    const currentStar = getSynthStar(existed);
-    if (currentStar >= maxStar) {
-      money.value += RECRUIT_SINGLE_COST;
-      addReport(`【${general.name}】已达最高星级，返还${RECRUIT_SINGLE_COST}金币！`);
-    } else {
-      promoteExistingGeneral(existed);
-      addReport(`【${general.name}】升星成功，当前星级：★${getSynthStar(existed) + 1}！`);
-    }
+const handleRecruitDone = (results: { general: General; rarity: GeneralRarity }[]) => {
+  if (results.length === 1) {
+    addReport("============= 单抽招募 ===========");
   } else {
-    setSynthStar(general, 0);
-    general.troops = 0;
-    general.isDead = false;
-    general.skillEffects = {};
-    generals.value.push(general);
-    formatGeneralReport(general);
+    addReport("============= 十连招募 ===========");
+  }
+
+  results.forEach(({ general, rarity }, i) => {
+    if (results.length > 1) {
+      addReport(`第${i + 1}抽：`);
+    }
+
+    const existed = generals.value.find((g) => g.id === general.id);
+    if (existed) {
+      const maxStar = MAX_STAR_BY_RARITY[general.rarity] ?? 5;
+      const currentStar = getSynthStar(existed);
+      if (currentStar >= maxStar) {
+        money.value += RECRUIT_SINGLE_COST;
+        addReport(`【${general.name}】已达最高星级，返还${RECRUIT_SINGLE_COST}金币！`);
+      } else {
+        promoteExistingGeneral(existed);
+        addReport(`【${general.name}】升星成功，当前星级：★${getSynthStar(existed) + 1}！`);
+      }
+    } else {
+      setSynthStar(general, 0);
+      general.troops = 0;
+      general.isDead = false;
+      general.skillEffects = {};
+      generals.value.push(general);
+      formatGeneralReport(general);
+      addReport(`获得【${general.name}】（${RARITY_CONFIG[rarity]?.name ?? rarity}）！`);
+    }
+  });
+
+  if (results.length > 1) {
+    addReport("=================================");
   }
 };
 
