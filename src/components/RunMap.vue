@@ -367,7 +367,7 @@ const getNodePoint = (node: MapNode) => {
   position: absolute;
   bottom: 16px;
   right: 16px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.2);
   border: 2px solid rgba(139, 115, 85, 0.6);
   border-radius: 8px;
   padding: 14px;

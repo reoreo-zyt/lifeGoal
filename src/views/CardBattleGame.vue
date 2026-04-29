@@ -12,8 +12,18 @@
     <!-- 游戏开始界面 -->
     <div v-else-if="!gameLoaded" class="game-start-screen">
       <div class="game-start-bg" style="background-image: url('/assets/game_cover_bg_1920x1080.jpg');"></div>
+      <div class="game-start-overlay"></div>
       <div class="game-start-content">
-        <h1 class="game-title">史策 rogue</h1>
+        <div class="title-wrapper">
+          <div class="title-decoration left"></div>
+          <div class="title-main">
+            <h1 class="game-title">史策<span class="rogue-text">ROGUE</span></h1>
+            <p class="game-subtitle">历史乱世 · 武将羁绊 · 策略</p>
+          </div>
+          <div class="title-decoration right"></div>
+        </div>
+      </div>
+      <div class="progress-footer">
         <div class="progress-container">
           <div class="progress-bar" :style="{ width: `${loadingProgress}%` }"></div>
         </div>
@@ -328,7 +338,7 @@ const showBattleControlTooltip = (event: MouseEvent) => {
 // ========== 游戏初始数据 ==========
 // 游戏各数值的初始值（resetGame 时恢复使用）
 const initialGameData = {
-  money: 10000,
+  money: 0,
   currentYear: -2070,
   currentWave: 1,
 };
@@ -5010,31 +5020,31 @@ const startBattle = async () => {
 }
 
 .action-button.recruit {
-  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
   color: white;
 }
 
 .action-button.recruit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
 }
 
 .action-button.recruit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
 }
 
 .action-button.end-turn {
-  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
   color: white;
 }
 
 .action-button.end-turn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
 }
 
 .action-button.next-wave {
-  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);;
+  background: linear-gradient(135deg, #4a3728 0%, #6b5344 100%);
   color: white;
 }
 
@@ -5121,6 +5131,7 @@ const startBattle = async () => {
   height: 100vh;
   z-index: 1000;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
@@ -5134,68 +5145,182 @@ const startBattle = async () => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: brightness(0.7);
+  filter: brightness(0.6) blur(2px);
+}
+
+.game-start-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
 }
 
 .game-start-content {
   position: relative;
   z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+}
+
+.title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  animation: fadeInDown 1s ease-out;
+}
+
+.title-decoration {
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #c9a961, transparent);
+}
+
+.title-decoration.left {
+  background: linear-gradient(90deg, transparent, #c9a961);
+}
+
+.title-decoration.right {
+  background: linear-gradient(90deg, #c9a961, transparent);
+}
+
+.title-main {
   text-align: center;
-  color: white;
-  padding: 40px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 10px;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-  max-width: 500px;
-  width: 90%;
 }
 
 .game-title {
-  font-size: 3rem;
-  margin-bottom: 40px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-size: 5rem;
+  font-weight: 900;
+  color: #f5f5dc;
+  text-shadow: 0 0 20px rgba(201, 169, 97, 0.5), 0 4px 8px rgba(0, 0, 0, 0.8);
+  margin: 0;
+  letter-spacing: 0.2em;
+  font-family: 'SimSun', 'Microsoft YaHei', serif;
+}
+
+.rogue-text {
+  display: block;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #c9a961;
+  letter-spacing: 0.5em;
+  text-shadow: 0 0 30px rgba(201, 169, 97, 0.8), 0 2px 4px rgba(0, 0, 0, 0.8);
+  margin-top: 10px;
+}
+
+.game-subtitle {
+  font-size: 1.2rem;
+  color: rgba(245, 245, 220, 0.8);
+  margin-top: 20px;
+  letter-spacing: 0.3em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.progress-footer {
+  position: relative;
+  z-index: 1001;
+  width: 100%;
+  max-width: 600px;
+  padding: 20px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  animation: fadeInUp 1s ease-out 0.5s both;
 }
 
 .progress-container {
   width: 100%;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 20px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #45a049);
-  border-radius: 10px;
+  background: linear-gradient(90deg, #c9a961, #e8d5a3, #c9a961);
+  border-radius: 4px;
   transition: width 0.3s ease;
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+  box-shadow: 0 0 15px rgba(201, 169, 97, 0.6);
+  position: relative;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 2s infinite;
 }
 
 .progress-text {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  color: #c9a961;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.2em;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .game-title {
+    font-size: 3rem;
+  }
+
+  .rogue-text {
     font-size: 2rem;
   }
 
-  .game-start-content {
-    padding: 30px;
+  .game-subtitle {
+    font-size: 0.9rem;
   }
 
-  .progress-container {
-    height: 15px;
+  .title-decoration {
+    width: 40px;
   }
 
-  .progress-text {
-    font-size: 1rem;
+  .title-wrapper {
+    gap: 15px;
+  }
+
+  .progress-footer {
+    padding: 15px 30px 30px;
   }
 }
 </style>
