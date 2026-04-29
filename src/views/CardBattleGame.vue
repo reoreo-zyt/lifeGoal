@@ -194,13 +194,8 @@
         <div v-if="showBattleBoard" class="game-footer">
           <button class="action-button recruit" @click="recruitCard" :disabled="money < RECRUIT_SINGLE_COST || isBattleActive"
             @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
-            <img src="/assets/open.webp" alt="单抽招募" class="button-icon">
-            <span class="recruit-label">单抽</span>
-          </button>
-          <button class="action-button recruit-ten" @click="recruitTenCards" :disabled="money < RECRUIT_TEN_COST || isBattleActive"
-            @mouseenter="showHeaderTooltip($event, 'recruitTen')" @mouseleave="hideHeaderTooltip">
-            <img src="/assets/open.webp" alt="十连招募" class="button-icon">
-            <span class="recruit-label">十连</span>
+            <img src="/assets/open.webp" alt="招募" class="button-icon">
+            <span class="recruit-label">招募</span>
           </button>
           <button class="action-button end-turn" @click="endTurn"
             @mouseenter="showBattleControlTooltip($event)" @mouseleave="hideHeaderTooltip">
@@ -221,7 +216,6 @@
       <AuthModal v-if="showAuthModal" :is-login="isLogin" @close="showAuthModal = false" @login="handleLogin" />
 
       <RecruitPanel
-        v-if="recruitPanel"
         ref="recruitPanel"
         :pity-count="pityCount"
         :money="money"

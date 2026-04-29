@@ -764,7 +764,7 @@ defineExpose({
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.98) 100%);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.28) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
