@@ -602,7 +602,20 @@ const onSingleHoverEnter = async () => {
     fiveStarTarget.value = currentResult.value;
     showFullScreenFiveFx.value = true;
     await playFiveStarCinematic(currentResult.value);
-    // 特效结束后检查是否全揭示
+    // 五星重置保底
+    resetPityCount();
+    if (mode.value === "single") {
+      phase.value = "done";
+    }
+  } else if (currentResult.value.rarity === "rare") {
+    // 紫色保底被消费，重置保底
+    resetPityCount();
+    if (mode.value === "single") {
+      phase.value = "done";
+    }
+  } else {
+    // 非五星非紫色（白/绿）：累加保底
+    addPityCount(1);
     if (mode.value === "single") {
       phase.value = "done";
     }
@@ -645,8 +658,11 @@ const onCardHoverEnter = async (index: number, general: RecruitResult) => {
     await playFiveStarCinematic(general);
     // 五星重置保底
     resetPityCount();
+  } else if (general.rarity === "rare") {
+    // 紫色抽到，重置保底（触发紫色保底后不再继续累加）
+    resetPityCount();
   } else {
-    // 非五星：揭示后累加保底
+    // 白/绿：累加保底
     addPityCount(1);
   }
 
