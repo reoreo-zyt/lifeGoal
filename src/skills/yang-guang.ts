@@ -59,7 +59,7 @@ export const createYangGuangSkill = (): Skill => ({
 
     if (type === "turnStart") {
       const hpLostPercent = (general.maxTroops - general.troops) / general.maxTroops;
-      const bonusCount = Math.floor(hpLostPercent / 0.08);
+      const bonusCount = Math.min(5, Math.floor(hpLostPercent / 0.08));
       const newDamageIncrease = bonusCount * 14;
       const newDamageReduction = bonusCount * 10;
 

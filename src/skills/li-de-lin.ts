@@ -40,16 +40,22 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  strategyDamageReduction: 0,
+  strategyDamageReductionSource: "",
+  physicalDamageReduction: 0,
+  physicalDamageReductionSource: "",
+  dispelChance: 0,
+  dispelChanceSource: "",
 };
 
 const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
-// 典谟润色 — 被动：自身受到谋略伤害-12%、物理伤害-18%
+// 典谟润色 — 被动：自身受到谋略伤害-12%、物理伤害-18%，每回合有20%概率驱散自身一个debuff
 export const createLiDeLinSkill = (): Skill => ({
   id: "dianmo-runse",
   name: "典谟润色",
   type: "passive",
-  description: "被动：自身受到谋略伤害-12%、受到物理伤害-18%",
+  description: "被动：自身受到谋略伤害-12%、受到物理伤害-18%，每回合有20%概率驱散自身一个debuff",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     const { type, event, addReport } = context;
@@ -60,10 +66,54 @@ export const createLiDeLinSkill = (): Skill => ({
       general.skillEffects.strategyDamageReductionSource = `【${general.name}】的【典谟润色】`;
       general.skillEffects.physicalDamageReduction = (general.skillEffects.physicalDamageReduction || 0) + 18;
       general.skillEffects.physicalDamageReductionSource = `【${general.name}】的【典谟润色】`;
+      general.skillEffects.dispelChance = 0.20;
+      general.skillEffects.dispelChanceSource = `【${general.name}】的【典谟润色】`;
       if (addReport) {
-        addReport(`【${general.name}】发动【典谟润色】，谋伤-12%、物伤-18%！`);
+        addReport(`【${general.name}】发动【典谟润色】，谋伤-12%、物伤-18%，每回合有20%概率驱散自身一个debuff！`);
       }
       return { triggered: true };
+    }
+
+    // 每回合有20%概率驱散自身一个debuff
+    if (type === "turnStart") {
+      if (Math.random() < 0.20) {
+        // 简单驱散：重置常见的debuff效果
+        if (general.skillEffects.strategyVulnerabilityDuration > 0) {
+          general.skillEffects.strategyVulnerability = 0;
+          general.skillEffects.strategyVulnerabilityDuration = 0;
+          if (addReport) addReport(`【${general.name}】的【典谟润色】驱散了谋略降低效果！`);
+          return null;
+        }
+        if (general.skillEffects.attackDebuffDuration > 0) {
+          general.skillEffects.attackDebuff = 0;
+          general.skillEffects.attackDebuffDuration = 0;
+          if (addReport) addReport(`【${general.name}】的【典谟润色】驱散了攻击降低效果！`);
+          return null;
+        }
+        if (general.skillEffects.defenseDebuffDuration > 0) {
+          general.skillEffects.defenseDebuff = 0;
+          general.skillEffects.defenseDebuffDuration = 0;
+          if (addReport) addReport(`【${general.name}】的【典谟润色】驱散了防御降低效果！`);
+          return null;
+        }
+        if (general.skillEffects.speedDebuffDuration > 0) {
+          general.skillEffects.speedDebuff = 0;
+          general.skillEffects.speedDebuffDuration = 0;
+          if (addReport) addReport(`【${general.name}】的【典谟润色】驱散了速度降低效果！`);
+          return null;
+        }
+        if (general.skillEffects.isStunned) {
+          general.skillEffects.isStunned = false;
+          if (addReport) addReport(`【${general.name}】的【典谟润色】驱散了【震慑】效果！`);
+          return null;
+        }
+        if (general.skillEffects.cannotPhysicalAttack) {
+          general.skillEffects.cannotPhysicalAttack = false;
+          general.skillEffects.cannotPhysicalAttackDuration = 0;
+          if (addReport) addReport(`【${general.name}】的【典谟润色】驱散了【怯战】效果！`);
+          return null;
+        }
+      }
     }
 
     return null;

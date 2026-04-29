@@ -40,32 +40,47 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  recoveryBonus: 0,
+  recoveryBonusSource: "",
+  turnStartRecovery: 0,
+  turnStartRecoverySource: "",
 };
 
 const calculateTroops = (commandValue: number): number => {
   return Math.floor(commandValue * 10);
 };
 
-// 被动：治疗效果+22%
+// 被动：治疗效果+22%，每回合开始恢复2%兵力
 export const createYangWenSiSkill = (): Skill => ({
   id: "qinglian-fenggong",
   name: "清廉奉公",
   type: "passive",
-  description: "被动：治疗效果+22%",
+  description: "被动：治疗效果+22%，每回合开始恢复2%兵力",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) {
       general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     }
 
-    const { type, addReport } = context;
+    const { type, event, addReport } = context;
 
-    if (type === "passive") {
+    if (type === "battleStart" && event === "init") {
       general.skillEffects.recoveryBonus = 0.22;
       general.skillEffects.recoveryBonusSource = `【${general.name}】的【清廉奉公】`;
+      general.skillEffects.turnStartRecovery = 0.02;
+      general.skillEffects.turnStartRecoverySource = `【${general.name}】的【清廉奉公】`;
       if (addReport) {
-        addReport(`【${general.name}】的【清廉奉公】生效：治疗效果+22%！`);
+        addReport(`【${general.name}】的【清廉奉公】生效：治疗效果+22%，每回合开始恢复2%兵力！`);
       }
       return { triggered: true };
+    }
+
+    // 每回合开始恢复2%兵力
+    if (type === "turnStart") {
+      const recoveryAmount = Math.floor(general.maxTroops * 0.02);
+      general.troops = Math.min(general.maxTroops, general.troops + recoveryAmount);
+      if (addReport) {
+        addReport(`【${general.name}】的【清廉奉公】恢复${recoveryAmount}点兵力！`);
+      }
     }
 
     return null;

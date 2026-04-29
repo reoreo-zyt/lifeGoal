@@ -28,6 +28,7 @@
           :is-attacking="attackingCard === slotKey.大营"
           :is-battle-active="isBattleActive"
           :api-base-url="apiBaseUrl"
+          :team-generals="teamGenerals"
           @select="$emit('select-slot', positionMap.大营)"
           @show-tooltip="(e) => $emit('show-tooltip', slotKey.大营, e)"
           @hide-tooltip="$emit('hide-tooltip')"
@@ -45,6 +46,7 @@
           :is-attacking="attackingCard === slotKey.中军"
           :is-battle-active="isBattleActive"
           :api-base-url="apiBaseUrl"
+          :team-generals="teamGenerals"
           @select="$emit('select-slot', positionMap.中军)"
           @show-tooltip="(e) => $emit('show-tooltip', slotKey.中军, e)"
           @hide-tooltip="$emit('hide-tooltip')"
@@ -62,6 +64,7 @@
           :is-attacking="attackingCard === slotKey.前锋"
           :is-battle-active="isBattleActive"
           :api-base-url="apiBaseUrl"
+          :team-generals="teamGenerals"
           @select="$emit('select-slot', positionMap.前锋)"
           @show-tooltip="(e) => $emit('show-tooltip', slotKey.前锋, e)"
           @hide-tooltip="$emit('hide-tooltip')"
@@ -105,6 +108,11 @@ defineEmits<{
 
 const sideLabel = computed(() => (props.side === "player" ? "我方" : "敌方"));
 const relicEmptyText = computed(() => (props.side === "player" ? "未选择遗物" : "未选择遗物"));
+const teamGenerals = computed(() =>
+  [props.formation.大营, props.formation.中军, props.formation.前锋].filter(
+    (g): g is General => g !== null,
+  ),
+);
 
 const positionMap = computed(() => ({
   大营: { side: props.side, position: "大营" as FormationPosition },

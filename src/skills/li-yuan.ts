@@ -54,7 +54,7 @@ export const createLiYuanSkill = (): Skill => ({
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     const { type, event, addReport, allies } = context;
 
-    // 战斗开始时：全体友军防御+22%，自身攻击+18%
+    // 战斗开始时：全体友军防御+22%，自身攻击+18%，首回合必定先手
     if (type === "battleStart" && event === "init") {
       if (allies && allies.length > 0) {
         allies.forEach((ally: General) => {
@@ -68,8 +68,10 @@ export const createLiYuanSkill = (): Skill => ({
       general.skillEffects.attackBonus = (general.skillEffects.attackBonus || 0) + 18;
       general.skillEffects.attackBonusSource = `【${general.name}】的【晋阳起兵】`;
       general.skillEffects.attackBonusDuration = 2;
+      general.skillEffects.alwaysFirst = true;
+      general.skillEffects.alwaysFirstSource = `【${general.name}】的【晋阳起兵】`;
       if (addReport) {
-        addReport(`【${general.name}】发动【晋阳起兵】，唐室基业，始于今日！自身攻击+18%！`);
+        addReport(`【${general.name}】发动【晋阳起兵】，唐室基业，始于今日！自身攻击+18%，首回合必定先手！`);
       }
       return { triggered: true };
     }

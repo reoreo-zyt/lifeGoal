@@ -28,6 +28,10 @@
             <span>统率: {{ general.leadership }}</span>
           </div>
         </div>
+        <div v-if="activeBonds.length > 0" class="tooltip-bonds">
+          <div class="tooltip-bonds-title">羁绊</div>
+          <div v-for="bond in activeBonds" :key="bond" class="tooltip-bond-item">{{ bond }}</div>
+        </div>
         <div v-if="general.skills && general.skills.length > 0" class="tooltip-skills">
           <div class="tooltip-skills-title">自带战法</div>
           <div v-for="skill in general.skills" :key="skill.id" class="tooltip-skill-item">
@@ -43,14 +47,23 @@
 <script setup lang="ts">
 // @ts-nocheck - 跳过此文件的类型检查以允许未使用的变量
 import type { General } from "../skills/types";
+import { getActiveBondNames } from "../skills/index";
+import { computed } from "vue";
 
 const _props = defineProps<{
   general: General | null;
+  /** 同队武将，用于计算羁绊 */
+  teamGenerals?: General[];
 }>();
 
 const emit = defineEmits<{
   (e: "close"): void;
 }>();
+
+const activeBonds = computed(() => {
+  if (!_props.general || !_props.teamGenerals) return [];
+  return getActiveBondNames(_props.general.id, _props.teamGenerals);
+});
 
 const onOverlayClick = () => {
   emit("close");
@@ -166,5 +179,29 @@ const onClose = () => {
   font-size: 12px;
   color: #7f8c8d;
   line-height: 1.4;
+}
+
+.tooltip-bonds {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.tooltip-bonds-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.tooltip-bond-item {
+  background: linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
 }
 </style>

@@ -60,7 +60,7 @@ export const createPeiXingYanSkill = (): Skill => {
 
       const { type, event, addReport } = context;
 
-      // 攻击大营目标时：额外伤害+138%
+      // 攻击大营目标时：额外伤害+138%，每场战斗首次攻击伤害+50%
       if (type === "attack" && event === "dealDamage") {
         // 通过 context 传入目标位置信息
         const targetPosition = context.targetPosition;
@@ -68,8 +68,12 @@ export const createPeiXingYanSkill = (): Skill => {
           if (addReport) {
             addReport(`【${general.name}】的【攻城略地】对大营目标造成额外伤害！`);
           }
-          return { bonusDamageMultiplier: 1.38 };
         }
+        // 每场战斗首次攻击伤害+50%（通过 firstAttackDamageBonus 实现）
+        if (addReport) {
+          addReport(`【${general.name}】的【攻城略地】生效：攻击伤害+50%！`);
+        }
+        return { bonusDamageMultiplier: targetPosition === "大营" ? 1.38 : 0, firstAttackDamageBonus: 0.50 };
       }
 
       return null;

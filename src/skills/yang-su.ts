@@ -106,6 +106,23 @@ export const createYangSuSkill = (): Skill => {
         }
       }
 
+      if (type === "normalAttack" && event === "afterDamage") {
+        if (Math.random() < 0.50) {
+          if (enemies && enemies.length > 0) {
+            const aliveEnemies = enemies.filter((e: General) => !e.isDead);
+            if (aliveEnemies.length > 0) {
+              const randomTarget = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+              const pursuitDamage = Math.max(0, Math.floor(general.attack * 1.00 - randomTarget.defense / 2));
+              randomTarget.troops = Math.max(0, randomTarget.troops - pursuitDamage);
+              if (randomTarget.troops <= 0) randomTarget.isDead = true;
+              if (addReport) {
+                addReport(`【${general.name}】触发【出塞破敌】追击！对【${randomTarget.name}】追加${pursuitDamage}点物理伤害！`);
+              }
+            }
+          }
+        }
+      }
+
       return null;
     },
   };

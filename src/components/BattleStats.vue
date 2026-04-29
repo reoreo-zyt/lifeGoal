@@ -2,6 +2,8 @@
 import { computed } from "vue";
 import type { General } from "../skills/types";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
 interface PositionStats {
   大营: number;
   中军: number;
@@ -47,6 +49,7 @@ const playerHealTotal = computed(() =>
 const enemyHealTotal = computed(() =>
   props.stats.healing.enemy.大营 + props.stats.healing.enemy.中军 + props.stats.healing.enemy.前锋,
 );
+const grandHealTotal = computed(() => playerHealTotal.value + enemyHealTotal.value);
 
 const pct = (value: number, total: number) => {
   if (total === 0) return "0%";
@@ -60,7 +63,9 @@ const sideDealtPct = (side: "player" | "enemy") => {
 
 const getAvatar = (side: "player" | "enemy", pos: FormationPosition) => {
   const formation = side === "player" ? props.playerFormation : props.enemyFormation;
-  return formation[pos]?.avatar || "";
+  const avatar = formation[pos]?.avatar;
+  if (!avatar) return "";
+  return `${API_BASE_URL}${avatar}`;
 };
 
 const getName = (side: "player" | "enemy", pos: FormationPosition) => {
@@ -172,7 +177,7 @@ const hasData = computed(() => grandDealtTotal.value > 0 || playerHealTotal.valu
                   <div v-else class="general-avatar avatar-placeholder">?</div>
                   <span class="pos-label">{{ pos }}</span>
                   <span class="bar-value heal-bar-value">{{ stats.healing.player[pos].toLocaleString() }}</span>
-                  <span class="bar-pct">{{ stats.healing.player[pos] > 0 ? '+' : '' }}</span>
+                  <span class="bar-pct">{{ grandHealTotal > 0 ? pct(stats.healing.player[pos], grandHealTotal) : '—' }}</span>
                 </div>
               </div>
 
@@ -188,7 +193,7 @@ const hasData = computed(() => grandDealtTotal.value > 0 || playerHealTotal.valu
                   <div v-else class="general-avatar avatar-placeholder">?</div>
                   <span class="pos-label">{{ pos }}</span>
                   <span class="bar-value heal-bar-value">{{ stats.healing.enemy[pos].toLocaleString() }}</span>
-                  <span class="bar-pct">{{ stats.healing.enemy[pos] > 0 ? '+' : '' }}</span>
+                  <span class="bar-pct">{{ grandHealTotal > 0 ? pct(stats.healing.enemy[pos], grandHealTotal) : '—' }}</span>
                 </div>
               </div>
             </div>

@@ -40,30 +40,38 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  attributeBonus2: 0,
+  attributeBonus2Source: "",
+  isImmuneToSpeedReduction: false,
+  isImmuneToSpeedReductionSource: "",
 };
 
 const calculateTroops = (commandValue: number): number => {
   return Math.floor(commandValue * 10);
 };
 
-// 被动：全属性+10
+// 被动：全属性+10，免疫速度降低效果
 export const createLuYanShiSkill = (): Skill => ({
   id: "zhongyong-zishou",
   name: "中庸自守",
   type: "passive",
-  description: "被动：全属性+10",
+  description: "被动：全属性+10，免疫速度降低效果",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) {
       general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     }
 
-    const { type, addReport } = context;
+    const { type, event, addReport } = context;
 
-    if (type === "passive") {
+    if (type === "battleStart" && event === "init") {
       general.skillEffects.attributeBonus = 10;
       general.skillEffects.attributeBonusSource = `【${general.name}】的【中庸自守】`;
+      general.skillEffects.attributeBonus2 = 10;
+      general.skillEffects.attributeBonus2Source = `【${general.name}】的【中庸自守】`;
+      general.skillEffects.isImmuneToSpeedReduction = true;
+      general.skillEffects.isImmuneToSpeedReductionSource = `【${general.name}】的【中庸自守】`;
       if (addReport) {
-        addReport(`【${general.name}】的【中庸自守】生效：全属性+10！`);
+        addReport(`【${general.name}】的【中庸自守】生效：全属性+10，免疫速度降低效果！`);
       }
       return { triggered: true };
     }

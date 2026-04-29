@@ -51,8 +51,16 @@
         </div>
       </div>
 
-      <!-- 状态效果 -->
+      <!-- 状态效果 + 羁绊 -->
       <StatusEffects :general="general" />
+      <div v-if="activeBonds.length > 0" class="card-bonds">
+        <span
+          v-for="bond in activeBonds"
+          :key="bond"
+          class="bond-tag"
+          :title="bond"
+        >羁</span>
+      </div>
 
       <div class="card-middle"></div>
 
@@ -86,6 +94,7 @@
 import { computed } from "vue";
 import type { General, GeneralRarity } from "../skills/types";
 import { RARITY_CONFIG } from "../skills/types";
+import { getActiveBondNames } from "../skills/index";
 import StatusEffects from "./StatusEffects.vue";
 
 const RARITY_BORDER_COLORS: Record<GeneralRarity, string> = {
@@ -103,6 +112,8 @@ const props = defineProps<{
   isAttacking?: boolean;
   isBattleActive?: boolean;
   apiBaseUrl: string;
+  /** 同队武将，用于计算羁绊 */
+  teamGenerals?: General[];
 }>();
 
 const emit = defineEmits<{
@@ -139,6 +150,11 @@ const maxStar = computed(() => {
 const borderColor = computed(() => {
   if (!props.general) return "#8b6914";
   return RARITY_BORDER_COLORS[props.general.rarity] ?? "#8b6914";
+});
+
+const activeBonds = computed(() => {
+  if (!props.general || !props.teamGenerals) return [];
+  return getActiveBondNames(props.general.id, props.teamGenerals);
 });
 
 const handleContextMenu = (event: MouseEvent) => {
@@ -309,6 +325,29 @@ const handleTroopsBarMouseDown = (event: MouseEvent) => {
 
 .card-middle {
   flex: 1;
+}
+
+.card-bonds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.bond-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%);
+  border: 1px solid #3a7abd;
+  color: #ffd700;
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+  cursor: help;
 }
 
 .card-bottom {

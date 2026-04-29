@@ -40,51 +40,78 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  pursuitChance: 0,
+  pursuitChanceSource: "",
+  pursuitDamage: 0,
+  pursuitDamageSource: "",
 };
 
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
+// 主动：连续攻击同一目标2次，每次90%物理伤害，伤害逐次+22%，追击 25%/追加80%
 export const createHeRuoBiSkill = (): Skill => ({
   id: "mie-chen-shuangji",
   name: "灭陈双击",
   type: "active",
   distance: 4,
   probability: 0.42,
-  description: "主动：连续攻击同一目标2次，每次90%物理伤害，伤害逐次+22%",
+  description: "主动：连续攻击同一目标2次，每次90%物理伤害，伤害逐次+22%，追击 25%/追加80%",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) {
       general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     }
 
-    const { type, event, addReport, targets } = context;
+    const { type, event, addReport, targets, target } = context;
+
+    if (type === "battleStart" && event === "init") {
+      general.skillEffects.pursuitChance = 0.25;
+      general.skillEffects.pursuitChanceSource = `【${general.name}】的【灭陈双击】`;
+      general.skillEffects.pursuitDamage = 0.80;
+      general.skillEffects.pursuitDamageSource = `【${general.name}】的【灭陈双击】`;
+      if (addReport) {
+        addReport(`【${general.name}】发动【灭陈双击】，追击效果激活：普攻后25%概率追加80%伤害！`);
+      }
+    }
 
     if (type === "activeSkill" && event === "trigger") {
       if (addReport) {
         addReport(`【${general.name}】发动【灭陈双击】！`);
       }
       if (targets && targets.length > 0) {
-        const target = targets[0];
+        const targetRef = targets[0];
         const baseMultiplier = 0.90;
         const increment = 0.22;
 
         for (let i = 0; i < 2; i++) {
           const multiplier = baseMultiplier + increment * i;
-          const damage = Math.max(0, Math.floor(general.attack * multiplier - target.defense / 2));
-          target.troops = Math.max(0, target.troops - damage);
+          const damage = Math.max(0, Math.floor(general.attack * multiplier - targetRef.defense / 2));
+          targetRef.troops = Math.max(0, targetRef.troops - damage);
           if (addReport) {
-            addReport(`【${general.name}】第${i + 1}次攻击对【${target.name}】造成${damage}点物理伤害！`);
+            addReport(`【${general.name}】第${i + 1}次攻击对【${targetRef.name}】造成${damage}点物理伤害！`);
           }
-          if (target.troops <= 0) {
-            target.isDead = true;
+          if (targetRef.troops <= 0) {
+            targetRef.isDead = true;
             if (addReport) {
-              addReport(`【${target.name}】阵亡！`);
+              addReport(`【${targetRef.name}】阵亡！`);
             }
             break;
           }
         }
       }
       return { triggered: true };
+    }
+
+    // 追击：普攻后25%概率追加80%伤害
+    if (type === "normalAttack" && event === "afterDamage") {
+      if (Math.random() < 0.25 && target) {
+        const pursuitDamage = Math.max(0, Math.floor(general.attack * 0.80 - target.defense / 2));
+        target.troops = Math.max(0, target.troops - pursuitDamage);
+        if (target.troops <= 0) target.isDead = true;
+        if (addReport) {
+          addReport(`【${general.name}】触发【灭陈双击】追击！对【${target.name}】追加${pursuitDamage}点物理伤害！`);
+        }
+      }
     }
 
     return null;

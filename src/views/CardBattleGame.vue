@@ -188,7 +188,7 @@
           }" @show-tooltip="showGeneralTooltip" />
 
         <!-- 武将信息 -->
-        <GeneralTooltip v-if="tooltipData" :general="tooltipData" @close="hideTooltip" />
+        <GeneralTooltip v-if="tooltipData" :general="tooltipData" :team-generals="tooltipTeamGenerals" @close="hideTooltip" />
 
         <!-- 底部操作按钮 -->
         <div v-if="showBattleBoard" class="game-footer">
@@ -243,7 +243,7 @@ import type {
   GeneralBattleSnapshot,
 } from "../types/game";
 import { RELIC_POOL, ENEMY_WAVE_RELIC_CONFIG, pickWeightedRelics, type Relic, type RelicEffects } from "../relics";
-import { RECRUIT_CONFIG, getFetchFunctionBase, pickRarity, pickGeneralByRarity } from '../skills/index';
+import { RECRUIT_CONFIG, getFetchFunctionBase, pickRarity, pickGeneralByRarity, activateBonds } from '../skills/index';
 
 // ========== 认证与初始化 ==========
 // 是否已登录（通过 localStorage 中的 user 数据判断）
@@ -1491,6 +1491,7 @@ const selectSlot = (side: "player" | "enemy", position: string) => {
 };
 
 const tooltipData = ref<General | null>(null);
+const tooltipTeamGenerals = ref<General[]>([]);
 
 let tooltipTimer: number | null = null;
 
@@ -1513,6 +1514,7 @@ const showTooltip = (slotKey: string, event?: MouseEvent) => {
   const general = formation[position as keyof typeof formation];
   if (general) {
     tooltipData.value = general;
+    tooltipTeamGenerals.value = Object.values(formation).filter(Boolean) as General[];
   }
 };
 
@@ -1523,6 +1525,7 @@ const hideTooltip = () => {
     tooltipTimer = null;
   }
   tooltipData.value = null;
+  tooltipTeamGenerals.value = [];
 };
 
 // ========== UI 状态 ==========
@@ -1541,6 +1544,7 @@ const showGeneralTooltip = (general: General, event?: MouseEvent) => {
 
   // 立即显示tooltip
   tooltipData.value = general;
+  tooltipTeamGenerals.value = Object.values(playerFormation.value).filter(Boolean) as General[];
 };
 
 // 关闭武将列表浮层
@@ -3287,6 +3291,12 @@ const startBattle = async () => {
   };
   isBattleActive.value = true;
   captureBattleStartSnapshot();
+
+  // 激活羁绊效果
+  const playerGenerals = Object.values(playerFormation.value).filter((g): g is General => g !== null);
+  const enemyGenerals = Object.values(enemyFormation.value).filter((g): g is General => g !== null);
+  activateBonds(playerGenerals, addReport);
+  activateBonds(enemyGenerals, addReport);
 
   // 战斗循环 - 共8回合
   for (let i = 1; i <= 8; i++) {

@@ -97,6 +97,40 @@ export const createGaoJiongSkill = (): Skill => {
         return { triggered: true };
       }
 
+      // 每回合使随机敌方2人谋略-12%持续1回合
+      if (type === "turnStart") {
+        if (enemies && enemies.length > 0) {
+          const aliveEnemies = enemies.filter((e: General) => !e.isDead && e.strategy > 0);
+          if (aliveEnemies.length > 0) {
+            // 随机选取2个敌方单位
+            const shuffled = [...aliveEnemies].sort(() => Math.random() - 0.5);
+            const targets = shuffled.slice(0, 2);
+            targets.forEach((enemy: General) => {
+              if (!enemy.skillEffects) enemy.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
+              enemy.skillEffects.strategyVulnerability = 0.12;
+              enemy.skillEffects.strategyVulnerabilityDuration = 1;
+              enemy.skillEffects.strategyVulnerabilitySource = `【${general.name}】的【宰辅之谋】`;
+              if (addReport) {
+                addReport(`【${general.name}】的【宰辅之谋】使【${enemy.name}】谋略-12%！`);
+              }
+            });
+          }
+        }
+
+        // 每回合结束前减少debuff持续时间
+        if (enemies && enemies.length > 0) {
+          enemies.forEach((enemy: General) => {
+            if (enemy.skillEffects?.strategyVulnerabilityDuration) {
+              enemy.skillEffects.strategyVulnerabilityDuration -= 1;
+              if (enemy.skillEffects.strategyVulnerabilityDuration <= 0) {
+                enemy.skillEffects.strategyVulnerability = 0;
+                enemy.skillEffects.strategyVulnerabilityDuration = 0;
+              }
+            }
+          });
+        }
+      }
+
       return null;
     },
   };

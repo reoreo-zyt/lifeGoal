@@ -40,19 +40,23 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  pursuitChance: 0,
+  pursuitChanceSource: "",
+  pursuitDamage: 0,
+  pursuitDamageSource: "",
 };
 
 const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
-// 铁骑纵横 — 被动：骑兵单位伤害+24%，物理防御-10%
+// 铁骑纵横 — 被动：骑兵单位伤害+24%，物理防御-10%，追击 35%/追加60%
 export const createShangGuanYiSkill = (): Skill => ({
   id: "tieqi-zongheng",
   name: "铁骑纵横",
   type: "passive",
-  description: "被动：骑兵单位伤害+24%，物理防御-10%",
+  description: "被动：骑兵单位伤害+24%，物理防御-10%，追击 35%/追加60%",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
-    const { type, event, addReport } = context;
+    const { type, event, addReport, target } = context;
 
     if (type === "battleStart" && event === "init") {
       if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -60,10 +64,26 @@ export const createShangGuanYiSkill = (): Skill => ({
       general.skillEffects.damageIncreaseSource = `【${general.name}】的【铁骑纵横】`;
       general.skillEffects.defensePenalty = (general.skillEffects.defensePenalty || 0) + 10;
       general.skillEffects.defensePenaltySource = `【${general.name}】的【铁骑纵横】`;
+      general.skillEffects.pursuitChance = 0.35;
+      general.skillEffects.pursuitChanceSource = `【${general.name}】的【铁骑纵横】`;
+      general.skillEffects.pursuitDamage = 0.60;
+      general.skillEffects.pursuitDamageSource = `【${general.name}】的【铁骑纵横】`;
       if (addReport) {
-        addReport(`【${general.name}】发动【铁骑纵横】，骑兵伤害+24%，物防-10%！`);
+        addReport(`【${general.name}】发动【铁骑纵横】，骑兵伤害+24%，物防-10%，追击 35%/追加60%！`);
       }
       return { triggered: true };
+    }
+
+    // 追击：普攻后35%概率追加60%伤害
+    if (type === "normalAttack" && event === "afterDamage") {
+      if (Math.random() < 0.35 && target) {
+        const pursuitDamage = Math.max(0, Math.floor(general.attack * 0.60 - target.defense / 2));
+        target.troops = Math.max(0, target.troops - pursuitDamage);
+        if (target.troops <= 0) target.isDead = true;
+        if (addReport) {
+          addReport(`【${general.name}】触发【铁骑纵横】追击！对【${target.name}】追加${pursuitDamage}点物理伤害！`);
+        }
+      }
     }
 
     return null;

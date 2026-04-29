@@ -40,16 +40,22 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  speedBonus: 0,
+  speedBonusSource: "",
+  alwaysFirst: false,
+  alwaysFirstSource: "",
+  firstActionDispel: false,
+  firstActionDispelSource: "",
 };
 
 const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
-// 疾风先手 — 被动：速度+25%，必定先手
+// 疾风先手 — 被动：速度+25%，必定先手，每回合首次行动前驱散自身1个debuff
 export const createYuanWenJingSkill = (): Skill => ({
   id: "jifeng-xianshou",
   name: "疾风先手",
   type: "passive",
-  description: "被动：速度+25%，必定先手",
+  description: "被动：速度+25%，必定先手，每回合首次行动前驱散自身1个debuff",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     const { type, event, addReport } = context;
@@ -60,10 +66,40 @@ export const createYuanWenJingSkill = (): Skill => ({
       general.skillEffects.speedBonusSource = `【${general.name}】的【疾风先手】`;
       general.skillEffects.alwaysFirst = true;
       general.skillEffects.alwaysFirstSource = `【${general.name}】的【疾风先手】`;
+      general.skillEffects.firstActionDispel = true;
+      general.skillEffects.firstActionDispelSource = `【${general.name}】的【疾风先手】`;
       if (addReport) {
-        addReport(`【${general.name}】发动【疾风先手】，速度+25%，本场战斗必定先手！`);
+        addReport(`【${general.name}】发动【疾风先手】，速度+25%，本场战斗必定先手，每回合首次行动前驱散自身1个debuff！`);
       }
       return { triggered: true };
+    }
+
+    // 每回合首次行动前驱散自身1个debuff（通过turnStart实现）
+    if (type === "turnStart") {
+      const SE = general.skillEffects;
+      let dispelled = false;
+      if (SE.strategyVulnerabilityDuration > 0) {
+        SE.strategyVulnerability = 0; SE.strategyVulnerabilityDuration = 0;
+        dispelled = true;
+      } else if (SE.attackDebuffDuration > 0) {
+        SE.attackDebuff = 0; SE.attackDebuffDuration = 0;
+        dispelled = true;
+      } else if (SE.defenseDebuffDuration > 0) {
+        SE.defenseDebuff = 0; SE.defenseDebuffDuration = 0;
+        dispelled = true;
+      } else if (SE.speedDebuffDuration > 0) {
+        SE.speedDebuff = 0; SE.speedDebuffDuration = 0;
+        dispelled = true;
+      } else if (SE.isStunned) {
+        SE.isStunned = false;
+        dispelled = true;
+      } else if (SE.cannotPhysicalAttack) {
+        SE.cannotPhysicalAttack = false; SE.cannotPhysicalAttackDuration = 0;
+        dispelled = true;
+      }
+      if (dispelled && addReport) {
+        addReport(`【${general.name}】的【疾风先手】驱散了自身1个debuff！`);
+      }
     }
 
     return null;

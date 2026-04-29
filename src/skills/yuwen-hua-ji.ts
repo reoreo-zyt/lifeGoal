@@ -44,14 +44,14 @@ const DEFAULT_SKILL_EFFECTS = {
 
 const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
-// 弑逆逞凶 — 主动：消耗25%兵力对敌方全体造成70%物理伤害，距离3，概率35%，敌方全体怯战1回合
+// 弑逆逞凶 — 主动：消耗25%兵力对敌方全体造成70%物理伤害，距离3，概率38%，敌方全体怯战1回合
 export const createYuWenHuaJiSkill = (): Skill => ({
   id: "shini-chengxiong",
   name: "弑逆逞凶",
   type: "active",
   distance: 3,
-  probability: 0.35,
-  description: "主动：消耗25%兵力对敌方全体造成70%物理伤害，距离3，概率35%，敌方全体怯战1回合",
+  probability: 0.38,
+  description: "主动：消耗25%兵力对敌方全体造成70%物理伤害，距离3，概率38%，敌方全体怯战1回合",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     const { type, event, addReport, enemies } = context;

@@ -44,14 +44,14 @@ const DEFAULT_SKILL_EFFECTS = {
 
 const calculateTroops = (commandValue: number): number => Math.floor(commandValue * 10);
 
-// 太原谋主 — 主动：使我方单体攻击+25%与速度+18%持续2回合，距离3，概率45%
+// 太原谋主 — 主动：使我方单体攻击+25%与速度+18%持续2回合，距离3，概率45%，驱散目标1个debuff
 export const createLiuWenJingSkill = (): Skill => ({
   id: "taiyuan-mouzhou",
   name: "太原谋主",
   type: "active",
   distance: 3,
   probability: 0.45,
-  description: "主动：使我方单体攻击+25%与速度+18%持续2回合，距离3，概率45%",
+  description: "主动：使我方单体攻击+25%与速度+18%持续2回合，距离3，概率45%，驱散目标1个debuff",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     const { type, event, addReport, allies } = context;
@@ -68,8 +68,37 @@ export const createLiuWenJingSkill = (): Skill => ({
           target.skillEffects.speedBonus = (target.skillEffects.speedBonus || 0) + 18;
           target.skillEffects.speedBonusSource = `【${general.name}】的【太原谋主】`;
           target.skillEffects.speedBonusDuration = 2;
+          // 驱散目标1个debuff
+          let dispelled = false;
+          if (target.skillEffects.strategyVulnerabilityDuration > 0) {
+            target.skillEffects.strategyVulnerability = 0;
+            target.skillEffects.strategyVulnerabilityDuration = 0;
+            dispelled = true;
+          } else if (target.skillEffects.attackDebuffDuration > 0) {
+            target.skillEffects.attackDebuff = 0;
+            target.skillEffects.attackDebuffDuration = 0;
+            dispelled = true;
+          } else if (target.skillEffects.defenseDebuffDuration > 0) {
+            target.skillEffects.defenseDebuff = 0;
+            target.skillEffects.defenseDebuffDuration = 0;
+            dispelled = true;
+          } else if (target.skillEffects.speedDebuffDuration > 0) {
+            target.skillEffects.speedDebuff = 0;
+            target.skillEffects.speedDebuffDuration = 0;
+            dispelled = true;
+          } else if (target.skillEffects.isStunned) {
+            target.skillEffects.isStunned = false;
+            dispelled = true;
+          } else if (target.skillEffects.cannotPhysicalAttack) {
+            target.skillEffects.cannotPhysicalAttack = false;
+            target.skillEffects.cannotPhysicalAttackDuration = 0;
+            dispelled = true;
+          }
           if (addReport) {
-            addReport(`【${general.name}】发动【太原谋主】，【${target.name}】攻击+25%、速度+18%，持续2回合！`);
+            let report = `【${general.name}】发动【太原谋主】，【${target.name}】攻击+25%、速度+18%，持续2回合`;
+            if (dispelled) report += `，并驱散了1个debuff！`;
+            else report += `！`;
+            addReport(report);
           }
           return { triggered: true };
         }

@@ -1,4 +1,7 @@
 import { createYuchiJiong } from "./yuchi-jiong";
+import { createQinQiong } from "./qin-qiong";
+import { createChengYaoJin } from "./cheng-yao-jin";
+import { createYuchiJingde } from "./yuchi-jingde";
 import { createLuYanShi } from "./lu-yan-shi";
 import { createWeiShiKang } from "./wei-shi-kang";
 import { createFengDeYi } from "./feng-ci-ming";
@@ -12,6 +15,7 @@ import { createGaoJiong } from "./gao-jiong";
 import { createYangSu } from "./yang-su";
 import { createHeRuoBi } from "./he-ruo-bi";
 import { createLiJing } from "./li-jing";
+import { createLiShimin } from "./li-shimin";
 import { createLiuWenJing } from "./liu-wen-jing";
 import { createYuWenHuaJi } from "./yuwen-hua-ji";
 import { createLiMi } from "./li-mi";
@@ -23,13 +27,27 @@ import { createFangXuanLing } from "./fang-xuan-ling";
 import { createDuRuHui } from "./du-ru-hui";
 import { createYuChiGong } from "./yu-chi-gong";
 import { createLiDeLin } from "./li-de-lin";
-import { createYuanYan } from "./yuan-yan-shi";
+import { createYuanYan as createYuanYanShi } from "./yuan-yan-shi";
+import { createYuanYan as createYuanYanYanshi } from "./yuan-yan";
 import { createYuJuLou } from "./yu-ju-lou";
 import { createPeiXingYan } from "./pei-xing-yan";
 import { createDuHuChang } from "./du-hu-chang";
 import { createLiuFang } from "./liu-fang";
 import { createYuanWenJing } from "./yuan-wen-jing";
+import { createLiYuanJi } from "./li-yuan-ji";
+import { createPeiRenJi } from "./pei-ren-ji";
+import { createShenGuang } from "./shen-guang";
+import { createLaiHuEr } from "./lai-hu-er";
+import { createZhangXuTuo } from "./zhang-xu-tuo";
+import { createLiuShu } from "./liu-shu";
+import { createWangShiChong } from "./wang-shi-chong";
+import { createDouJianDe } from "./dou-jian-de";
+import { createSuWei } from "./su-wei";
+import { createLiuJi } from "./liu-ji";
+import { createYuWenShu } from "./yuwen-shu";
 import type { GeneralRarity } from "./types";
+export type { Bond } from "./bonds";
+export { BONDS, activateBonds, getActiveBondNames } from "./bonds";
 
 // ============================================================
 // 招募配置：武将稀有度分组
@@ -50,6 +68,7 @@ export const RECRUIT_CONFIG: RecruitConfigItem[] = [
   { id: 21, moduleName: "yang-jian", fetchFnName: "fetchYangJianFromDatabase", name: "杨坚", rarity: "legendary" },
   { id: 24, moduleName: "gao-jiong", fetchFnName: "fetchGaoJiongFromDatabase", name: "高颎", rarity: "legendary" },
   { id: 25, moduleName: "yang-su", fetchFnName: "fetchYangSuFromDatabase", name: "杨素", rarity: "legendary" },
+  { id: 3, moduleName: "li-shimin", fetchFnName: "fetchLiShiminFromDatabase", name: "李世民", rarity: "legendary" },
   { id: 29, moduleName: "li-jing", fetchFnName: "fetchLiJingFromDatabase", name: "李靖", rarity: "legendary" },
 
   // ★★★★ 紫（12人）
@@ -65,6 +84,9 @@ export const RECRUIT_CONFIG: RecruitConfigItem[] = [
   { id: 35, moduleName: "pei-xing-yan", fetchFnName: "fetchPeiXingYanFromDatabase", name: "裴行俨", rarity: "rare" },
   { id: 36, moduleName: "du-hu-chang", fetchFnName: "fetchDuHuChangFromDatabase", name: "独弧昌", rarity: "rare" },
   { id: 37, moduleName: "liu-fang", fetchFnName: "fetchLiuFangFromDatabase", name: "刘昉", rarity: "rare" },
+  { id: 31, moduleName: "qin-qiong", fetchFnName: "fetchQinQiongFromDatabase", name: "秦琼", rarity: "rare" },
+  { id: 33, moduleName: "cheng-yao-jin", fetchFnName: "fetchChengYaoJinFromDatabase", name: "程咬金", rarity: "rare" },
+  { id: 32, moduleName: "yuchi-jingde", fetchFnName: "fetchYuchiJingdeFromDatabase", name: "尉迟敬德", rarity: "rare" },
 
   // ★★★ 绿（8人）
   { id: 570, moduleName: "li-mi", fetchFnName: "fetchLiMiFromDatabase", name: "李密", rarity: "uncommon" },
@@ -73,6 +95,18 @@ export const RECRUIT_CONFIG: RecruitConfigItem[] = [
   { id: 20, moduleName: "liu-wen-jing", fetchFnName: "fetchLiuWenJingFromDatabase", name: "刘文静", rarity: "uncommon" },
   { id: 1, moduleName: "li-yuan", fetchFnName: "fetchLiYuanFromDatabase", name: "李渊", rarity: "uncommon" },
   { id: 515, moduleName: "yuan-yan-shi", fetchFnName: "fetchYuanYanFromDatabase", name: "元延嗣", rarity: "uncommon" },
+  { id: 515, moduleName: "yuan-yan", fetchFnName: "fetchYuanYanFromDatabase", name: "元岩", rarity: "rare" },
+  { id: 655, moduleName: "li-yuan-ji", fetchFnName: "fetchLiYuanJiFromDatabase", name: "李元吉", rarity: "rare" },
+  { id: 571, moduleName: "pei-ren-ji", fetchFnName: "fetchPeiRenJiFromDatabase", name: "裴仁基", rarity: "rare" },
+  { id: 534, moduleName: "shen-guang", fetchFnName: "fetchShenGuangFromDatabase", name: "沈光", rarity: "rare" },
+  { id: 601, moduleName: "dou-jian-de", fetchFnName: "fetchDouJianDeFromDatabase", name: "窦建德", rarity: "uncommon" },
+  { id: 578, moduleName: "zhang-xu-tuo", fetchFnName: "fetchZhangXuTuoFromDatabase", name: "张须陀", rarity: "uncommon" },
+  { id: 526, moduleName: "wang-shi-chong", fetchFnName: "fetchWangShiChongFromDatabase", name: "王世充", rarity: "uncommon" },
+  { id: 70, moduleName: "su-wei", fetchFnName: "fetchSuWeiFromDatabase", name: "苏威", rarity: "uncommon" },
+  { id: 512, moduleName: "yuwen-shu", fetchFnName: "fetchYuWenShuFromDatabase", name: "宇文述", rarity: "uncommon" },
+  { id: 77, moduleName: "liu-shu", fetchFnName: "fetchLiuShuFromDatabase", name: "柳述", rarity: "uncommon" },
+  { id: 535, moduleName: "lai-hu-er", fetchFnName: "fetchLaiHuErFromDatabase", name: "来护儿", rarity: "uncommon" },
+  { id: 76, moduleName: "liu-ji", fetchFnName: "fetchLiuJiFromDatabase", name: "柳机", rarity: "common" },
   { id: 26, moduleName: "yuwen-hua-ji", fetchFnName: "fetchYuWenHuaJiFromDatabase", name: "宇文化及", rarity: "uncommon" },
   { id: 524, moduleName: "yuan-wen-jing", fetchFnName: "fetchYuanWenJingFromDatabase", name: "元文景", rarity: "uncommon" },
 
@@ -148,6 +182,21 @@ export const getFetchFunctionBase = (id: number, API_BASE_URL: string): (() => P
 
 export const specialGenerals = {
   yuchiJiong: createYuchiJiong,
+  qinQiong: createQinQiong,
+  chengYaoJin: createChengYaoJin,
+  yuchiJingde: createYuchiJingde,
+  liYuanJi: createLiYuanJi,
+  peiRenJi: createPeiRenJi,
+  shenGuang: createShenGuang,
+  laiHuEr: createLaiHuEr,
+  zhangXuTuo: createZhangXuTuo,
+  liuShu: createLiuShu,
+  wangShiChong: createWangShiChong,
+  douJianDe: createDouJianDe,
+  suWei: createSuWei,
+  yuanYanShi: createYuanYanShi,
+  liuJi: createLiuJi,
+  yuWenShu: createYuWenShu,
   luYanShi: createLuYanShi,
   weiShiKang: createWeiShiKang,
   fengDeYi: createFengDeYi,
@@ -161,6 +210,7 @@ export const specialGenerals = {
   yangSu: createYangSu,
   heRuoBi: createHeRuoBi,
   liJing: createLiJing,
+  liShimin: createLiShimin,
   liuWenJing: createLiuWenJing,
   yuwenHuaJi: createYuWenHuaJi,
   liMi: createLiMi,
@@ -172,7 +222,7 @@ export const specialGenerals = {
   duRuHui: createDuRuHui,
   yuChiGong: createYuChiGong,
   liDeLin: createLiDeLin,
-  yuanYan: createYuanYan,
+  yuanYanYanshi: createYuanYanYanshi,
   yuJuLou: createYuJuLou,
   peiXingYan: createPeiXingYan,
   duHuChang: createDuHuChang,

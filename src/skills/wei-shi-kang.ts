@@ -40,34 +40,55 @@ const DEFAULT_SKILL_EFFECTS = {
   damageIncrease: 0,
   damageIncreaseSource: "",
   hasTriggeredRecovery: false,
+  counterRate: 0,
+  counterRateSource: "",
+  counterDamage: 0,
+  counterDamageSource: "",
 };
 
 const calculateTroops = (commandValue: number): number => {
   return Math.floor(commandValue * 10);
 };
 
-// 被动：物理伤害-25%，策略防御-15%
+// 被动：物理伤害-25%，策略防御-15%，受伤时30%概率反击80%伤害
 export const createWeiShiKangSkill = (): Skill => ({
   id: "tiebi-jianshou",
   name: "铁壁坚守",
   type: "passive",
-  description: "被动：物理伤害-25%，策略防御-15%",
+  description: "被动：物理伤害-25%，策略防御-15%，受伤时30%概率反击80%伤害",
   effect: (general: General, context: any) => {
     if (!general.skillEffects) {
       general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
     }
 
-    const { type, addReport } = context;
+    const { type, event, addReport, attacker } = context;
 
-    if (type === "passive") {
+    // 被动效果：物理减伤25%，策防-15%，反击30%/80%
+    if (type === "battleStart" && event === "init") {
       general.skillEffects.physicalDamageReduction = 0.25;
       general.skillEffects.physicalDamageReductionSource = `【${general.name}】的【铁壁坚守】`;
       general.skillEffects.strategyDefenseReduction = 0.15;
       general.skillEffects.strategyDefenseReductionSource = `【${general.name}】的【铁壁坚守】`;
+      general.skillEffects.counterRate = 0.30;
+      general.skillEffects.counterRateSource = `【${general.name}】的【铁壁坚守】`;
+      general.skillEffects.counterDamage = 0.80;
+      general.skillEffects.counterDamageSource = `【${general.name}】的【铁壁坚守】`;
       if (addReport) {
-        addReport(`【${general.name}】的【铁壁坚守】生效：物理伤害-25%，策略防御-15%！`);
+        addReport(`【${general.name}】的【铁壁坚守】生效：物理伤害-25%，策略防御-15%，受伤时30%概率反击80%伤害！`);
       }
       return { triggered: true };
+    }
+
+    // 受伤时30%概率反击80%伤害
+    if (type === "attacked" && event === "afterDamage") {
+      if (Math.random() < 0.30 && attacker) {
+        const counterDamage = Math.max(0, Math.floor(general.attack * 0.80 - attacker.defense / 2));
+        attacker.troops = Math.max(0, attacker.troops - counterDamage);
+        if (attacker.troops <= 0) attacker.isDead = true;
+        if (addReport) {
+          addReport(`【${general.name}】触发【铁壁坚守】反击！对【${attacker.name}】造成${counterDamage}点物理伤害！`);
+        }
+      }
     }
 
     return null;

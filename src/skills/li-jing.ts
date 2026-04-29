@@ -57,7 +57,7 @@ export const createLiJingSkill = (): Skill => {
     id: "weigong-bingfa",
     name: "卫公兵法",
     type: "command",
-    description: "指挥：我方全体物防+24%，自身攻击附加55%策略伤害，每回合35%概率震慑随机敌方1回合",
+    description: "指挥：我方全体物防+24%，自身攻击附加55%策略伤害，每回合35%概率震慑随机敌方1回合，连击：普攻后必定再攻击一次",
     effect: (general: General, context: any) => {
       if (!general.skillEffects) {
         general.skillEffects = { ...DEFAULT_SKILL_EFFECTS };
@@ -127,6 +127,14 @@ export const createLiJingSkill = (): Skill => {
           general.skillEffects.isStunned = false;
           return { skipTurn: true };
         }
+      }
+
+      // 连击：普攻后必定再攻击一次
+      if (type === "normalAttack" && event === "afterDamage") {
+        if (addReport) {
+          addReport(`【${general.name}】触发【卫公兵法】连击！`);
+        }
+        return { extraAttack: true };
       }
 
       return null;
