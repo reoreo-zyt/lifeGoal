@@ -68,7 +68,7 @@ export const RECRUIT_CONFIG: RecruitConfigItem[] = [
   { id: 21, moduleName: "yang-jian", fetchFnName: "fetchYangJianFromDatabase", name: "杨坚", rarity: "legendary" },
   { id: 24, moduleName: "gao-jiong", fetchFnName: "fetchGaoJiongFromDatabase", name: "高颎", rarity: "legendary" },
   { id: 25, moduleName: "yang-su", fetchFnName: "fetchYangSuFromDatabase", name: "杨素", rarity: "legendary" },
-  { id: 3, moduleName: "li-shimin", fetchFnName: "fetchLiShiminFromDatabase", name: "李世民", rarity: "legendary" },
+  { id: 2, moduleName: "li-shimin", fetchFnName: "fetchLiShiminFromDatabase", name: "李世民", rarity: "legendary" },
   { id: 29, moduleName: "li-jing", fetchFnName: "fetchLiJingFromDatabase", name: "李靖", rarity: "legendary" },
 
   // ★★★★ 紫（12人）

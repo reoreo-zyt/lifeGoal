@@ -96,6 +96,11 @@
             mode="reward"
             @select="selectLayerReward"
           />
+          <RelicAcquisitionModal
+            :visible="showRelicAcquisitionModal"
+            :relic="acquiringRelic"
+            @close="showRelicAcquisitionModal = false"
+          />
           <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text"
             :class="[`damage-${damageText.kind || 'normal'}`, { crit: !!damageText.critical }]" :style="{
             left: damageText.x + 'px',
@@ -271,6 +276,11 @@
         @skip="skipTutorial"
         @next="advanceTutorial"
       />
+      <EventPanel
+        :visible="showEventPanel"
+        :event="currentEvent"
+        @select="selectEventChoice"
+      />
     </div>
   </div>
 </template>
@@ -287,6 +297,8 @@ import RunMap from "../components/RunMap.vue";
 import RecruitPanel from "../components/RecruitPanel.vue";
 import RewardSelector from "../components/RewardSelector.vue";
 import TutorialModal from "../components/TutorialModal.vue";
+import EventPanel from "../components/EventPanel.vue";
+import RelicAcquisitionModal from "../components/relic/RelicAcquisitionModal.vue";
 import type { General, GeneralRarity, FormationPosition } from "../skills/types";
 import { RARITY_CONFIG } from "../skills/types";
 import type {
@@ -297,8 +309,10 @@ import type {
   VictoryRewardOption,
   GeneralBattleSnapshot,
 } from "../types/game";
-import { RELIC_POOL, ENEMY_WAVE_RELIC_CONFIG, pickWeightedRelics, type Relic, type RelicEffects } from "../relics";
+import { RELIC_POOL, getEnemyWaveRelic, pickWeightedRelics, type Relic } from "../relics";
 import { RECRUIT_CONFIG, getFetchFunctionBase, activateBonds } from '../skills/index';
+import { EVENTS_DATA } from '../events/events-data';
+import type { MapEvent, EventChoice, Effect } from '../events/event-types';
 
 // ========== 认证与初始化 ==========
 // 是否已登录（通过 localStorage 中的 user 数据判断）
@@ -1072,6 +1086,9 @@ const playerRelics = ref<Relic[]>([]);
 const enemyRelics = ref<Relic[]>([]);
 // 是否显示遗物选择弹窗（开局时触发）
 const showRelicSelector = ref(false);
+// 遗物获得动画弹窗状态
+const showRelicAcquisitionModal = ref(false);
+const acquiringRelic = ref<Relic | null>(null);
 // ========== 奖励系统 ==========
 // 是否显示战斗胜利奖励选择弹窗
 const showVictoryRewardSelector = ref(false);
@@ -1103,6 +1120,18 @@ const layerRewardOptions = ref<VictoryRewardOption[]>([]);
 const showLayerRewardSelector = ref(false);
 // 层奖励选择时崔珏的台词
 const layerRewardDialogLine = ref("");
+
+// ========== 事件系统状态 ==========
+// 已禁用的事件ID集合（选择后会禁用某些事件）
+const disabledEvents = ref<Set<string>>(new Set());
+// 全局标记（影响事件权重和后续事件触发）
+const eventFlags = ref<Set<string>>(new Set());
+// 当前展示的事件
+const currentEvent = ref<MapEvent | null>(null);
+// 是否显示事件选择面板
+const showEventPanel = ref(false);
+// 待添加的武将队列（addGeneral 效果需要异步获取）
+const pendingGeneralAdditions = ref<string[]>([]);
 
 // ========== 地图配置 ==========
 // 地图生成参数（楼层数、每层节点数、连接规则等）
@@ -1448,6 +1477,212 @@ watch(isBattleActive, (active) => {
   unlockBattleConscriptSnapshot();
 });
 
+// ========== 叙事事件系统 ==========
+// 获取 addGeneral 效果类型的值含义
+const getAddGeneralEffectValue = (value: number): string => {
+  const map: Record<number, string> = { 1: '随机瓦岗武将（秦琼/程咬金）', 2: '裴行俨', 3: '随机隋将' };
+  return map[value] || `类型${value}`;
+};
+
+// 应用单个效果到游戏状态
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const applyEffect = (effect: Effect) => {
+  // 统一处理 addGeneral 类型（扩展类型，非 EffectType 成员）
+  if ((effect as any).type === 'addGeneral') {
+    if (effect.value === 1) {
+      const candidates = ['秦琼', '程咬金'].filter(n => !generals.value.some(g => g.name === n));
+      if (candidates.length > 0) {
+        const name = candidates[Math.floor(Math.random() * candidates.length)];
+        const cfg = RECRUIT_CONFIG.find(c => c.name === name);
+        if (cfg) pendingGeneralAdditions.value.push(cfg.name);
+      }
+    } else if (effect.value === 2) {
+      if (!generals.value.some(g => g.name === '裴行俨')) {
+        const cfg = RECRUIT_CONFIG.find(c => c.name === '裴行俨');
+        if (cfg) pendingGeneralAdditions.value.push(cfg.name);
+      }
+    }
+    return;
+  }
+
+  switch (effect.type) {
+    case 'gold':
+      money.value += effect.value;
+      break;
+    case 'conscript':
+      totalConscripts.value = Math.min(
+        maxConscripts,
+        Math.max(0, totalConscripts.value + effect.value),
+      );
+      break;
+    case 'attributePercent': {
+      const pct = effect.value / 100;
+      generals.value.forEach(g => {
+        g.attack = Math.round(g.attack * (1 + pct));
+        g.defense = Math.round(g.defense * (1 + pct));
+        g.strategy = Math.round(g.strategy * (1 + pct));
+        g.speed = Math.round(g.speed * (1 + pct));
+      });
+      break;
+    }
+    case 'attack': {
+      const pct = effect.value / 100;
+      if (effect.target === 'specific' && effect.targetName) {
+        const g = generals.value.find(x => x.name === effect.targetName);
+        if (g) g.attack = Math.round(g.attack * (1 + pct));
+      } else {
+        generals.value.forEach(g => { g.attack = Math.round(g.attack * (1 + pct)); });
+      }
+      break;
+    }
+    case 'defense': {
+      const pct = effect.value / 100;
+      if (effect.duration && effect.duration > 0) {
+        // 持续debuff：设置 skillEffects，由战斗系统处理
+        const reduction = Math.abs(pct);
+        generals.value.forEach(g => {
+          if (!g.skillEffects) g.skillEffects = {};
+          g.skillEffects.defenseReduction = reduction;
+          g.skillEffects.defenseReductionDuration = effect.duration!;
+          g.skillEffects.defenseReductionSource = '事件效果';
+        });
+        addReport(`全体武将防御降低${(reduction * 100).toFixed(0)}%（持续${effect.duration}回合）`);
+      } else if (effect.target === 'specific' && effect.targetName) {
+        const g = generals.value.find(x => x.name === effect.targetName);
+        if (g) g.defense = Math.round(g.defense * (1 + pct));
+      } else {
+        generals.value.forEach(g => { g.defense = Math.round(g.defense * (1 + pct)); });
+      }
+      break;
+    }
+    case 'speed': {
+      const pct = effect.value / 100;
+      if (effect.duration && effect.duration > 0) {
+        // 持续debuff：设置 skillEffects.speedReduction，由 getAdjustedSpeed 处理
+        const reduction = Math.abs(pct);
+        generals.value.forEach(g => {
+          if (!g.skillEffects) g.skillEffects = {};
+          g.skillEffects.speedReduction = reduction;
+          g.skillEffects.speedReductionDuration = effect.duration!;
+        });
+        addReport(`全体武将速度降低${(reduction * 100).toFixed(0)}%（持续${effect.duration}回合）`);
+      } else if (effect.target === 'specific' && effect.targetName) {
+        const g = generals.value.find(x => x.name === effect.targetName);
+        if (g) g.speed = Math.round(g.speed * (1 + pct));
+      } else {
+        generals.value.forEach(g => { g.speed = Math.round(g.speed * (1 + pct)); });
+      }
+      break;
+    }
+    case 'strategy': {
+      const pct = effect.value / 100;
+      if (effect.target === 'specific' && effect.targetName) {
+        const g = generals.value.find(x => x.name === effect.targetName);
+        if (g) g.strategy = Math.round(g.strategy * (1 + pct));
+      } else {
+        generals.value.forEach(g => { g.strategy = Math.round(g.strategy * (1 + pct)); });
+      }
+      break;
+    }
+    case 'moral':
+      addReport(`士气 ${effect.value >= 0 ? '+' : ''}${effect.value}`);
+      break;
+    case 'specialBuff':
+    case 'specialDebuff':
+      break;
+  }
+};
+
+// 格式化效果为战斗报告文字
+const formatEffectReport = (effect: Effect): string => {
+  const sign = effect.value >= 0 ? '+' : '';
+  const pct = ['attack', 'defense', 'speed', 'strategy', 'attributePercent', 'moral'].includes(effect.type) ? '%' : '';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((effect as any).type === 'addGeneral') {
+    return `获得武将：${getAddGeneralEffectValue(effect.value)}`;
+  }
+  if (effect.type === 'gold') return `金币${sign}${effect.value}`;
+  if (effect.type === 'conscript') return `征召兵${sign}${effect.value}`;
+  const labels: Record<string, string> = {
+    attack: '攻击', defense: '防御', speed: '速度', strategy: '谋略',
+    attributePercent: '全属性', moral: '士气', specialBuff: '特殊增益', specialDebuff: '特殊减益',
+  };
+  return `${labels[effect.type] || effect.type}${sign}${effect.value}${pct}`;
+};
+
+// 计算单个事件的权重
+const calculateEventWeight = (event: MapEvent): number => {
+  if (disabledEvents.value.has(event.id)) return 0;
+
+  // 通用事件：基础权重 0.5，按上下文加成
+  if (event.requiredGenerals.length === 0) {
+    let weight = 0.5;
+    if (generals.value.length > 3) weight += 0.3;
+    if (money.value < 500) weight += 0.5; // 粮草不济时通用事件权重提升
+    return weight;
+  }
+
+  // 专属事件：必须有对应武将
+  const ownedNames = generals.value.map(g => g.name);
+  const hasRequired = event.requiredGenerals.some(name => ownedNames.includes(name));
+  if (!hasRequired) return 0;
+  let weight = 1.0;
+  event.requiredGenerals.forEach(name => {
+    if (ownedNames.includes(name)) {
+      weight += event.weightBonus[name] ?? 0.5;
+    }
+  });
+  eventFlags.value.forEach(flag => {
+    if (event.id.includes(flag)) weight += 0.5;
+  });
+  return weight;
+};
+
+// 从事件池抽取一个事件
+const drawRandomEvent = (): MapEvent | null => {
+  const candidates = EVENTS_DATA.map(event => ({
+    event,
+    weight: calculateEventWeight(event),
+  })).filter(c => c.weight > 0);
+  if (candidates.length === 0) {
+    // 兜底：强制抽取通用事件
+    const universalEvents = EVENTS_DATA.filter(e => e.requiredGenerals.length === 0);
+    if (universalEvents.length === 0) return null;
+    return universalEvents[Math.floor(Math.random() * universalEvents.length)];
+  }
+  const totalWeight = candidates.reduce((sum, c) => sum + c.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const candidate of candidates) {
+    roll -= candidate.weight;
+    if (roll <= 0) return candidate.event;
+  }
+  return candidates[candidates.length - 1].event;
+};
+
+// 应用完整选项
+const applyEventChoice = (choice: EventChoice) => {
+  addReport(`你选择了「${choice.label}」：${choice.description}`);
+  choice.effects.forEach(effect => {
+    applyEffect(effect);
+    addReport(formatEffectReport(effect));
+  });
+  choice.disablesEvents?.forEach(id => disabledEvents.value.add(id));
+  choice.enablesEvents?.forEach(id => disabledEvents.value.delete(id));
+  choice.flags?.forEach(flag => eventFlags.value.add(flag));
+};
+
+// 处理事件选项选择
+const selectEventChoice = (choice: 'A' | 'B') => {
+  const event = currentEvent.value;
+  if (!event) return;
+  showEventPanel.value = false;
+  const selectedChoice = choice === 'A' ? event.choiceA : event.choiceB;
+  applyEventChoice(selectedChoice);
+  currentEvent.value = null;
+  gamePhase.value = 'map_select';
+  showEventMap.value = true;
+};
+
 // ========== 地图图例 ==========
 // 地图图例项列表（用于显示各节点类型的图标和名称）
 const mapLegendItems = computed(() => [
@@ -1459,68 +1694,6 @@ const mapLegendItems = computed(() => [
   { type: "elite" as NodeType, label: "精英", icon: mapNodeIconByType.elite },
   { type: "boss" as NodeType, label: "Boss", icon: mapNodeIconByType.boss },
 ]);
-
-// ========== 地图事件池 ==========
-// 所有可触发的随机事件列表（每个事件包含ID、标题、描述和应用逻辑）
-const mapEventPool = [
-  {
-    id: "event-gold-for-star",
-    title: "判官借火",
-    description: "支付 200 金币，随机一名武将升星 +1。",
-    apply: () => {
-      if (money.value < 200) {
-        addReport("金币不足，事件转化为征召兵 +300。");
-        totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 300);
-        return;
-      }
-      money.value -= 200;
-      if (generals.value.length === 0) {
-        addReport("暂无武将可强化，返还金币并补征召兵 +200。");
-        money.value += 200;
-        totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 200);
-        return;
-      }
-      const target = generals.value[Math.floor(Math.random() * generals.value.length)];
-      promoteGeneralByReward(target);
-      addReport("事件结算：支付 200 金币，完成一次升星。");
-    },
-  },
-  {
-    id: "event-recover-rest",
-    title: "旧部归营",
-    description: "随机两名休整武将减少 1 轮休整。",
-    apply: () => {
-      const ids = Object.keys(playerRecoveryRounds.value)
-        .map((id) => Number(id))
-        .filter((id) => (playerRecoveryRounds.value[id] || 0) > 0);
-      if (ids.length === 0) {
-        addReport("当前无休整武将，改为获得金币 +120。");
-        money.value += 120;
-        return;
-      }
-      let changed = 0;
-      const shuffled = [...ids].sort(() => Math.random() - 0.5);
-      shuffled.slice(0, 2).forEach((id) => {
-        playerRecoveryRounds.value[id] = Math.max(0, playerRecoveryRounds.value[id] - 1);
-        if (playerRecoveryRounds.value[id] === 0) {
-          delete playerRecoveryRounds.value[id];
-        }
-        changed++;
-      });
-      addReport(`事件结算：${changed} 名武将休整轮次 -1。`);
-    },
-  },
-  {
-    id: "event-conscript",
-    title: "军械整补",
-    description: "恢复征召兵 +700（不超上限）。",
-    apply: () => {
-      const before = totalConscripts.value;
-      totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 700);
-      addReport(`事件结算：征召兵 +${totalConscripts.value - before}。`);
-    },
-  },
-] as const;
 
 // ========== 节点解析 ==========
 // 处理战斗类型节点：生成敌方队伍，精英/Boss属性强化
@@ -1556,11 +1729,15 @@ const resolveBattleNode = async (type: NodeType) => {
 
 // 处理随机事件节点：从事件池随机抽取一个并应用
 const resolveEventNode = () => {
-  const event = mapEventPool[Math.floor(Math.random() * mapEventPool.length)];
-  addReport(`事件【${event.title}】：${event.description}`);
-  event.apply();
-  gamePhase.value = "map_select";
-  showEventMap.value = true;
+  const event = drawRandomEvent();
+  if (!event) {
+    addReport("当前无适合触发的事件。");
+    gamePhase.value = "map_select";
+    showEventMap.value = true;
+    return;
+  }
+  currentEvent.value = event;
+  showEventPanel.value = true;
 };
 
 // 处理宝物节点：随机获取一个遗物，或折算为金币
@@ -1574,11 +1751,15 @@ const resolveTreasureNode = () => {
       showEventMap.value = true;
       return;
     }
-    playerRelicCandidates.value = [relic];
-    if (!playerRelics.value.some((item) => item.id === relic.id)) {
+    const isNew = !playerRelics.value.some((item) => item.id === relic.id);
+    if (isNew) {
       playerRelics.value.push(relic);
     }
     addReport(`宝物节点：获得遗物【${relic.name}】。`);
+    if (isNew && (relic.rarity === "rare" || relic.rarity === "epic" || relic.rarity === "legendary")) {
+      acquiringRelic.value = relic;
+      showRelicAcquisitionModal.value = true;
+    }
   } else {
     money.value += 150;
     addReport("宝物节点：获得金币 +150。");
@@ -2016,8 +2197,7 @@ const generateEnemyTeam = async () => {
     }
   }
 
-  const relicId = ENEMY_WAVE_RELIC_CONFIG[currentWave.value];
-  const enemyRelic = RELIC_POOL.find((r) => r.id === relicId) || null;
+  const enemyRelic = getEnemyWaveRelic(currentWave.value);
   enemyRelics.value = enemyRelic ? [enemyRelic] : [];
   if (enemyRelic) {
     addReport(`本波敌军携带遗物【${enemyRelic.name}】。`);
@@ -2366,11 +2546,14 @@ const getRelicsBySide = (side: "player" | "enemy"): Relic[] =>
 // 统计指定阵营遗物效果数值之和（如：防御加成百分比、伤害加成百分比等）
 const getRelicEffectValue = (
   side: "player" | "enemy",
-  key: keyof RelicEffects,
+  key: string,
 ): number => {
   const relics = getRelicsBySide(side);
   if (relics.length === 0) return 0;
-  return relics.reduce((sum, relic) => sum + Number(relic.effects[key] || 0), 0);
+  return relics.reduce((sum, relic) => {
+    const val = key in (relic.effects ?? {}) ? (relic.effects as Record<string, unknown>)[key] : 0;
+    return sum + (typeof val === "number" ? val : 0);
+  }, 0);
 };
 
 // 判断某武将是否满足低兵力防御加成条件（兵力低于上限的指定比例时生效）
@@ -2380,17 +2563,23 @@ const hasLowTroopsDefenseBonus = (
 ): boolean => {
   const relics = getRelicsBySide(side);
   if (relics.length === 0) return false;
-  const threshold = Math.max(...relics.map((relic) => Number(relic.effects.lowTroopsThreshold || 0)));
+  const threshold = Math.max(...relics.map((relic) => {
+    const e = relic.effects;
+    return Number((e && typeof e === 'object' && 'lowTroopsThreshold' in e) ? e.lowTroopsThreshold : 0);
+  }));
   if (threshold <= 0) return false;
   return general.maxTroops > 0 && general.troops / general.maxTroops < threshold;
 };
 
-// 计算武将实际速度（基础速度 × 遗物百分比加成，骑兵额外有加成）
+// 计算武将实际速度（基础速度 × 遗物百分比加成 × 速度降幅debuff，骑兵额外有加成）
 const getAdjustedSpeed = (general: General, side: "player" | "enemy") => {
   let speed = general.speed;
   speed *= 1 + getRelicEffectValue(side, "speedPct");
   if (general.soldierType === "骑兵") {
     speed *= 1 + getRelicEffectValue(side, "cavalrySpeedPct");
+  }
+  if (general.skillEffects?.speedReduction) {
+    speed *= 1 - general.skillEffects.speedReduction;
   }
   return speed;
 };
@@ -2421,6 +2610,12 @@ const applyRelicDebuffResist = (unit: {
     effects.defenseReductionDuration = 0;
     effects.defenseReduction = 0;
     addReport(`【${unit.general.name}】受遗物庇佑，抵消了降防效果！`);
+    return;
+  }
+  if (effects.speedReductionDuration > 0) {
+    effects.speedReductionDuration = 0;
+    effects.speedReduction = 0;
+    addReport(`【${unit.general.name}】受遗物庇佑，抵消了减速效果！`);
     return;
   }
   if (effects.cannotNormalAttackDuration > 0) {
@@ -2477,11 +2672,17 @@ const startRelicSelection = () => {
 
 // 玩家选择一个遗物后，将其加入我方遗物列表并关闭选择界面
 const selectPlayerRelic = (relic: Relic) => {
-  if (!playerRelics.value.some((item) => item.id === relic.id)) {
+  const isNew = !playerRelics.value.some((item) => item.id === relic.id);
+  if (isNew) {
     playerRelics.value.push(relic);
   }
   showRelicSelector.value = false;
   addReport(`我方选择遗物【${relic.name}】。`);
+  // 仅新获得的绿/紫/金色遗物展示酷炫动画
+  if (isNew && (relic.rarity === "rare" || relic.rarity === "epic" || relic.rarity === "legendary")) {
+    acquiringRelic.value = relic;
+    showRelicAcquisitionModal.value = true;
+  }
 };
 
 // ========== 招募武将 ==========
@@ -3323,6 +3524,8 @@ const resetGame = () => {
   enemyRelics.value = [];
   playerRelicCandidates.value = [];
   showRelicSelector.value = false;
+  showRelicAcquisitionModal.value = false;
+  acquiringRelic.value = null;
   showVictoryRewardSelector.value = false;
   victoryRewardOptions.value = [];
   isResolvingVictoryReward.value = false;
@@ -3569,6 +3772,20 @@ const startBattle = async () => {
             unit.general.skillEffects.defenseReductionSource = '';
             addReport(
               `【${unit.general.name}】${source}的防御降低效果结束！`,
+            );
+          }
+        }
+
+        // 处理速度降低效果
+        if (unit.general.skillEffects.speedReductionDuration > 0) {
+          unit.general.skillEffects.speedReductionDuration -= 1;
+          addReport(
+            `【${unit.general.name}】的减速效果剩余${unit.general.skillEffects.speedReductionDuration}回合`,
+          );
+          if (unit.general.skillEffects.speedReductionDuration === 0) {
+            unit.general.skillEffects.speedReduction = 0;
+            addReport(
+              `【${unit.general.name}】的减速效果结束！`,
             );
           }
         }
