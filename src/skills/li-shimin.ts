@@ -7,7 +7,7 @@ const LI_SHIMIN_QUOTES = {
 
 // 李世民的基础属性常量
 const LI_SHIMIN_BASE = {
-  id: 3,
+  id: 2,
   name: "李世民",
   rarity: "legendary" as GeneralRarity,
   attack: 92,
