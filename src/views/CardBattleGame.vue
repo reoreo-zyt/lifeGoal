@@ -84,6 +84,11 @@
             mode="reward"
             @select="selectLayerReward"
           />
+          <RelicAcquisitionModal
+            :visible="showRelicAcquisitionModal"
+            :relic="acquiringRelic"
+            @close="showRelicAcquisitionModal = false"
+          />
           <div v-for="(damageText, index) in damageTexts" :key="index" class="damage-text"
             :class="[`damage-${damageText.kind || 'normal'}`, { crit: !!damageText.critical }]" :style="{
             left: damageText.x + 'px',
@@ -243,6 +248,7 @@ import RunMap from "../components/RunMap.vue";
 import RecruitPanel from "../components/RecruitPanel.vue";
 import RewardSelector from "../components/RewardSelector.vue";
 import EventPanel from "../components/EventPanel.vue";
+import RelicAcquisitionModal from "../components/relic/RelicAcquisitionModal.vue";
 import type { General, GeneralRarity, FormationPosition } from "../skills/types";
 import { RARITY_CONFIG } from "../skills/types";
 import type {
@@ -253,7 +259,7 @@ import type {
   VictoryRewardOption,
   GeneralBattleSnapshot,
 } from "../types/game";
-import { RELIC_POOL, ENEMY_WAVE_RELIC_CONFIG, pickWeightedRelics, type Relic, type RelicEffects } from "../relics";
+import { RELIC_POOL, getEnemyWaveRelic, pickWeightedRelics, type Relic } from "../relics";
 import { RECRUIT_CONFIG, getFetchFunctionBase, activateBonds } from '../skills/index';
 import { EVENTS_DATA } from '../events/events-data';
 import type { MapEvent, EventChoice, Effect } from '../events/event-types';
@@ -888,6 +894,9 @@ const playerRelics = ref<Relic[]>([]);
 const enemyRelics = ref<Relic[]>([]);
 // 是否显示遗物选择弹窗（开局时触发）
 const showRelicSelector = ref(false);
+// 遗物获得动画弹窗状态
+const showRelicAcquisitionModal = ref(false);
+const acquiringRelic = ref<Relic | null>(null);
 // ========== 奖励系统 ==========
 // 是否显示战斗胜利奖励选择弹窗
 const showVictoryRewardSelector = ref(false);
@@ -1524,11 +1533,15 @@ const resolveTreasureNode = () => {
       showEventMap.value = true;
       return;
     }
-    playerRelicCandidates.value = [relic];
-    if (!playerRelics.value.some((item) => item.id === relic.id)) {
+    const isNew = !playerRelics.value.some((item) => item.id === relic.id);
+    if (isNew) {
       playerRelics.value.push(relic);
     }
     addReport(`宝物节点：获得遗物【${relic.name}】。`);
+    if (isNew && (relic.rarity === "rare" || relic.rarity === "epic" || relic.rarity === "legendary")) {
+      acquiringRelic.value = relic;
+      showRelicAcquisitionModal.value = true;
+    }
   } else {
     money.value += 150;
     addReport("宝物节点：获得金币 +150。");
@@ -1961,8 +1974,7 @@ const generateEnemyTeam = async () => {
     }
   }
 
-  const relicId = ENEMY_WAVE_RELIC_CONFIG[currentWave.value];
-  const enemyRelic = RELIC_POOL.find((r) => r.id === relicId) || null;
+  const enemyRelic = getEnemyWaveRelic(currentWave.value);
   enemyRelics.value = enemyRelic ? [enemyRelic] : [];
   if (enemyRelic) {
     addReport(`本波敌军携带遗物【${enemyRelic.name}】。`);
@@ -2311,11 +2323,14 @@ const getRelicsBySide = (side: "player" | "enemy"): Relic[] =>
 // 统计指定阵营遗物效果数值之和（如：防御加成百分比、伤害加成百分比等）
 const getRelicEffectValue = (
   side: "player" | "enemy",
-  key: keyof RelicEffects,
+  key: string,
 ): number => {
   const relics = getRelicsBySide(side);
   if (relics.length === 0) return 0;
-  return relics.reduce((sum, relic) => sum + Number(relic.effects[key] || 0), 0);
+  return relics.reduce((sum, relic) => {
+    const val = key in (relic.effects ?? {}) ? (relic.effects as Record<string, unknown>)[key] : 0;
+    return sum + (typeof val === "number" ? val : 0);
+  }, 0);
 };
 
 // 判断某武将是否满足低兵力防御加成条件（兵力低于上限的指定比例时生效）
@@ -2325,7 +2340,10 @@ const hasLowTroopsDefenseBonus = (
 ): boolean => {
   const relics = getRelicsBySide(side);
   if (relics.length === 0) return false;
-  const threshold = Math.max(...relics.map((relic) => Number(relic.effects.lowTroopsThreshold || 0)));
+  const threshold = Math.max(...relics.map((relic) => {
+    const e = relic.effects;
+    return Number((e && typeof e === 'object' && 'lowTroopsThreshold' in e) ? e.lowTroopsThreshold : 0);
+  }));
   if (threshold <= 0) return false;
   return general.maxTroops > 0 && general.troops / general.maxTroops < threshold;
 };
@@ -2431,11 +2449,17 @@ const startRelicSelection = () => {
 
 // 玩家选择一个遗物后，将其加入我方遗物列表并关闭选择界面
 const selectPlayerRelic = (relic: Relic) => {
-  if (!playerRelics.value.some((item) => item.id === relic.id)) {
+  const isNew = !playerRelics.value.some((item) => item.id === relic.id);
+  if (isNew) {
     playerRelics.value.push(relic);
   }
   showRelicSelector.value = false;
   addReport(`我方选择遗物【${relic.name}】。`);
+  // 仅新获得的绿/紫/金色遗物展示酷炫动画
+  if (isNew && (relic.rarity === "rare" || relic.rarity === "epic" || relic.rarity === "legendary")) {
+    acquiringRelic.value = relic;
+    showRelicAcquisitionModal.value = true;
+  }
 };
 
 // ========== 招募武将 ==========
@@ -3277,6 +3301,8 @@ const resetGame = () => {
   enemyRelics.value = [];
   playerRelicCandidates.value = [];
   showRelicSelector.value = false;
+  showRelicAcquisitionModal.value = false;
+  acquiringRelic.value = null;
   showVictoryRewardSelector.value = false;
   victoryRewardOptions.value = [];
   isResolvingVictoryReward.value = false;

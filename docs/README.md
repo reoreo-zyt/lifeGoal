@@ -1,5 +1,6 @@
 - 羁绊设计 docs/bond/README.md
 - 技能设计 docs/skill/README.md
+- 遗物设计 docs/relic/README.md（贞观/开元/典谟/武德四套系列，基于《六韬》《贞观政要》《旧唐书》等历史典籍）
 - 事件设计
     - docs/event/specs/universal-events.md 通用事件
     - docs/event/specs/README.md 人物专属事件
