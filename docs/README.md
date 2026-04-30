@@ -1,0 +1,2 @@
+- 羁绊设计 docs/bond/README.md
+- 技能设计 docs/skill/README.md
