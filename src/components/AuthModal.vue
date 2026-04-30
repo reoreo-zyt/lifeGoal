@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps<{
   isLogin?: boolean
@@ -67,9 +67,14 @@ const emit = defineEmits<{
   (e: 'login', user: any): void
 }>()
 
-const isLogin = ref<any>(props.isLogin || true)
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+// Local isLogin state synced with prop
+const isLogin = ref(props.isLogin ?? true)
+watch(() => props.isLogin, (v) => {
+  if (v !== undefined) isLogin.value = v
+})
 
 const formData = ref({
   name: '',
