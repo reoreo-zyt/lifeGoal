@@ -1,2 +1,4 @@
 - 羁绊设计 docs/bond/README.md
 - 技能设计 docs/skill/README.md
+- 事件设计 docs/event/specs/README.md
+- 事件实现 docs/event/plans/README.md
