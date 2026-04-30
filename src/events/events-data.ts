@@ -604,6 +604,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '大军深入，粮道被劫。斥候急报：营地存粮仅余三日，若不早日筹措，军心必乱。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'sui',
+    image: new URL('../../assets/events/gen-001.webp', import.meta.url).href,
     choiceA: {
       label: '强征民粮',
       description: '就地强征百姓粮草，短期内解决困境',
@@ -629,6 +630,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '乌云压顶，大雨连绵数日。河水暴涨，道路泥泞难行。军中士气低落，将领亦面有忧色。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'chen',
+    image: new URL('../../assets/events/gen-002.webp', import.meta.url).href,
     choiceA: {
       label: '稳步推进',
       description: '泥泞难行，稳步缓进，确保不陷入伏击',
@@ -653,6 +655,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '战乱纷纷，流民如潮。近日有数百流民至营前请降，愿为兵卒，以求饱食。其间老幼混杂，良莠不齐。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'tang',
+    image: new URL('../../assets/events/gen-003.webp', import.meta.url).href,
     choiceA: {
       label: '收编壮丁',
       description: '筛选精壮者入伍，老幼安置于后方',
@@ -678,6 +681,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '国库空虚，军饷拖欠已有两月。士卒颇有怨言，夜间营中偶有私语。急则生变，不可不察。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'tian',
+    image: new URL('../../assets/events/gen-004.webp', import.meta.url).href,
     choiceA: {
       label: '拖欠缓发',
       description: '以朝廷困难晓之以理，暂缓发放并许诺战后加倍',
@@ -704,6 +708,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '夜深，斥候归营，带回敌军情报：敌军分兵两路，主力屯于东原，粮草皆在西河。另有一支精锐，游弋于山林之中，来去如风。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'hun',
+    image: new URL('../../assets/events/gen-005.webp', import.meta.url).href,
     choiceA: {
       label: '断其粮道',
       description: '派精兵绕道烧毁西河粮草，断敌命脉',
@@ -730,6 +735,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '军中忽起疫病，病卒十有三四。高热咳血，死者日增。军医束手，将领忧惧。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'zhen',
+    image: new URL('../../assets/events/gen-006.webp', import.meta.url).href,
     choiceA: {
       label: '封营隔离',
       description: '将病卒隔离医治，牺牲部分兵力换取整体健康',
@@ -757,6 +763,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '子夜，营地忽传惊叫，疑有敌军劫营。全军惊醒，乱作一团，点火四照，兵器相交……原来是虚惊一场，不过是野兽惊扰。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'sui',
+    image: new URL('../../assets/events/gen-007.webp', import.meta.url).href,
     choiceA: {
       label: '彻夜警戒',
       description: '全营戒严，提防真正的袭击，次日行军疲惫',
@@ -782,6 +789,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '战后，清点俘虏数百人。其目光或仇恨、或茫然、或不服。如何处置，关乎军心与后路。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'chen',
+    image: new URL('../../assets/events/gen-008.webp', import.meta.url).href,
     choiceA: {
       label: '优待俘虏',
       description: '以礼待之，愿留者编入军中，不愿者放归',
@@ -808,6 +816,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '战火蔓延，商路断绝。往日熙攘的集市如今空空如也，盐铁布匹皆无从购置，金价飞涨。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'tang',
+    image: new URL('../../assets/events/gen-009.webp', import.meta.url).href,
     choiceA: {
       label: '官府强买',
       description: '以官价强制收购民间物资',
@@ -834,6 +843,7 @@ export const EVENTS_DATA: MapEvent[] = [
     narrative: '两位将领因战略分歧在帐前争执不下，言辞激烈，各有拥趸。士卒围观，窃窃私语。处理不当，轻则内耗，重则分裂。',
     narrativeSource: '虚构（泛历史背景）',
     chapter: 'tian',
+    image: new URL('../../assets/events/gen-010.webp', import.meta.url).href,
     choiceA: {
       label: '秉公裁断',
       description: '听取双方意见后公正裁决，维护团结',

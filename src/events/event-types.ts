@@ -49,4 +49,6 @@ export interface MapEvent {
   choiceB: EventChoice;
   requiredGenerals: string[];
   weightBonus: Record<string, number>;
+  /** 事件配图（Vite URL pattern） */
+  image?: string;
 }

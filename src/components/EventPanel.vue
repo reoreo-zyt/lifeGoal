@@ -41,6 +41,7 @@ const effectLabel = (type: string): string => {
       <div v-if="visible && event" class="event-mask">
         <div class="event-panel">
           <div class="event-header">
+            <img v-if="event.image" :src="event.image" :alt="event.title" class="event-image" />
             <h2>{{ event.title }}</h2>
             <p class="source">出处：{{ event.narrativeSource }}</p>
           </div>
@@ -116,6 +117,16 @@ const effectLabel = (type: string): string => {
 .event-header {
   text-align: center;
   margin-bottom: 20px;
+}
+
+.event-image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .event-header h2 {
