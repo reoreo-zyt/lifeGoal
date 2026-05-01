@@ -291,7 +291,6 @@ import { RELIC_POOL, getEnemyWaveRelic, pickWeightedRelics, type Relic } from ".
 import { RECRUIT_CONFIG, getFetchFunctionBase, activateBonds } from '../skills/index';
 import { EVENTS_DATA } from '../events/events-data';
 import type { MapEvent, EventChoice, Effect } from '../events/event-types';
-import { useTutorial, tutorialEventBus } from '../tutorial';
 
 // ========== 认证与初始化 ==========
 // 是否已登录（通过 localStorage 中的 user 数据判断）
@@ -419,45 +418,6 @@ const soldierType克制 = {
   弓兵: "骑兵",
 };
 
-// ========== 教程系统 ==========
-const tutorial = useTutorial();
-
-// 监听教程步骤效果事件
-tutorialEventBus.on('step-effect', (stepId: string) => {
-  if (stepId === 'click-battle') {
-    // 点击战斗节点后自动进入招募步骤
-  }
-  if (stepId === 'recruit-intro') {
-    money.value += 1000;
-    addReport('教程赠送金币 +1000');
-  }
-});
-
-// 监听教程 action 事件
-tutorialEventBus.on('action', (_action: string, target: string) => {
-  if (target === '.action-button.recruit') {
-    // 打开招募面板
-    recruitPanel.value?.open();
-    // 延迟一点 emit 事件，等待 DOM 更新完成
-    setTimeout(() => {
-      tutorialEventBus.emit('recruit-panel-opened');
-    }, 100);
-  }
-  if (target === '.relic-auto-btn') {
-    // 自动分配兵力
-    autoAllocateTroopsEvenly();
-  }
-  if (target === '.speed-controls .speed-btn:nth-child(2)') {
-    // 调整战斗速度为2x
-    setBattleSpeed(2);
-  }
-});
-
-// 教程完成时显示提示
-tutorialEventBus.on('complete', () => {
-  addReport('新手教程完成！');
-});
-
 // ========== 游戏状态监听 ==========
 // 监听登录状态变化：登录成功后自动开始游戏加载流程
 watch(isLoggedIn, (newValue) => {
@@ -477,10 +437,6 @@ const startGameLoading = () => {
       clearInterval(loadingInterval);
       setTimeout(() => {
         gameLoaded.value = true;
-        // 游戏加载完成后启动教程
-        if (!tutorial.isCompleted()) {
-          tutorial.start();
-        }
       }, 500);
     }
   }, 150);
@@ -1324,10 +1280,6 @@ const toggleMapLegend = () => {
 watch(showBattleBoard, (active, prevActive) => {
   if (active && !prevActive) {
     showBattleMapDrawer.value = false;
-    // 如果第一阶段教程已完成，且还没有开始战斗教程，则开始战斗教程
-    if (tutorial.isCompleted() && !tutorial.isInBattlePhase()) {
-      tutorial.startBattlePhase();
-    }
   }
   if (!active) {
     showBattleMapDrawer.value = false;
@@ -1757,8 +1709,6 @@ const selectSlot = (side: "player" | "enemy", position: string) => {
   if (side === "player" && !isBattleActive.value) {
     selectedSlot.value = `${side}-${position}`;
     showGeneralList.value = true;
-    // 教程：点击卡槽时隐藏当前高亮
-    tutorial.hideCurrentStep();
   }
 };
 
@@ -1876,8 +1826,6 @@ const deployGeneral = (general: General) => {
       `【${general.name}】已上阵至【${targetPosition}】！统率: ${currentCommand.value}/${maxCommand.value}`,
     );
     closeGeneralList();
-    // 教程：武将上阵后触发
-    tutorialEventBus.emit('general-deployed');
   }
 };
 
@@ -2553,8 +2501,6 @@ const selectPlayerRelic = (relic: Relic) => {
     acquiringRelic.value = relic;
     showRelicAcquisitionModal.value = true;
   }
-  // 教程：选择遗物后自动进入下一步
-  tutorialEventBus.emit('relic-selected');
 };
 
 // ========== 招募武将 ==========
@@ -2567,12 +2513,7 @@ const recruitCard = () => {
 const handleRecruitPanelClose = () => {};
 
 const handleTenRecruitRevealed = () => {
-  // 关闭招募面板
-  recruitPanel.value?.close();
-  // 十连完成后结束第一阶段教程，等回到战斗场景再开始第二阶段
-  setTimeout(() => {
-    tutorial.skip();
-  }, 1500);
+  // 十连完成后停留在展示界面，由用户手动关闭
 };
 
 const handleRecruitDone = (results: { general: General; rarity: GeneralRarity }[]) => {
@@ -3307,7 +3248,30 @@ const checkGameOverByTurns = () => {
     return;
   }
 
-  // 如果有大营阵亡，按原本的兵力对比逻辑处理
+  // 如果有大营阵亡，直接判定胜负
+  if (!enemyCampAlive && playerCampAlive) {
+    // 敌方大营阵亡，我方胜利
+    restoreBattleStateToInitial({ preserveTroops: true });
+    applyPlayerRecoveryForDeaths();
+    addCuiJueQuote("victory");
+    addReport("回合结束！敌方大营已阵亡，我方获胜！");
+    openVictorySettlement();
+    return;
+  }
+
+  if (!playerCampAlive && enemyCampAlive) {
+    // 我方大营阵亡，战斗失败
+    restoreBattleStateToInitial({ preserveTroops: true });
+    addCuiJueQuote("defeat");
+    addReport("回合结束！我方大营已阵亡，战斗失败！");
+    setTimeout(() => {
+      alert("战斗失败！恢复游戏初始数据！");
+      resetGame();
+    }, 1000);
+    return;
+  }
+
+  // 双方大营都存活，按兵力对比判定
   let playerTroops = 0;
   let enemyTroops = 0;
 
