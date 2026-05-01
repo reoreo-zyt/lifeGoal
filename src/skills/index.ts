@@ -82,7 +82,7 @@ export const RECRUIT_CONFIG: RecruitConfigItem[] = [
   { id: 42, moduleName: "shi-wan-sui", fetchFnName: "fetchShiWanSuiFromDatabase", name: "史万岁", rarity: "rare" },
   { id: 34, moduleName: "yu-ju-lou", fetchFnName: "fetchYuJuLouFromDatabase", name: "鱼俱罗", rarity: "rare" },
   { id: 35, moduleName: "pei-xing-yan", fetchFnName: "fetchPeiXingYanFromDatabase", name: "裴行俨", rarity: "rare" },
-  { id: 36, moduleName: "du-hu-chang", fetchFnName: "fetchDuHuChangFromDatabase", name: "独弧昌", rarity: "rare" },
+  { id: 36, moduleName: "du-hu-chang", fetchFnName: "fetchDuHuChangFromDatabase", name: "李光弼", rarity: "rare" },
   { id: 37, moduleName: "liu-fang", fetchFnName: "fetchLiuFangFromDatabase", name: "刘昉", rarity: "rare" },
   { id: 31, moduleName: "qin-qiong", fetchFnName: "fetchQinQiongFromDatabase", name: "秦琼", rarity: "rare" },
   { id: 33, moduleName: "cheng-yao-jin", fetchFnName: "fetchChengYaoJinFromDatabase", name: "程咬金", rarity: "rare" },

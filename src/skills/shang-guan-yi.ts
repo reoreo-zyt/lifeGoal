@@ -6,7 +6,7 @@ const SHANG_GUAN_YI_QUOTES = {
 } as const;
 
 const SHANG_GUAN_YI_BASE = {
-  id: 516,
+  id: 707,
   name: "上官仪",
   rarity: "uncommon" as GeneralRarity,
   attack: 72,
@@ -104,7 +104,7 @@ export const createShangGuanYi = (): General => {
 
 export const fetchShangGuanYiFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/516`);
+    const response = await fetch(`${API_BASE_URL}/characters/707`);
     if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
     const troops = calculateTroops(SHANG_GUAN_YI_BASE.command);

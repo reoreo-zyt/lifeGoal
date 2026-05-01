@@ -6,7 +6,7 @@ const PEI_XING_YAN_QUOTES = {
 } as const;
 
 const PEI_XING_YAN_BASE = {
-  id: 35,
+  id: 773,
   name: "裴行俨",
   rarity: "rare",
   attack: 78,
@@ -96,7 +96,7 @@ export const createPeiXingYan = (): General => {
 
 export const fetchPeiXingYanFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/35`);
+    const response = await fetch(`${API_BASE_URL}/characters/773`);
     if (!response.ok) throw new Error('获取人物信息失败');
     const characterData = await response.json();
     const troops = calculateTroops(PEI_XING_YAN_BASE.command);

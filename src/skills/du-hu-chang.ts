@@ -7,7 +7,7 @@ const DU_HU_CHANG_QUOTES = {
 
 const DU_HU_CHANG_BASE = {
   id: 36,
-  name: "独弧昌",
+  name: "李光弼",
   rarity: "rare",
   attack: 72,
   attackGrowth: 2.18,
@@ -46,7 +46,7 @@ const calculateTroops = (commandValue: number): number => {
   return Math.floor(commandValue * 10);
 };
 
-// 独弧昌的自带战法【谋覆军众】
+// 李光弼的自带战法【谋覆军众】
 export const createDuHuChangSkill = (): Skill => {
   return {
     id: "mou-fu-jun-zhong",
@@ -139,7 +139,7 @@ export const fetchDuHuChangFromDatabase = async (API_BASE_URL: string): Promise<
       rarity: DU_HU_CHANG_BASE.rarity as GeneralRarity,
     };
   } catch (error) {
-    console.error('从数据库获取独弧昌信息失败:', error);
+    console.error('从数据库获取李光弼信息失败:', error);
     return createDuHuChang();
   }
 };

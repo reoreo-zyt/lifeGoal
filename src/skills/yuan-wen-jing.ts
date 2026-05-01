@@ -6,7 +6,7 @@ const YUAN_WEN_JING_QUOTES = {
 } as const;
 
 const YUAN_WEN_JING_BASE = {
-  id: 524,
+  id: 772,
   name: "元文景",
   rarity: "uncommon" as GeneralRarity,
   attack: 58,
@@ -121,7 +121,7 @@ export const createYuanWenJing = (): General => {
 
 export const fetchYuanWenJingFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/524`);
+    const response = await fetch(`${API_BASE_URL}/characters/772`);
     if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
     const troops = calculateTroops(YUAN_WEN_JING_BASE.command);

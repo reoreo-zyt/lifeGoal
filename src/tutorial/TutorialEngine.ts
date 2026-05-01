@@ -87,6 +87,9 @@ export class TutorialEngine {
     const step = this.steps[index]
     if (!step) return
 
+    // Clean up any residual tutorial elements from previous sessions
+    this.cleanupAllTutorialElements()
+
     // Hide previous handler
     if (this.currentHandler) {
       this.currentHandler.hide()
@@ -236,6 +239,17 @@ export class TutorialEngine {
       this.currentHandler.hide()
       this.currentHandler = null
     }
+  }
+
+  // 清理所有残留的教程元素
+  private cleanupAllTutorialElements(): void {
+    // 清理 highlight overlay
+    const highlightOverlay = document.querySelector('.tutorial-highlight-overlay')
+    if (highlightOverlay) highlightOverlay.remove()
+
+    // 清理 modal overlay
+    const modalOverlay = document.querySelector('.tutorial-modal-overlay')
+    if (modalOverlay) modalOverlay.remove()
   }
 
   hideCurrentStep(): void {

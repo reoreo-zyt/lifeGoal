@@ -6,7 +6,7 @@ const LIU_FANG_QUOTES = {
 } as const;
 
 const LIU_FANG_BASE = {
-  id: 37,
+  id: 776,
   name: "刘昉",
   rarity: "rare",
   attack: 68,
@@ -123,7 +123,7 @@ export const createLiuFang = (): General => {
 
 export const fetchLiuFangFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/37`);
+    const response = await fetch(`${API_BASE_URL}/characters/776`);
     if (!response.ok) throw new Error('获取人物信息失败');
     const characterData = await response.json();
     const troops = calculateTroops(LIU_FANG_BASE.command);

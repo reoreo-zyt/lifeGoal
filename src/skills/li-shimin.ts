@@ -142,7 +142,7 @@ export const createLiShimin = (): General => {
 // 从数据库获取李世民的详细信息
 export const fetchLiShiminFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/3`);
+    const response = await fetch(`${API_BASE_URL}/characters/2`);
     if (!response.ok) {
       throw new Error("获取人物信息失败");
     }
