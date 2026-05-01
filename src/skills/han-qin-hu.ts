@@ -6,7 +6,7 @@ const HAN_QIN_HU_QUOTES = {
 } as const;
 
 const HAN_QIN_HU_BASE = {
-  id: 12,
+  id: 43,
   name: "韩擒虎",
   rarity: "rare" as GeneralRarity,
   attack: 88,
@@ -114,7 +114,7 @@ export const createHanQinHu = (): General => {
 
 export const fetchHanQinHuFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/12`);
+    const response = await fetch(`${API_BASE_URL}/characters/43`);
     if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
     const troops = calculateTroops(HAN_QIN_HU_BASE.command);

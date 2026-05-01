@@ -6,7 +6,7 @@ const YU_JU_LOU_QUOTES = {
 } as const;
 
 const YU_JU_LOU_BASE = {
-  id: 34,
+  id: 536,
   name: "鱼俱罗",
   rarity: "rare",
   attack: 82,
@@ -124,7 +124,7 @@ export const createYuJuLou = (): General => {
 
 export const fetchYuJuLouFromDatabase = async (API_BASE_URL: string): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/34`);
+    const response = await fetch(`${API_BASE_URL}/characters/536`);
     if (!response.ok) throw new Error('获取人物信息失败');
     const characterData = await response.json();
     const troops = calculateTroops(YU_JU_LOU_BASE.command);

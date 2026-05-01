@@ -10,7 +10,7 @@ const YU_CHI_GONG_QUOTES = {
 } as const;
 
 const YU_CHI_GONG_BASE = {
-  id: 4,
+  id: 32,
   name: "尉迟恭",
   rarity: "rare" as GeneralRarity,
   attack: 96,
@@ -133,7 +133,7 @@ export const fetchYuChiGongFromDatabase = async (
   API_BASE_URL: string
 ): Promise<General | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/characters/4`);
+    const response = await fetch(`${API_BASE_URL}/characters/32`);
     if (!response.ok) throw new Error("获取人物信息失败");
     const characterData = await response.json();
     const troops = calculateTroops(YU_CHI_GONG_BASE.command);

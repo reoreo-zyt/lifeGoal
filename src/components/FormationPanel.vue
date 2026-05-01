@@ -6,7 +6,7 @@
     <RelicBar :relics="relics" :empty-text="relicEmptyText" style="margin-top: 94px;"/>
 
     <!-- 阵型 -->
-    <div class="formation horizontal" style="margin-top: 70px;">
+    <div class="formation horizontal" :class="{ reverse: side === 'enemy' }" style="margin-top: 70px;">
       <!-- 大营 -->
       <div class="card-slot" @click="$emit('select-slot', positionMap.大营)">
         <GeneralCard
@@ -143,6 +143,10 @@ const slotKey = computed(() => ({
 
 .formation.horizontal {
   flex-direction: row;
+}
+
+.formation.horizontal.reverse {
+  flex-direction: row-reverse;
 }
 
 .card-slot {

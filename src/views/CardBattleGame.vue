@@ -1975,17 +1975,19 @@ const shuffleDesignedGeneralIds = (): number[] => {
   return ids;
 };
 
-// 生成敌方队伍：从预设武将池中洗牌抽取3名布置到大营/中军/前锋，并配置敌方遗物
+// 生成敌方队伍：从预设武将池中洗牌抽取3名（敌方镜像布阵：从左到右为 大营、中军、前锋）
 const generateEnemyTeam = async () => {
-  const positions: (keyof typeof enemyFormation.value)[] = [
-    "大营",
-    "中军",
-    "前锋",
+  // 敌方镜像：从左到右显示为大营、中军、前锋（与我方镜像对称）
+  // 武将顺序从左到右存储，所以第1个武将→大营(左)，第2个→中军，第3个→前锋(右)
+  const placementOrder: (keyof typeof enemyFormation.value)[] = [
+    "大营",  // 第1个武将放在大营(左)
+    "中军",  // 第2个武将放在中军(中)
+    "前锋",  // 第3个武将放在前锋(右)
   ];
   const idPool = shuffleDesignedGeneralIds();
   let poolIndex = 0;
 
-  for (const position of positions) {
+  for (const position of placementOrder) {
     let placed: General | null = null;
     while (poolIndex < idPool.length && !placed) {
       const id = idPool[poolIndex++];
