@@ -1,3 +1,6 @@
+// 武将定位类型
+export type GeneralRole = "肉盾" | "输出" | "控制" | "辅助" | "治疗";
+
 // 兵种类型
 export type SoldierType = "步兵" | "弓兵" | "骑兵";
 
@@ -56,6 +59,8 @@ export interface General {
   id: number;
   name: string;
   rarity: GeneralRarity;
+  /** 武将定位：肉盾、输出、控制、辅助、治疗 */
+  role?: GeneralRole;
   attack: number;
   attackGrowth: number;
   defense: number;

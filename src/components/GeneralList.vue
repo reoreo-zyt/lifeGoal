@@ -56,6 +56,35 @@
               休整{{ getRecoveryRounds(general) }}轮
             </div>
             <div class="card-middle"></div>
+
+            <!-- 羁绊信息 -->
+            <div v-if="getGeneralBonds(general).length > 0" class="card-bonds">
+              <div
+                v-for="bondInfo in getGeneralBonds(general)"
+                :key="bondInfo.bond.id"
+                class="bond-info"
+              >
+                <span class="bond-name">{{ bondInfo.bond.name }}</span>
+                <span class="bond-members">
+                  [
+                  <span class="bond-member" v-for="(name, idx) in bondInfo.currentMembers" :key="name">
+                    {{ name }}<span v-if="idx < bondInfo.currentMembers.length - 1">、</span>
+                  </span>
+                  <span class="bond-missing" v-if="bondInfo.missingMembers.length > 0">
+                    <span v-for="(name, idx) in bondInfo.missingMembers" :key="name">
+                      {{ name }}<span v-if="idx < bondInfo.missingMembers.length - 1">、</span>
+                    </span>
+                  </span>
+                  ]
+                </span>
+              </div>
+            </div>
+
+            <!-- 定位标签 -->
+            <div v-if="getGeneralRoles(general).length > 0" class="card-roles">
+              <span v-for="role in getGeneralRoles(general)" :key="role" class="role-tag">{{ role }}</span>
+            </div>
+
             <div class="card-bottom">
               <div class="card-bottom-item">
                 <span class="card-level">Lv.{{ general.level }}</span>
@@ -84,12 +113,27 @@
 <script setup lang="ts">
 import type { General, GeneralRarity } from "../skills/types";
 import { RARITY_CONFIG } from "../skills/types";
+import { BONDS } from "../skills/bonds";
+import { RECRUIT_CONFIG } from "../skills/index";
+import { detectRole } from "../skills/role-utils";
 
 const RARITY_BORDER_COLORS: Record<GeneralRarity, string> = {
   common: "#6b7280",
   uncommon: "#22c55e",
   rare: "#a855f7",
   legendary: "#f59e0b",
+};
+
+interface BondInfo {
+  bond: typeof BONDS[number];
+  currentMembers: string[];
+  missingMembers: string[];
+}
+
+// Helper to get member name from ID
+const getMemberName = (id: number): string => {
+  const config = RECRUIT_CONFIG.find(item => item.id === id);
+  return config ? config.name : `武将${id}`;
 };
 
 const props = defineProps<{
@@ -124,9 +168,46 @@ const isDeployed = (general: General) => props.deployedGeneralIds.includes(gener
 const isActiveSlotGeneral = (general: General) =>
   props.activeSlotGeneralId !== null && props.activeSlotGeneralId === general.id;
 
+const getGeneralBonds = (general: General): BondInfo[] => {
+  const result: BondInfo[] = [];
+
+  for (const bond of BONDS) {
+    // 检查此武将是否属于此羁绊
+    if (!bond.memberIds.includes(general.id)) {
+      continue;
+    }
+
+    // 获取当前拥有的武将名称
+    const currentMembers: string[] = [];
+    const missingMembers: string[] = [];
+
+    for (const memberId of bond.memberIds) {
+      if (memberId <= 0) continue;
+      const member = props.generals.find(g => g.id === memberId);
+      if (member) {
+        currentMembers.push(member.name);
+      } else {
+        missingMembers.push(getMemberName(memberId));
+      }
+    }
+
+    result.push({
+      bond,
+      currentMembers,
+      missingMembers,
+    });
+  }
+
+  return result;
+};
+
 const getRecoveryRounds = (general: General) => Math.max(0, (props.restRoundsById[general.id] || 0) - 1);
 
 const isResting = (general: General) => getRecoveryRounds(general) > 0;
+
+const getGeneralRoles = (general: General): string[] => {
+  return detectRole(general);
+};
 
 const handleSelect = (general: General) => {
   if (isResting(general)) return;
@@ -404,6 +485,68 @@ const handleSelect = (general: General) => {
   color: white;
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.card-bonds {
+  position: absolute;
+  bottom: 45px;
+  left: 0;
+  right: 0;
+  padding: 0 4px;
+  z-index: 3;
+}
+
+.bond-info {
+  font-size: 9px;
+  color: #ffd700;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bond-name {
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.bond-members {
+  color: #aaa;
+  font-size: 8px;
+}
+
+.bond-member {
+  color: #90ee90;
+}
+
+.bond-missing {
+  color: #ff6b6b;
+}
+
+.card-roles {
+  position: absolute;
+  top: 32px;
+  left: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-width: 80%;
+  z-index: 4;
+}
+
+.card-roles .role-tag {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+  white-space: nowrap;
 }
 
 /* 滚动条样式 */

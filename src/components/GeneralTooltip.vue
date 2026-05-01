@@ -26,11 +26,26 @@
           </div>
           <div class="tooltip-stat-row">
             <span>统率: {{ general.leadership }}</span>
+            <span v-if="generalRoles.length > 0" class="role-tag">定位: {{ generalRoles.join('/') }}</span>
           </div>
         </div>
         <div v-if="activeBonds.length > 0" class="tooltip-bonds">
           <div class="tooltip-bonds-title">羁绊</div>
-          <div v-for="bond in activeBonds" :key="bond" class="tooltip-bond-item">{{ bond }}</div>
+          <div v-for="bondInfo in activeBonds" :key="bondInfo.bond.id" class="tooltip-bond-item">
+            <div class="bond-header">
+              <span class="bond-name">{{ bondInfo.bond.name }}</span>
+              <span class="bond-status" :class="{ complete: bondInfo.isComplete }">
+                {{ bondInfo.isComplete ? '已激活' : '未完成' }}
+              </span>
+            </div>
+            <div class="bond-members-info">
+              成员: {{ bondInfo.currentMembers.join('、') }}
+              <span v-if="bondInfo.missingMembers.length > 0" class="missing-hint">
+                (缺少: {{ bondInfo.missingMembers.join('、') }})
+              </span>
+            </div>
+            <div class="bond-effect">{{ bondInfo.bond.description }}</div>
+          </div>
         </div>
         <div v-if="general.skills && general.skills.length > 0" class="tooltip-skills">
           <div class="tooltip-skills-title">自带战法</div>
@@ -47,8 +62,16 @@
 <script setup lang="ts">
 // @ts-nocheck - 跳过此文件的类型检查以允许未使用的变量
 import type { General } from "../skills/types";
-import { getActiveBondNames } from "../skills/index";
+import { BONDS } from "../skills/bonds";
+import { getGeneralRole } from "../skills/role-utils";
+import { RECRUIT_CONFIG } from "../skills/index";
 import { computed } from "vue";
+
+// Helper to get member name from ID
+const getMemberName = (id: number): string => {
+  const config = RECRUIT_CONFIG.find(item => item.id === id);
+  return config ? config.name : `武将${id}`;
+};
 
 const _props = defineProps<{
   general: General | null;
@@ -60,9 +83,52 @@ const emit = defineEmits<{
   (e: "close"): void;
 }>();
 
-const activeBonds = computed(() => {
+interface BondInfo {
+  bond: typeof BONDS[number];
+  isComplete: boolean;
+  currentMembers: string[];
+  missingMembers: string[];
+}
+
+const activeBonds = computed<BondInfo[]>(() => {
   if (!_props.general || !_props.teamGenerals) return [];
-  return getActiveBondNames(_props.general.id, _props.teamGenerals);
+
+  const result: BondInfo[] = [];
+
+  for (const bond of BONDS) {
+    // 检查此武将是否属于此羁绊
+    if (!bond.memberIds.includes(_props.general.id)) {
+      continue;
+    }
+
+    // 获取羁绊成员信息
+    const currentMembers: string[] = [];
+    const missingMembers: string[] = [];
+
+    for (const memberId of bond.memberIds) {
+      if (memberId <= 0) continue;
+      const member = _props.teamGenerals.find(g => g.id === memberId);
+      if (member) {
+        currentMembers.push(member.name);
+      } else {
+        missingMembers.push(getMemberName(memberId));
+      }
+    }
+
+    result.push({
+      bond,
+      isComplete: missingMembers.length === 0,
+      currentMembers,
+      missingMembers,
+    });
+  }
+
+  return result;
+});
+
+const generalRoles = computed(() => {
+  if (!_props.general) return [];
+  return getGeneralRole(_props.general);
 });
 
 const onOverlayClick = () => {
@@ -148,6 +214,11 @@ const onClose = () => {
   color: #2c3e50;
 }
 
+.role-tag {
+  color: #667eea;
+  font-weight: bold;
+}
+
 .tooltip-skills {
   margin-top: 15px;
   padding-top: 15px;
@@ -197,11 +268,52 @@ const onClose = () => {
 .tooltip-bond-item {
   background: linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%);
   border-radius: 6px;
-  padding: 6px 10px;
-  margin-bottom: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
   font-size: 13px;
+}
+
+.bond-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.bond-header .bond-name {
   font-weight: bold;
   color: #ffd700;
   text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+}
+
+.bond-status {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #666;
+  color: #fff;
+}
+
+.bond-status.complete {
+  background: #22c55e;
+  color: #fff;
+}
+
+.bond-members-info {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.missing-hint {
+  color: #ff6b6b;
+}
+
+.bond-effect {
+  font-size: 12px;
+  color: #e0e0e0;
+  line-height: 1.4;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 </style>

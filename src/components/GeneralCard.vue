@@ -64,6 +64,11 @@
 
       <div class="card-middle"></div>
 
+      <!-- 定位标签 -->
+      <div v-if="generalRoles.length > 0" class="card-roles">
+        <span v-for="role in generalRoles" :key="role" class="role-tag">{{ role }}</span>
+      </div>
+
       <!-- 底部信息 -->
       <div class="card-bottom">
         <div class="card-bottom-item">
@@ -95,6 +100,7 @@ import { computed } from "vue";
 import type { General, GeneralRarity } from "../skills/types";
 import { RARITY_CONFIG } from "../skills/types";
 import { getActiveBondNames } from "../skills/index";
+import { getGeneralRole } from "../skills/role-utils";
 import StatusEffects from "./StatusEffects.vue";
 
 const RARITY_BORDER_COLORS: Record<GeneralRarity, string> = {
@@ -155,6 +161,11 @@ const borderColor = computed(() => {
 const activeBonds = computed(() => {
   if (!props.general || !props.teamGenerals) return [];
   return getActiveBondNames(props.general.id, props.teamGenerals);
+});
+
+const generalRoles = computed(() => {
+  if (!props.general) return [];
+  return getGeneralRole(props.general);
 });
 
 const handleContextMenu = (event: MouseEvent) => {
@@ -348,6 +359,42 @@ const handleTroopsBarMouseDown = (event: MouseEvent) => {
   color: #ffd700;
   text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
   cursor: help;
+}
+
+.card-role {
+  position: absolute;
+  top: 45px;
+  left: 8px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+}
+
+.card-roles {
+  position: absolute;
+  top: 45px;
+  left: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-width: 80%;
+}
+
+.role-tag {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+  white-space: nowrap;
 }
 
 .card-bottom {
