@@ -11,7 +11,7 @@ const YUCHI_JINGDE_QUOTES = {
 
 const YUCHI_JINGDE_BASE = {
   id: 32,
-  name: "尉迟敬德",
+  name: "尉迟恭",
   rarity: "rare" as GeneralRarity,
   attack: 90,
   attackGrowth: 2.85,
@@ -48,7 +48,7 @@ const DEFAULT_SKILL_EFFECTS = {
 const calculateTroops = (commandValue: number): number =>
   Math.floor(commandValue * 10);
 
-// 尉迟敬德自带战法【单鞭夺槊】
+// 尉迟恭自带战法【单鞭夺槊】
 export const createYuchiJingdeSkill = (): Skill => ({
   id: "dan-bian-duo-shuo",
   name: "单鞭夺槊",
@@ -147,7 +147,7 @@ export const fetchYuchiJingdeFromDatabase = async (API_BASE_URL: string): Promis
       quotes: YUCHI_JINGDE_QUOTES,
     };
   } catch (error) {
-    console.error("从数据库获取尉迟敬德信息失败:", error);
+    console.error("从数据库获取尉迟恭信息失败:", error);
     return createYuchiJingde();
   }
 };

@@ -45,11 +45,11 @@ const bondWagangTwin: Bond = {
   },
 };
 
-/** 门神镇宅：秦琼 + 尉迟敬德 */
+/** 门神镇宅：秦琼 + 尉迟恭 */
 const bondMenshen: Bond = {
   id: "menshen-zhenzhai",
   name: "门神镇宅",
-  memberIds: [31, 32], // 秦琼(31)、尉迟敬德(32)
+  memberIds: [31, 32], // 秦琼(31)、尉迟恭(32)
   description: "同队时防御+22%，受伤-12%，双方免疫怯战",
   apply(generals, addReport) {
     const qinQiong = findGeneral(generals, 31);
@@ -65,7 +65,7 @@ const bondMenshen: Bond = {
       g.skillEffects.immuneToChichan = true;
       g.skillEffects.immuneToChichanSource = "门神镇宅";
     }
-    if (addReport) addReport("【羁绊·门神镇宅】激活！秦琼、尉迟敬德防御+22%，受伤-12%，免疫怯战");
+    if (addReport) addReport("【羁绊·门神镇宅】激活！秦琼、尉迟恭防御+22%，受伤-12%，免疫怯战");
   },
 };
 
@@ -385,11 +385,11 @@ const bondJiaofei: Bond = {
   },
 };
 
-/** 门神护卫：尉迟敬德 + 程咬金 */
+/** 门神护卫：尉迟恭 + 程咬金 */
 const bondMenshenHuwei: Bond = {
   id: "menshen-huwei",
   name: "门神护卫",
-  memberIds: [32, 33], // 尉迟敬德(32)、程咬金(33)
+  memberIds: [32, 33], // 尉迟恭(32)、程咬金(33)
   description: "同队时双方受伤-15%，追击概率+20%",
   apply(generals, addReport) {
     const yuchiJingde = findGeneral(generals, 32);
@@ -403,7 +403,7 @@ const bondMenshenHuwei: Bond = {
       g.skillEffects.pursuitChance = (g.skillEffects.pursuitChance || 0) + 0.20;
       g.skillEffects.pursuitChanceSource = "门神护卫";
     }
-    if (addReport) addReport("【羁绊·门神护卫】激活！尉迟敬德、程咬金受伤-15%，追击概率+20%");
+    if (addReport) addReport("【羁绊·门神护卫】激活！尉迟恭、程咬金受伤-15%，追击概率+20%");
   },
 };
 

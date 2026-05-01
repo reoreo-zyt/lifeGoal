@@ -7,7 +7,7 @@ const WEI_SHI_KANG_QUOTES = {
 
 const WEI_SHI_KANG_BASE = {
   id: 71,
-  name: "尉士康",
+  name: "韦世康",
   rarity: "common" as GeneralRarity,
   attack: 56,
   attackGrowth: 1.78,
@@ -127,7 +127,7 @@ export const fetchWeiShiKangFromDatabase = async (API_BASE_URL: string): Promise
       quotes: WEI_SHI_KANG_QUOTES,
     };
   } catch (error) {
-    console.error('从数据库获取尉士康信息失败:', error);
+    console.error('从数据库获取韦世康信息失败:', error);
     return createWeiShiKang();
   }
 };

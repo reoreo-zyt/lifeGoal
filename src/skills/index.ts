@@ -86,7 +86,7 @@ export const RECRUIT_CONFIG: RecruitConfigItem[] = [
   { id: 37, moduleName: "liu-fang", fetchFnName: "fetchLiuFangFromDatabase", name: "刘昉", rarity: "rare" },
   { id: 31, moduleName: "qin-qiong", fetchFnName: "fetchQinQiongFromDatabase", name: "秦琼", rarity: "rare" },
   { id: 33, moduleName: "cheng-yao-jin", fetchFnName: "fetchChengYaoJinFromDatabase", name: "程咬金", rarity: "rare" },
-  { id: 32, moduleName: "yuchi-jingde", fetchFnName: "fetchYuchiJingdeFromDatabase", name: "尉迟敬德", rarity: "rare" },
+  { id: 32, moduleName: "yuchi-jingde", fetchFnName: "fetchYuchiJingdeFromDatabase", name: "尉迟恭", rarity: "rare" },
 
   // ★★★ 绿（8人）
   { id: 570, moduleName: "li-mi", fetchFnName: "fetchLiMiFromDatabase", name: "李密", rarity: "uncommon" },
@@ -114,10 +114,10 @@ export const RECRUIT_CONFIG: RecruitConfigItem[] = [
   { id: 66, moduleName: "yang-wen-si", fetchFnName: "fetchYangWenSiFromDatabase", name: "杨文思", rarity: "common" },
   { id: 73, moduleName: "wei-yi", fetchFnName: "fetchWeiYiFromDatabase", name: "韦艺", rarity: "common" },
   { id: 577, moduleName: "feng-ci-ming", fetchFnName: "fetchFengDeYiFromDatabase", name: "封德彝", rarity: "common" },
-  { id: 71, moduleName: "wei-shi-kang", fetchFnName: "fetchWeiShiKangFromDatabase", name: "尉士康", rarity: "common" },
+  { id: 71, moduleName: "wei-shi-kang", fetchFnName: "fetchWeiShiKangFromDatabase", name: "韦世康", rarity: "common" },
   { id: 70, moduleName: "lu-yan-shi", fetchFnName: "fetchLuYanShiFromDatabase", name: "陆彦师", rarity: "common" },
-  { id: 74, moduleName: "di-wu-qi", fetchFnName: "fetchDiXiaoWeiFromDatabase", name: "邸校尉", rarity: "common" },
-  { id: 516, moduleName: "shang-guan-yi", fetchFnName: "fetchShangGuanYiFromDatabase", name: "上官义", rarity: "common" },
+  { id: 74, moduleName: "di-wu-qi", fetchFnName: "fetchDiXiaoWeiFromDatabase", name: "赵才", rarity: "common" },
+  { id: 516, moduleName: "shang-guan-yi", fetchFnName: "fetchShangGuanYiFromDatabase", name: "上官仪", rarity: "common" },
 ];
 
 // ============================================================

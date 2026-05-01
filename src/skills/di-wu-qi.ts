@@ -7,7 +7,7 @@ const DI_XIAO_WEI_QUOTES = {
 
 const DI_XIAO_WEI_BASE = {
   id: 74,
-  name: "邸校尉",
+  name: "赵才",
   rarity: "common" as GeneralRarity,
   attack: 62,
   attackGrowth: 2.08,
@@ -112,7 +112,7 @@ export const fetchDiXiaoWeiFromDatabase = async (API_BASE_URL: string): Promise<
       quotes: DI_XIAO_WEI_QUOTES,
     };
   } catch (error) {
-    console.error('从数据库获取邸校尉信息失败:', error);
+    console.error('从数据库获取赵才信息失败:', error);
     return createDiXiaoWei();
   }
 };

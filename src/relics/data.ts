@@ -399,7 +399,7 @@ export const RELIC_POOL: Relic[] = [
     effectText: "敌方全体受到反击伤害+25%",
     effects: {},
     source: "treasure",
-    lore: "玄武岩锻制的重盾，乌黑如墨。尉迟敬德单鞭夺槊时凭此盾护驾，反震之力尤为惊人。",
+    lore: "玄武岩锻制的重盾，乌黑如墨。尉迟恭单鞭夺槊时凭此盾护驾，反震之力尤为惊人。",
   },
   {
     id: "yinyang_fan",
@@ -607,7 +607,7 @@ export const RELIC_POOL: Relic[] = [
     effectText: "战斗胜利后，使下一场战斗全队攻击+15%（可叠加3层）",
     effects: { victoryStack: 0.15 },
     source: "boss",
-    lore: "秦始皇以和氏璧制玉玺，书'受命于天，既寿永昌'。尉迟敬德玄武门之变后入宫取玺，李唐皇权由此正名。",
+    lore: "秦始皇以和氏璧制玉玺，书'受命于天，既寿永昌'。尉迟恭玄武门之变后入宫取玺，李唐皇权由此正名。",
   },
   {
     id: "jiuzhuan_huanhun",

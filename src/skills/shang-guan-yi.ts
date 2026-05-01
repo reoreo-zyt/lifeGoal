@@ -7,7 +7,7 @@ const SHANG_GUAN_YI_QUOTES = {
 
 const SHANG_GUAN_YI_BASE = {
   id: 516,
-  name: "上官义",
+  name: "上官仪",
   rarity: "uncommon" as GeneralRarity,
   attack: 72,
   attackGrowth: 2.52,
@@ -122,7 +122,7 @@ export const fetchShangGuanYiFromDatabase = async (API_BASE_URL: string): Promis
       quotes: SHANG_GUAN_YI_QUOTES,
     };
   } catch (error) {
-    console.error("从数据库获取上官义信息失败:", error);
+    console.error("从数据库获取上官仪信息失败:", error);
     return createShangGuanYi();
   }
 };

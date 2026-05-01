@@ -376,6 +376,7 @@ const emit = defineEmits<{
   (e: "update:goldPityCount", value: number): void;
   (e: "close"): void;
   (e: "recruit-done", results: RecruitResult[]): void;
+  (e: "ten-recruit-revealed"): void;
   (e: "auto-allocate-troops"): void;
 }>();
 
@@ -606,6 +607,10 @@ const startRecruit = async (m: "single" | "ten") => {
       }
     }
     phase.value = "done";
+    // 快速模式下也需要触发揭示完成事件
+    if (m === "ten") {
+      emit("ten-recruit-revealed");
+    }
   } else {
     phase.value = "revealing";
   }
@@ -872,6 +877,7 @@ const checkRevealComplete = () => {
     const allRevealed = tenResults.value.every((_, i) => flippedIndices.value.has(i));
     if (allRevealed) {
       phase.value = "done";
+      emit("ten-recruit-revealed");
     }
   }
 };

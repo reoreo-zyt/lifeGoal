@@ -286,8 +286,8 @@ export const EVENTS_DATA: MapEvent[] = [
   {
     id: 'tian-001',
     title: '尉迟恭降唐',
-    narrative: '尉迟敬德原为刘武周部将，于美良川被秦琼设计收服。世民亲释其缚，敬德遂降。',
-    narrativeSource: '《旧唐书》卷六八《尉迟敬德传》',
+    narrative: '尉迟恭原为刘武周部将，于美良川被秦琼设计收服。世民亲释其缚，敬德遂降。',
+    narrativeSource: '《旧唐书》卷六八《尉迟恭传》',
     chapter: 'tian',
     choiceA: {
       label: '恩义相待',
@@ -362,8 +362,8 @@ export const EVENTS_DATA: MapEvent[] = [
   {
     id: 'tian-004',
     title: '单骑救主',
-    narrative: '美良川之战，秦王世民被围。尉迟敬德单骑冲阵，所向披靡，护送世民突围而出。',
-    narrativeSource: '《旧唐书》卷六八《尉迟敬德传》',
+    narrative: '美良川之战，秦王世民被围。尉迟恭单骑冲阵，所向披靡，护送世民突围而出。',
+    narrativeSource: '《旧唐书》卷六八《尉迟恭传》',
     chapter: 'tian',
     choiceA: {
       label: '论功行赏',

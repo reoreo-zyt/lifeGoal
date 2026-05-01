@@ -251,31 +251,10 @@
         v-model:gold-pity-count="goldPityCount"
         @close="handleRecruitPanelClose"
         @recruit-done="handleRecruitDone"
+        @ten-recruit-revealed="handleTenRecruitRevealed"
         @auto-allocate-troops="autoAllocateTroopsEvenly"
       />
 
-      <!-- 新手教程提示对话框 -->
-      <div v-if="showTutorialPrompt" class="tutorial-prompt-overlay">
-        <div class="tutorial-prompt-modal">
-          <h2>是否需要新手教程？</h2>
-          <p>学习游戏基本操作</p>
-          <div class="tutorial-prompt-actions">
-            <button class="tutorial-btn yes" @click="startTutorial">是</button>
-            <button class="tutorial-btn no" @click="skipTutorial">否</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 新手教程弹窗 -->
-      <TutorialModal
-        :visible="tutorialActive"
-        :step="currentTutorialStep"
-        :current-step-index="tutorialStepIndex"
-        :total-steps="TUTORIAL_STEPS.length"
-        :can-skip="true"
-        @skip="skipTutorial"
-        @next="advanceTutorial"
-      />
       <EventPanel
         :visible="showEventPanel"
         :event="currentEvent"
@@ -296,7 +275,6 @@ import FormationPanel from "../components/FormationPanel.vue";
 import RunMap from "../components/RunMap.vue";
 import RecruitPanel from "../components/RecruitPanel.vue";
 import RewardSelector from "../components/RewardSelector.vue";
-import TutorialModal from "../components/TutorialModal.vue";
 import EventPanel from "../components/EventPanel.vue";
 import RelicAcquisitionModal from "../components/relic/RelicAcquisitionModal.vue";
 import type { General, GeneralRarity, FormationPosition } from "../skills/types";
@@ -313,6 +291,7 @@ import { RELIC_POOL, getEnemyWaveRelic, pickWeightedRelics, type Relic } from ".
 import { RECRUIT_CONFIG, getFetchFunctionBase, activateBonds } from '../skills/index';
 import { EVENTS_DATA } from '../events/events-data';
 import type { MapEvent, EventChoice, Effect } from '../events/event-types';
+import { useTutorial, tutorialEventBus } from '../tutorial';
 
 // ========== 认证与初始化 ==========
 // 是否已登录（通过 localStorage 中的 user 数据判断）
@@ -384,7 +363,7 @@ const showBattleControlTooltip = (event: MouseEvent) => {
 // ========== 游戏初始数据 ==========
 // 游戏各数值的初始值（resetGame 时恢复使用）
 const initialGameData = {
-  money: 0,
+  money:1000,
   currentYear: -2070,
   currentWave: 1,
 };
@@ -440,143 +419,43 @@ const soldierType克制 = {
   弓兵: "骑兵",
 };
 
-// ========== 新手教程系统 ==========
-interface TutorialStep {
-  id: string;
-  title: string;
-  description: string;
-  actionHint?: string;
-  targetSelector?: string;
-  tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
-  effect?: () => void;
-}
+// ========== 教程系统 ==========
+const tutorial = useTutorial();
 
-const TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    id: 'intro-ui',
-    title: '界面介绍',
-    description: '这里是顶部状态栏，显示你的金钱、波次、统率等信息。顶部还有征召兵数量。',
-    targetSelector: '.ui-top-bar-status',
-    tooltipPosition: 'bottom'
-  },
-  {
-    id: 'click-battle-node',
-    title: '选择战斗节点',
-    description: '点击地图上的战斗节点进入战斗。首先需要选择地图上的战斗节点。',
-    targetSelector: '.event-node-btn.type-battle',
-    tooltipPosition: 'right'
-  },
-  {
-    id: 'trigger-battle',
-    title: '进入战斗',
-    description: '遭遇战斗！战斗开始前需要上阵武将。',
-    tooltipPosition: 'bottom'
-  },
-  {
-    id: 'need-general',
-    title: '上阵武将',
-    description: '上阵一位武将到大营位置才可以开始战斗。让我们先进行招募获取武将！',
-    targetSelector: '.map-select-footer .action-button.recruit',
-    tooltipPosition: 'top'
-  },
-  {
-    id: 'recruit-no-gold',
-    title: '金币不足',
-    description: '金币不足无法招募！系统赠送900金币作为新手奖励！',
-    effect: () => {
-      money.value += 900;
-      addReport('教程赠送金币 +900');
-    }
-  },
-  {
-    id: 'ten-recruit',
-    title: '十连招募',
-    description: '现在进行十连招募，必出紫色及以上品质的武将！点击十连按钮。',
-    targetSelector: '.mode-card.ten',
-    tooltipPosition: 'left'
-  },
-  {
-    id: 'deploy',
-    title: '上阵武将',
-    description: '将招募到的武将拖拽或点击到大营位置。',
-    targetSelector: '.player-side .card-slot:first-child',
-    tooltipPosition: 'right'
-  },
-  {
-    id: 'auto-allocate',
-    title: '自动分配兵力',
-    description: '点击自动分配兵力，为武将分配征召兵。',
-    targetSelector: '.game-footer .relic-auto-btn',
-    tooltipPosition: 'top'
-  },
-  {
-    id: 'speed',
-    title: '战斗速度',
-    description: '设置战斗速度和跳过动画。可以使用2倍速度并跳过战斗动画。',
-    targetSelector: '.game-footer .speed-controls',
-    tooltipPosition: 'top'
-  },
-  {
-    id: 'start-battle',
-    title: '开始战斗',
-    description: '一切准备就绪！点击开始战斗按钮，正式进入战斗！',
-    targetSelector: '.game-footer .action-button.end-turn',
-    tooltipPosition: 'top'
+// 监听教程步骤效果事件
+tutorialEventBus.on('step-effect', (stepId: string) => {
+  if (stepId === 'click-battle') {
+    // 点击战斗节点后自动进入招募步骤
   }
-];
-
-const showTutorialPrompt = ref(false);
-const tutorialActive = ref(false);
-const tutorialStepIndex = ref(0);
-
-const currentTutorialStep = computed(() =>
-  tutorialActive.value ? TUTORIAL_STEPS[tutorialStepIndex.value] : null
-);
-
-const startTutorial = () => {
-  showTutorialPrompt.value = false;
-  tutorialActive.value = true;
-  tutorialStepIndex.value = 0;
-};
-
-const skipTutorial = () => {
-  showTutorialPrompt.value = false;
-  tutorialActive.value = false;
-};
-
-const advanceTutorial = () => {
-  console.log('advanceTutorial called, currentStep:', currentTutorialStep.value?.id);
-  // 第二步（click-battle-node）需要等待点击战斗节点
-  const currentStep = currentTutorialStep.value;
-  if (currentStep?.id === 'click-battle-node') {
-    addReport('请先点击地图上的战斗节点');
-    return;
+  if (stepId === 'recruit-intro') {
+    money.value += 1000;
+    addReport('教程赠送金币 +1000');
   }
+});
 
-  if (tutorialStepIndex.value < TUTORIAL_STEPS.length - 1) {
-    tutorialStepIndex.value++;
-    const step = TUTORIAL_STEPS[tutorialStepIndex.value];
-    console.log('Advanced to step:', tutorialStepIndex.value, step?.id);
-    if (step.effect) {
-      step.effect();
-    }
-  } else {
-    completeTutorial();
+// 监听教程 action 事件
+tutorialEventBus.on('action', (_action: string, target: string) => {
+  if (target === '.action-button.recruit') {
+    // 打开招募面板
+    recruitPanel.value?.open();
+    // 延迟一点 emit 事件，等待 DOM 更新完成
+    setTimeout(() => {
+      tutorialEventBus.emit('recruit-panel-opened');
+    }, 100);
   }
-};
+  if (target === '.relic-auto-btn') {
+    // 自动分配兵力
+    autoAllocateTroopsEvenly();
+  }
+  if (target === '.speed-controls .speed-btn:nth-child(2)') {
+    // 调整战斗速度为2x
+    setBattleSpeed(2);
+  }
+});
 
-const completeTutorial = () => {
-  tutorialActive.value = false;
+// 教程完成时显示提示
+tutorialEventBus.on('complete', () => {
   addReport('新手教程完成！');
-};
-
-// 监听金币变化用于触发赠送金币步骤后的自动推进
-watch(money, (newMoney, oldMoney) => {
-  if (!tutorialActive.value) return;
-  const step = currentTutorialStep.value;
-  if (step?.id === 'recruit-no-gold' && newMoney > oldMoney && newMoney >= 900) {
-    advanceTutorial();
-  }
 });
 
 // ========== 游戏状态监听 ==========
@@ -598,8 +477,10 @@ const startGameLoading = () => {
       clearInterval(loadingInterval);
       setTimeout(() => {
         gameLoaded.value = true;
-        // 每次游戏加载完成后都显示教程提示
-        showTutorialPrompt.value = true;
+        // 游戏加载完成后启动教程
+        if (!tutorial.isCompleted()) {
+          tutorial.start();
+        }
       }, 500);
     }
   }, 150);
@@ -1107,7 +988,7 @@ const showEventMap = ref(true);
 // 当前整局跑图数据（包含所有楼层和节点）
 const runMap = ref<RunMapType | null>(null);
 // 招募面板引用
-const recruitPanel = ref<{ open: () => void } | null>(null);
+const recruitPanel = ref<{ open: () => void; close: () => void } | null>(null);
 // 待处理的节点ID（已选择但尚未完成事件）
 const pendingNodeId = ref<string | null>(null);
 // 待处理节点的战斗类型（battle/elite/boss，null=非战斗节点）
@@ -1176,32 +1057,6 @@ const hasShownNewRunQuote = ref(false);
 const cuiJuePortrait = "/assets/cui_jue.webp";
 // 遗物选择时崔琰的台词
 const cuiJueRelicDialogLine = ref("这些是前人留下的痕迹。有的带着荣耀，有的染着遗憾——你选哪个？");
-
-// ========== 监听游戏事件自动推进教程 ==========
-watch(gamePhase, (phase) => {
-  console.log('gamePhase watch triggered:', phase, 'tutorialActive:', tutorialActive.value, 'currentStep:', currentTutorialStep.value?.id);
-  if (!tutorialActive.value) return;
-  const step = currentTutorialStep.value;
-  // 点击战斗节点后进入 encounter_resolve
-  if (step?.id === 'click-battle-node' && phase === 'encounter_resolve') {
-    console.log('Advancing from step 2 to step 3');
-    advanceTutorial();
-  }
-});
-
-watch(isBattleActive, (active, prevActive) => {
-  if (!tutorialActive.value) return;
-  const step = currentTutorialStep.value;
-  // 只有从 false 变成 true 时才触发（避免初始状态已为 true 时误触发）
-  if (active && !prevActive) {
-    if (step?.id === 'trigger-battle') {
-      advanceTutorial();
-    }
-    if (step?.id === 'start-battle') {
-      advanceTutorial();
-    }
-  }
-});
 
 // ========== 地图节点配置 ==========
 // 各类型节点对应的图标路径
@@ -1334,12 +1189,19 @@ const generateRunMap = (seed?: number): RunMapType => {
       : randInt(rng, MAP_CONFIG.minNodesPerFloor, MAP_CONFIG.maxNodesPerFloor);
     const thisFloorNodes: MapNode[] = [];
     for (let lane = 0; lane < nodeCount; lane++) {
+      // 第一层第一个节点必定是普通战斗
+      let nodeType: NodeType;
+      if (floor === 1 && lane === 0) {
+        nodeType = "battle";
+      } else {
+        nodeType = pickWeightedNodeType(rng, floor, floorCount);
+      }
       const node: MapNode = {
         id: `f${floor}-l${lane}`,
         floor,
         lane,
         yOffset: (rng() - 0.5) * 8,
-        type: pickWeightedNodeType(rng, floor, floorCount),
+        type: nodeType,
         linksTo: [],
         visited: false,
       };
@@ -1462,6 +1324,10 @@ const toggleMapLegend = () => {
 watch(showBattleBoard, (active, prevActive) => {
   if (active && !prevActive) {
     showBattleMapDrawer.value = false;
+    // 如果第一阶段教程已完成，且还没有开始战斗教程，则开始战斗教程
+    if (tutorial.isCompleted() && !tutorial.isInBattlePhase()) {
+      tutorial.startBattlePhase();
+    }
   }
   if (!active) {
     showBattleMapDrawer.value = false;
@@ -1891,6 +1757,8 @@ const selectSlot = (side: "player" | "enemy", position: string) => {
   if (side === "player" && !isBattleActive.value) {
     selectedSlot.value = `${side}-${position}`;
     showGeneralList.value = true;
+    // 教程：点击卡槽时隐藏当前高亮
+    tutorial.hideCurrentStep();
   }
 };
 
@@ -2008,6 +1876,8 @@ const deployGeneral = (general: General) => {
       `【${general.name}】已上阵至【${targetPosition}】！统率: ${currentCommand.value}/${maxCommand.value}`,
     );
     closeGeneralList();
+    // 教程：武将上阵后触发
+    tutorialEventBus.emit('general-deployed');
   }
 };
 
@@ -2683,6 +2553,8 @@ const selectPlayerRelic = (relic: Relic) => {
     acquiringRelic.value = relic;
     showRelicAcquisitionModal.value = true;
   }
+  // 教程：选择遗物后自动进入下一步
+  tutorialEventBus.emit('relic-selected');
 };
 
 // ========== 招募武将 ==========
@@ -2693,6 +2565,15 @@ const recruitCard = () => {
 
 // ========== 招募面板事件处理 ==========
 const handleRecruitPanelClose = () => {};
+
+const handleTenRecruitRevealed = () => {
+  // 关闭招募面板
+  recruitPanel.value?.close();
+  // 十连完成后结束第一阶段教程，等回到战斗场景再开始第二阶段
+  setTimeout(() => {
+    tutorial.skip();
+  }, 1500);
+};
 
 const handleRecruitDone = (results: { general: General; rarity: GeneralRarity }[]) => {
   if (results.length === 1) {
@@ -5385,74 +5266,6 @@ const startBattle = async () => {
   background: url('/assets/ui_top_bar_status.jpg') no-repeat center center;
   background-size: cover;
   z-index: 100;
-}
-
-.tutorial-prompt-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.tutorial-prompt-modal {
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  border: 2px solid #c9a961;
-  border-radius: 16px;
-  padding: 30px 40px;
-  text-align: center;
-  max-width: 400px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-}
-
-.tutorial-prompt-modal h2 {
-  color: #f5f5dc;
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-.tutorial-prompt-modal p {
-  color: rgba(245, 245, 220, 0.7);
-  margin-bottom: 25px;
-}
-
-.tutorial-prompt-actions {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-}
-
-.tutorial-btn {
-  padding: 12px 30px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tutorial-btn.yes {
-  background: linear-gradient(135deg, #c9a961 0%, #a08050 100%);
-  color: #2c3e50;
-  font-weight: bold;
-}
-
-.tutorial-btn.yes:hover {
-  background: linear-gradient(135deg, #d4b06a 0%, #b08a55 100%);
-  transform: translateY(-2px);
-}
-
-.tutorial-btn.no {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.tutorial-btn.no:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
 }
 
 .speed-controls {
