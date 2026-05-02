@@ -4,7 +4,6 @@ export type EventChapter = 'sui' | 'chen' | 'tang' | 'tian' | 'zhen' | 'hun';
 /** 效果类型 */
 export type EffectType =
   | 'gold'
-  | 'conscript'
   | 'attack'
   | 'defense'
   | 'speed'
@@ -13,7 +12,8 @@ export type EffectType =
   | 'moral'
   | 'specialBuff'
   | 'specialDebuff'
-  | 'addGeneral';
+  | 'addGeneral'
+  | 'conscript';
 
 /** 效果目标 */
 export type EffectTarget = 'all' | 'general' | 'specific';

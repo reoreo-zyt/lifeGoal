@@ -57,7 +57,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '暗中蓄力',
       description: '收买内应，培植党羽，暗中布局',
       effects: [
-        { type: 'conscript', value: 300 },
         { type: 'moral', value: -5 },
       ],
       flags: ['yuwen_inf'],
@@ -77,7 +76,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '秋毫无犯',
       description: '军纪严明，秋毫无犯，安定民心',
       effects: [
-        { type: 'conscript', value: 500 },
         { type: 'strategy', value: 10, target: 'all' },
       ],
       enablesEvents: ['chen-002'],
@@ -87,8 +85,7 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '纵兵劫掠，缴获丰厚，以充军用',
       effects: [
         { type: 'gold', value: 400 },
-        { type: 'conscript', value: 200 },
-        { type: 'moral', value: -8 },
+                { type: 'moral', value: -8 },
       ],
       disablesEvents: ['zhen-002'],
     },
@@ -165,9 +162,7 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '暗施援手',
       description: '暗施援手，助其逃亡，收买人心',
       effects: [
-        { type: 'conscript', value: 300 },
-        { type: 'moral', value: 5 },
-      ],
+              ],
       flags: ['yujilou_hidden'],
     },
     requiredGenerals: ['鱼俱罗'],
@@ -195,7 +190,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '尊炀帝为太上皇，挟天子以令诸侯',
       effects: [
         { type: 'gold', value: 300 },
-        { type: 'conscript', value: 400 },
       ],
       enablesEvents: ['hun-004'],
       disablesEvents: ['tang-004'],
@@ -213,7 +207,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '招贤纳士',
       description: '以利诱之，瓦解瓦岗，收编精锐',
       effects: [
-        { type: 'conscript', value: 600 },
         { type: 'addGeneral', value: 1 }, // 添加随机瓦岗武将
       ],
       flags: ['wagang_broken'],
@@ -239,7 +232,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '裴氏归唐',
       description: '劝降裴氏父子，以礼相待，收为己用',
       effects: [
-        { type: 'conscript', value: 500 },
         { type: 'addGeneral', value: 2 }, // 添加裴行俨
       ],
       enablesEvents: ['tang-004'],
@@ -248,7 +240,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '武力夺取',
       description: '强攻虎牢，以武力收编其众',
       effects: [
-        { type: 'conscript', value: 300 },
         { type: 'gold', value: 200 },
       ],
       disablesEvents: ['tang-004'],
@@ -435,7 +426,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '馈赠金银，换取退兵，暂解燃眉之急',
       effects: [
         { type: 'gold', value: -300 },
-        { type: 'conscript', value: 400 },
       ],
     },
     requiredGenerals: ['李世民', '李靖'],
@@ -459,7 +449,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '静待时机',
       description: '保存实力，等待天下大乱，坐收渔利',
       effects: [
-        { type: 'conscript', value: 500 },
         { type: 'speed', value: -10, target: 'all' },
       ],
     },
@@ -477,7 +466,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '接收杨素旧部，择其忠勇者而用之',
       effects: [
         { type: 'attack', value: 25, target: 'specific', targetName: '杨素' },
-        { type: 'conscript', value: 400 },
       ],
       enablesEvents: ['zhen-002'],
     },
@@ -504,7 +492,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '宽仁待之',
       description: '赦免夏王旧部，以仁义收揽人心',
       effects: [
-        { type: 'conscript', value: 800 },
         { type: 'defense', value: 10, target: 'all' },
       ],
       enablesEvents: ['hun-003'],
@@ -513,7 +500,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '斩草除根',
       description: '夏王旧部一律充军，不留后患',
       effects: [
-        { type: 'conscript', value: 500 },
         { type: 'gold', value: 200 },
       ],
       disablesEvents: ['hun-003'],
@@ -531,7 +517,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '围三阙一',
       description: '虚留生路，瓦解守军，不战而屈人之兵',
       effects: [
-        { type: 'conscript', value: 600 },
         { type: 'gold', value: 300 },
       ],
     },
@@ -540,7 +525,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '强攻洛阳，血战到底，以武力定乾坤',
       effects: [
         { type: 'attack', value: 18, target: 'all' },
-        { type: 'conscript', value: -200 },
       ],
     },
     requiredGenerals: ['王世充', '李世民'],
@@ -589,7 +573,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '借刀杀人',
       description: '暗中借宇文化及之手除掉炀帝，坐收渔利',
       effects: [
-        { type: 'conscript', value: 600 },
         { type: 'moral', value: -5 },
       ],
     },
@@ -609,7 +592,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '强征民粮',
       description: '就地强征百姓粮草，短期内解决困境',
       effects: [
-        { type: 'conscript', value: -200 },
         { type: 'moral', value: -10 },
       ],
     },
@@ -617,7 +599,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '奇袭补给',
       description: '派精兵奇袭敌方粮道，以战养战',
       effects: [
-        { type: 'conscript', value: 400 },
         { type: 'speed', value: -5, duration: 1 },
       ],
     },
@@ -642,7 +623,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '冒雨疾行',
       description: '趁敌懈怠，冒雨急行军，速至有利地形',
       effects: [
-        { type: 'conscript', value: 300 },
         { type: 'defense', value: -8, duration: 1 },
       ],
     },
@@ -660,14 +640,12 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '收编壮丁',
       description: '筛选精壮者入伍，老幼安置于后方',
       effects: [
-        { type: 'conscript', value: 500 },
-      ],
+              ],
     },
     choiceB: {
       label: '全数收容',
       description: '不论老幼尽数收编，短期内兵力大增但战力稀释',
       effects: [
-        { type: 'conscript', value: 800 },
         { type: 'defense', value: -5, duration: 1 },
         { type: 'speed', value: -5, duration: 1 },
       ],
@@ -696,7 +674,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '变卖赈灾粮米以发军饷，短期解决困境',
       effects: [
         { type: 'gold', value: 300 },
-        { type: 'conscript', value: -300 },
       ],
     },
     requiredGenerals: [],
@@ -714,7 +691,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '派精兵绕道烧毁西河粮草，断敌命脉',
       effects: [
         { type: 'strategy', value: 10 },
-        { type: 'conscript', value: -200 },
       ],
       enablesEvents: ['hun-001'],
     },
@@ -723,7 +699,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '设伏山林，歼灭敌军游骑，夺其战马',
       effects: [
         { type: 'attack', value: 12 },
-        { type: 'conscript', value: -150 },
       ],
     },
     requiredGenerals: [],
@@ -740,7 +715,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '封营隔离',
       description: '将病卒隔离医治，牺牲部分兵力换取整体健康',
       effects: [
-        { type: 'conscript', value: -400 },
         { type: 'defense', value: 8 },
       ],
       flags: ['epidemic_survived'],
@@ -749,7 +723,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '弃卒保车',
       description: '将病卒尽数遣散，轻装疾行',
       effects: [
-        { type: 'conscript', value: -200 },
         { type: 'speed', value: 10 },
         { type: 'moral', value: -8 },
       ],
@@ -777,7 +750,6 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '趁夜色掩护全军转移，另寻营地',
       effects: [
         { type: 'speed', value: 15 },
-        { type: 'conscript', value: -100 },
       ],
     },
     requiredGenerals: [],
@@ -794,7 +766,6 @@ export const EVENTS_DATA: MapEvent[] = [
       label: '优待俘虏',
       description: '以礼待之，愿留者编入军中，不愿者放归',
       effects: [
-        { type: 'conscript', value: 300 },
         { type: 'moral', value: 8 },
         { type: 'attack', value: -5 },
       ],
@@ -822,8 +793,7 @@ export const EVENTS_DATA: MapEvent[] = [
       description: '以官价强制收购民间物资',
       effects: [
         { type: 'gold', value: -200 },
-        { type: 'conscript', value: 200 },
-      ],
+              ],
       flags: ['merchant_hostile'],
     },
     choiceB: {

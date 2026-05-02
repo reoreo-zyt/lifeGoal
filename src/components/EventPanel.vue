@@ -20,7 +20,6 @@ const formatEffect = (effect: Effect): string => {
 const effectLabel = (type: string): string => {
   const labels: Record<string, string> = {
     gold: '金币',
-    conscript: '征召',
     attack: '攻击',
     defense: '防御',
     speed: '速度',
@@ -30,6 +29,7 @@ const effectLabel = (type: string): string => {
     specialBuff: '特殊增益',
     specialDebuff: '特殊减益',
     addGeneral: '武将',
+    conscript: '征召兵',
   };
   return labels[type] || type;
 };

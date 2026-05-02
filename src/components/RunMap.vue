@@ -1,7 +1,7 @@
 <template>
   <div class="event-map-panel" :class="{ 'in-drawer': inDrawer }">
     <div class="event-map-header">
-      <span>事件树 · 当前可选层 {{ currentMapFloor }}</span>
+      <span>事件树 · 第{{ currentRound }}轮 · 当前可选层 {{ currentMapFloor }}</span>
     </div>
     <div class="event-map-board">
       <!-- 连接线 SVG -->
@@ -67,6 +67,7 @@ import type { NodeType, MapNode, RunMap, LegendItem, MapLinkLine } from "../type
 const props = defineProps<{
   runMap: RunMap | null;
   currentMapFloor: number;
+  currentRound: number;
   pendingNodeId: string | null;
   mapNodeIconByType: Record<NodeType, string>;
   nodeTypeTitle: Record<NodeType, string>;

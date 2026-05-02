@@ -46,7 +46,7 @@ export interface LegendItem {
 // 战斗胜利奖励选项
 export interface VictoryRewardOption {
   id: string;
-  type: "gold" | "conscript" | "promote" | "layerHeal";
+  type: "gold" | "promote" | "layerHeal" | "conscript";
   icon: string;
   name: string;
   description: string;

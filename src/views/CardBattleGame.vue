@@ -54,10 +54,10 @@
               <span class="info-value">{{ currentCommand }}/{{ maxCommand }}</span>
             </div>
             <div class="info-item" @mouseenter="showHeaderTooltip($event, 'conscript')" @mouseleave="hideHeaderTooltip">
-              <img src="/assets/command.webp" alt="征召兵" class="info-icon">
-              <span class="info-value">{{ displayAvailableConscripts }}/{{ displayTotalConscripts }}</span>
+              <img src="/assets/money.webp" alt="征召兵" class="info-icon">
+              <span class="info-value">{{ totalConscripts }}/{{ maxConscripts }}</span>
             </div>
-          </div>
+                      </div>
         </div>
 
         <!-- 悬浮提示框 -->
@@ -69,7 +69,7 @@
           <!-- 初始遗物选择 -->
           <RewardSelector
             :visible="showRelicSelector"
-            title="请选择本局遗物（3选1）"
+            :title="`第${currentRound}轮 · 请选择遗物（3选1）`"
             :dialog-line="cuiJueRelicDialogLine"
             :portrait="cuiJuePortrait"
             :candidates="playerRelicCandidates"
@@ -121,6 +121,7 @@
               <RunMap
                 :run-map="runMap"
                 :current-map-floor="currentMapFloor"
+                :current-round="currentRound"
                 :pending-node-id="pendingNodeId"
                 :map-node-icon-by-type="mapNodeIconByType"
                 :node-type-title="nodeTypeTitle"
@@ -145,6 +146,7 @@
             <RunMap
               :run-map="runMap"
               :current-map-floor="currentMapFloor"
+              :current-round="currentRound"
               :pending-node-id="pendingNodeId"
               :map-node-icon-by-type="mapNodeIconByType"
               :node-type-title="nodeTypeTitle"
@@ -167,7 +169,6 @@
               @select-slot="({ side, position }) => selectSlot(side, position)"
               @show-tooltip="(slotKey, event) => showTooltip(slotKey, event)"
               @hide-tooltip="hideTooltip"
-              @troops-bar-mousedown="(position, event) => handleTroopsBarMouseDown(position, event)"
             />
           <BattleReport :reports="battleReports" />
           <BattleStats
@@ -206,15 +207,41 @@
         <!-- 武将信息 -->
         <GeneralTooltip v-if="tooltipData" :general="tooltipData" :team-generals="tooltipTeamGenerals" @close="hideTooltip" />
 
+        <!-- 战前征召兵分配弹窗 -->
+        <Teleport to="body">
+          <Transition name="modal">
+            <div v-if="showPreBattleConscriptAllocation" class="modal-mask" @click.self="closePreBattleAllocation">
+              <div class="pre-battle-allocation-modal">
+                <h3>分配征召兵</h3>
+                <div class="allocation-info">
+                  可用征召兵：<span class="conscript-highlight">{{ totalConscripts }}</span> / {{ maxConscripts }}
+                </div>
+                <div class="allocation-list">
+                  <template v-for="(general, position) in playerFormation" :key="position">
+                    <div v-if="general" class="allocation-item">
+                      <div class="allocation-general-info">
+                        <span class="general-name">{{ general.name }}</span>
+                        <span class="general-position">{{ position }}</span>
+                      </div>
+                      <div class="allocation-slider">
+                        <input type="range" :min="0" :max="general.maxTroops" :value="preBattleAllocations[general.id] || 0"
+                          @input="(e) => updatePreBattleAllocation(general.id, Number((e.target as HTMLInputElement).value))" />
+                        <span class="allocation-value">{{ preBattleAllocations[general.id] || 0 }}</span>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+                <div class="allocation-actions">
+                  <button class="allocation-btn cancel" @click="closePreBattleAllocation">取消</button>
+                  <button class="allocation-btn confirm" @click="confirmPreBattleAllocation">确认分配</button>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </Teleport>
+
         <!-- 底部操作按钮 -->
         <div v-if="showBattleBoard" class="game-footer">
-          <button
-            class="relic-auto-btn"
-            :disabled="isBattleActive"
-            @click="autoAllocateTroopsEvenly"
-          >
-            自动分配兵力
-          </button>
           <button class="action-button recruit" @click="recruitCard" :disabled="money < RECRUIT_SINGLE_COST || isBattleActive"
             @mouseenter="showHeaderTooltip($event, 'recruit')" @mouseleave="hideHeaderTooltip">
             <img src="/assets/open.webp" alt="招募" class="button-icon">
@@ -252,7 +279,6 @@
         @close="handleRecruitPanelClose"
         @recruit-done="handleRecruitDone"
         @ten-recruit-revealed="handleTenRecruitRevealed"
-        @auto-allocate-troops="autoAllocateTroopsEvenly"
       />
 
       <EventPanel
@@ -288,7 +314,8 @@ import type {
   GeneralBattleSnapshot,
 } from "../types/game";
 import { RELIC_POOL, getEnemyWaveRelic, pickWeightedRelics, type Relic } from "../relics";
-import { RECRUIT_CONFIG, getFetchFunctionBase, activateBonds } from '../skills/index';
+import { RECRUIT_CONFIG, getFetchFunctionBase, activateBonds, BONDS } from '../skills/index';
+import { getGeneralRole } from '../skills/role-utils';
 import { EVENTS_DATA } from '../events/events-data';
 import type { MapEvent, EventChoice, Effect } from '../events/event-types';
 
@@ -320,7 +347,7 @@ const tooltipTexts: Record<string, string> = {
   money: '当前金币数量',
   wave: '当前波次/总波次',
   command: '当前统率/最大统率',
-  conscript: '可分配征召兵/总征召兵（开局3000）',
+  conscript: '当前征召兵/征召兵上限',
   recruit: '消耗100金币单抽招募武将，已拥有则升星',
   recruitTen: '消耗1000金币十连招募，必出紫色及以上稀有度，已拥有升星，超限返金币',
   start: '开始战斗',
@@ -369,6 +396,10 @@ const initialGameData = {
 
 // 当前金币数量
 const money = ref(initialGameData.money);
+// 当前征召兵数量（全局兵力储备，上限3000）
+const totalConscripts = ref(3000);
+// 征召兵上限
+const maxConscripts = ref(3000);
 // 当前游戏年份（显示用）
 const currentYear = ref(initialGameData.currentYear);
 // 当前波次（与地图层数对应）
@@ -395,10 +426,6 @@ const MAX_STAR_BY_RARITY: Record<string, number> = {
   rare: 5,
   legendary: 5,
 };
-// 征召兵上限（固定 3000）
-const maxConscripts = 3000;
-// 当前总征召兵数量（含已分配和可分配的）
-const totalConscripts = ref(maxConscripts);
 
 // API 根地址（从环境变量读取，开发环境默认 localhost:3000）
 const API_BASE_URL =
@@ -598,6 +625,12 @@ const playerRecoveryRounds = ref<Record<number, number>>({});
 const selectedSlot = ref<string | null>(null);
 // 是否显示武将列表弹窗
 const showGeneralList = ref(false);
+// 是否显示战前征召兵分配弹窗
+const showPreBattleConscriptAllocation = ref(false);
+// 战前征召兵分配：每个武将待分配的兵力
+const preBattleAllocations = ref<Record<number, number>>({});
+// 是否等待征召兵分配完成后继续战斗
+const pendingBattleAfterAllocation = ref(false);
 // 战斗播报信息列表（显示在 BattleReport 组件中）
 const battleReports = ref<string[]>([]);
 // ========== 战斗系统 ==========
@@ -649,80 +682,6 @@ const battleStats = ref<BattleStats>({
 // 是否显示战斗统计面板
 const showBattleStatsPanel = ref(false);
 
-// ========== 征召兵管理 ==========
-// 已提交到上阵武将的征召兵总量
-const committedConscripts = ref(0);
-// 战斗锁定后保存的已用征召兵数量
-const battleLockedUsedConscripts = ref<number | null>(null);
-// 战斗锁定后可分配征召兵数量快照
-const battleLockedAvailableConscripts = ref<number | null>(null);
-// 战斗锁定后总征召兵数量快照
-const battleLockedTotalConscripts = ref<number | null>(null);
-
-// 将 committedConscripts 同步为当前上阵武将的兵力总和
-const syncCommittedConscriptsFromFormation = () => {
-  committedConscripts.value = calculateUsedConscripts();
-};
-
-// 锁定征召兵快照（战斗开始时调用，保存当前分配状态）
-const lockBattleConscriptSnapshot = () => {
-  const used = committedConscripts.value;
-  battleLockedUsedConscripts.value = used;
-  battleLockedAvailableConscripts.value = Math.max(0, totalConscripts.value - used);
-  battleLockedTotalConscripts.value = totalConscripts.value;
-};
-
-// 解除征召兵锁定（战斗结束后调用）
-const unlockBattleConscriptSnapshot = () => {
-  battleLockedUsedConscripts.value = null;
-  battleLockedAvailableConscripts.value = null;
-  battleLockedTotalConscripts.value = null;
-};
-
-// 计算当前上阵武将已使用的征召兵总量
-const calculateUsedConscripts = () =>
-  Object.values(playerFormation.value).reduce((sum, general) => {
-    if (!general) return sum;
-    return sum + Math.max(0, general.troops || 0);
-  }, 0);
-
-// 已使用的征召兵（用于显示）
-const usedConscripts = computed(() => {
-  return Math.max(0, committedConscripts.value);
-});
-
-// 可分配的征召兵数量（战斗中取快照值，战斗外实时计算）
-const availableConscripts = computed(() => {
-  if (
-    isBattleActive.value &&
-    battleLockedAvailableConscripts.value !== null
-  ) {
-    return battleLockedAvailableConscripts.value;
-  }
-  return Math.max(0, totalConscripts.value - usedConscripts.value);
-});
-
-// 界面上显示的可分配征召兵（战斗中取快照值）
-const displayAvailableConscripts = computed(() => {
-  if (
-    isBattleActive.value &&
-    battleLockedAvailableConscripts.value !== null
-  ) {
-    return battleLockedAvailableConscripts.value;
-  }
-  return availableConscripts.value;
-});
-
-// 界面上显示的总征召兵（战斗中取快照值）
-const displayTotalConscripts = computed(() => {
-  if (
-    isBattleActive.value &&
-    battleLockedTotalConscripts.value !== null
-  ) {
-    return battleLockedTotalConscripts.value;
-  }
-  return totalConscripts.value;
-});
 // ========== 伤害与特效 ==========
 // 战斗中显示的伤害数值列表（绝对定位在卡牌上，2秒后自动移除）
 const damageTexts = ref<any[]>([]);
@@ -951,6 +910,8 @@ const pendingNodeId = ref<string | null>(null);
 const pendingBattleNodeType = ref<NodeType | null>(null);
 // 当前处于第几幕/几层（击败Boss后递增）
 const currentAct = ref(1);
+// 当前轮次（每击败一个Boss后递增，每轮开始时选择三选一遗物）
+const currentRound = ref(1);
 // 层完成奖励的三个可选项
 const layerRewardOptions = ref<VictoryRewardOption[]>([]);
 // 是否显示层完成奖励选择弹窗
@@ -1286,15 +1247,6 @@ watch(showBattleBoard, (active, prevActive) => {
   }
 });
 
-// 监听战斗状态：进入战斗时锁定征召兵快照，退出时解除
-watch(isBattleActive, (active) => {
-  if (active) {
-    lockBattleConscriptSnapshot();
-    return;
-  }
-  unlockBattleConscriptSnapshot();
-});
-
 // ========== 叙事事件系统 ==========
 // 获取 addGeneral 效果类型的值含义
 const getAddGeneralEffectValue = (value: number): string => {
@@ -1326,12 +1278,6 @@ const applyEffect = (effect: Effect) => {
   switch (effect.type) {
     case 'gold':
       money.value += effect.value;
-      break;
-    case 'conscript':
-      totalConscripts.value = Math.min(
-        maxConscripts,
-        Math.max(0, totalConscripts.value + effect.value),
-      );
       break;
     case 'attributePercent': {
       const pct = effect.value / 100;
@@ -1408,6 +1354,12 @@ const applyEffect = (effect: Effect) => {
     case 'specialBuff':
     case 'specialDebuff':
       break;
+    case 'conscript': {
+      const added = Math.min(effect.value, maxConscripts.value - totalConscripts.value);
+      totalConscripts.value += added;
+      addReport(`征召兵 ${added >= 0 ? '+' : ''}${added}`);
+      break;
+    }
   }
 };
 
@@ -1420,10 +1372,10 @@ const formatEffectReport = (effect: Effect): string => {
     return `获得武将：${getAddGeneralEffectValue(effect.value)}`;
   }
   if (effect.type === 'gold') return `金币${sign}${effect.value}`;
-  if (effect.type === 'conscript') return `征召兵${sign}${effect.value}`;
   const labels: Record<string, string> = {
     attack: '攻击', defense: '防御', speed: '速度', strategy: '谋略',
     attributePercent: '全属性', moral: '士气', specialBuff: '特殊增益', specialDebuff: '特殊减益',
+    conscript: '征召兵',
   };
   return `${labels[effect.type] || effect.type}${sign}${effect.value}${pct}`;
 };
@@ -1586,11 +1538,8 @@ const resolveTreasureNode = () => {
   showEventMap.value = true;
 };
 
-// 处理休整节点：恢复征召兵，并随机减少一名武将的休整轮次
+// 处理休整节点：减少一名武将的休整轮次
 const resolveRestNode = () => {
-  const before = totalConscripts.value;
-  totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 600);
-  const recovered = totalConscripts.value - before;
   const ids = Object.keys(playerRecoveryRounds.value)
     .map((id) => Number(id))
     .filter((id) => (playerRecoveryRounds.value[id] || 0) > 0);
@@ -1600,23 +1549,23 @@ const resolveRestNode = () => {
     if (playerRecoveryRounds.value[targetId] === 0) {
       delete playerRecoveryRounds.value[targetId];
     }
-    addReport(`营地休整：征召兵 +${recovered}，并减少 1 名武将休整轮次。`);
+    addReport(`营地休整：减少 1 名武将休整轮次。`);
   } else {
-    addReport(`营地休整：征召兵 +${recovered}。`);
+    addReport(`营地休整：无武将处于休整状态。`);
   }
   gamePhase.value = "map_select";
   showEventMap.value = true;
 };
 
-// 处理商店节点：花费金币购买征召兵
+// 处理商店节点：花费金币购买物品和征召兵
 const resolveShopNode = () => {
   if (money.value >= 180) {
     money.value -= 180;
-    totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 500);
-    addReport("商店交易：花费 180 金币，恢复征召兵 +500。");
+    const added = Math.min(300 + Math.floor(Math.random() * 200), maxConscripts.value - totalConscripts.value);
+    totalConscripts.value += added;
+    addReport(`商店交易：花费 180 金币，补充征召兵 +${added}。`);
   } else {
-    addReport("商店节点：金币不足，仅获得征召兵 +220。");
-    totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + 220);
+    addReport("商店节点：金币不足，无法购买。");
   }
   gamePhase.value = "map_select";
   showEventMap.value = true;
@@ -1776,7 +1725,79 @@ const closeGeneralList = () => {
   hideTooltip();
 };
 
-// 部署武将到指定阵位（阵位满员则替换，统率不足时阻止部署）
+// 打开战前征召兵分配弹窗
+const openPreBattleAllocation = () => {
+  // 初始化每个武将的待分配兵力为当前兵力
+  preBattleAllocations.value = {};
+  Object.values(playerFormation.value).forEach((g) => {
+    if (g) {
+      preBattleAllocations.value[g.id] = g.troops;
+    }
+  });
+  showPreBattleConscriptAllocation.value = true;
+};
+
+// 关闭战前征召兵分配弹窗
+const closePreBattleAllocation = () => {
+  showPreBattleConscriptAllocation.value = false;
+  preBattleAllocations.value = {};
+};
+
+// 更新战前征召兵分配值
+const updatePreBattleAllocation = (generalId: number, value: number) => {
+  preBattleAllocations.value[generalId] = value;
+};
+
+// 确认战前征召兵分配
+const confirmPreBattleAllocation = () => {
+  let totalNeeded = 0;
+  Object.entries(preBattleAllocations.value).forEach(([id, value]) => {
+    const general = Object.values(playerFormation.value).find((g) => g?.id === Number(id));
+    if (general) {
+      const needed = value - general.troops;
+      if (needed > 0) totalNeeded += needed;
+    }
+  });
+
+  if (totalNeeded > totalConscripts.value) {
+    addReport(`征召兵不足！需要 ${totalNeeded}，当前只有 ${totalConscripts.value}`);
+    return;
+  }
+
+  // 扣除征召兵并分配给武将
+  Object.entries(preBattleAllocations.value).forEach(([id, value]) => {
+    const general = Object.values(playerFormation.value).find((g) => g?.id === Number(id));
+    if (general) {
+      const needed = value - general.troops;
+      if (needed > 0) {
+        totalConscripts.value -= needed;
+        general.troops = value;
+        addReport(`【${general.name}】分配征召兵 +${needed}，当前兵力 ${value}`);
+      }
+    }
+  });
+
+  closePreBattleAllocation();
+  // 继续进入战斗
+  proceedToBattle();
+};
+
+// 继续战斗流程（在征召兵分配完成后调用）
+const proceedToBattle = async () => {
+  clearAllBattleFx();
+  if (!pendingBattleNodeType.value) {
+    addReport("当前没有待处理的战斗节点。");
+    showEventMap.value = true;
+    return;
+  }
+  if (areAllOwnedGeneralsResting()) {
+    addReport("所有武将均在休整中，战役结束，回到第一轮。");
+    alert("所有武将都在休整中，游戏结束！将重置到第一轮。");
+    resetGame();
+    return;
+  }
+};
+
 const deployGeneral = (general: General) => {
   if (selectedSlot.value) {
     const restRounds = playerRecoveryRounds.value[general.id] || 0;
@@ -1787,7 +1808,6 @@ const deployGeneral = (general: General) => {
     const [, position] = selectedSlot.value.split("-");
     const targetPosition = position as keyof typeof playerFormation.value;
     const oldGeneral = playerFormation.value[position as keyof typeof playerFormation.value];
-    const oldTroopsInSlot = oldGeneral ? Math.max(0, oldGeneral.troops || 0) : 0;
     const oldCommand = oldGeneral ? oldGeneral.leadership : 0;
     const newTotalCommand = currentCommand.value - oldCommand + general.leadership;
 
@@ -1813,13 +1833,7 @@ const deployGeneral = (general: General) => {
     playerFormation.value[targetPosition] = general;
     if (!oldGeneral || oldGeneral.id !== general.id) {
       const desiredTroops = Math.max(0, Math.min(general.troops || 0, general.maxTroops));
-      const budgetByPool = oldTroopsInSlot + availableConscripts.value;
-      general.troops = Math.min(desiredTroops, budgetByPool);
-      if (!isBattleActive.value && !isBattleStarting.value) {
-        const nextCommitted =
-          committedConscripts.value - oldTroopsInSlot + Math.max(0, general.troops || 0);
-        committedConscripts.value = Math.max(0, Math.min(totalConscripts.value, nextCommitted));
-      }
+      general.troops = desiredTroops;
     }
     updateCurrentCommand();
     addReport(
@@ -1827,94 +1841,6 @@ const deployGeneral = (general: General) => {
     );
     closeGeneralList();
   }
-};
-
-// 为上阵武将设置兵力分配（通过征召兵分配界面）
-const setGeneralTroops = (
-  position: keyof typeof playerFormation.value,
-  targetTroops: number,
-) => {
-  if (isBattleActive.value) return;
-  const general = playerFormation.value[position];
-  if (!general) return;
-  const maxAllowedByPool = Math.min(
-    general.maxTroops,
-    general.troops + availableConscripts.value,
-  );
-  const next = Math.max(0, Math.min(Math.floor(targetTroops), maxAllowedByPool));
-  general.troops = next;
-  syncCommittedConscriptsFromFormation();
-};
-
-// 鼠标按下兵力条时记录初始值和已分配量，用于拖拽调整
-const handleTroopsBarMouseDown = (
-  position: keyof typeof playerFormation.value,
-  event: MouseEvent,
-) => {
-  if (isBattleActive.value) return;
-  const bar = event.currentTarget as HTMLElement | null;
-  if (!bar) return;
-
-  const applyFromClientX = (clientX: number) => {
-    const general = playerFormation.value[position];
-    if (!general) return;
-    const rect = bar.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const requested = Math.floor(general.maxTroops * ratio);
-    setGeneralTroops(position, requested);
-  };
-
-  applyFromClientX(event.clientX);
-  const onMove = (e: MouseEvent) => applyFromClientX(e.clientX);
-  const onUp = () => {
-    window.removeEventListener("mousemove", onMove);
-    window.removeEventListener("mouseup", onUp);
-  };
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("mouseup", onUp);
-};
-
-// 将剩余可分配征召兵平均分配给所有上阵武将（优先补满兵力的）
-const autoAllocateTroopsEvenly = () => {
-  if (isBattleActive.value) return;
-  const deployed = Object.values(playerFormation.value).filter(
-    (g): g is General => !!g,
-  );
-  if (deployed.length === 0) {
-    addReport("请先上阵武将，再进行自动分配。");
-    return;
-  }
-  let remaining = Math.max(0, availableConscripts.value);
-  if (remaining <= 0) {
-    addReport("当前没有可分配征召兵。");
-    return;
-  }
-  const totalNeedToFull = deployed.reduce(
-    (sum, g) => sum + Math.max(0, g.maxTroops - (g.troops || 0)),
-    0,
-  );
-  if (remaining >= totalNeedToFull) {
-    deployed.forEach((general) => {
-      general.troops = general.maxTroops;
-    });
-    committedConscripts.value += totalNeedToFull;
-    addReport("征召兵充足，已将我方上阵武将全部补至满兵。");
-    return;
-  }
-  const canReceive = deployed.filter((g) => g.troops < g.maxTroops);
-  while (remaining > 0 && canReceive.length > 0) {
-    let progressed = false;
-    for (const general of canReceive) {
-      if (remaining <= 0) break;
-      if (general.troops >= general.maxTroops) continue;
-      general.troops += 1;
-      remaining -= 1;
-      progressed = true;
-    }
-    if (!progressed) break;
-  }
-  committedConscripts.value += Math.max(0, availableConscripts.value - remaining);
-  addReport("已自动均分征召兵到我方上阵武将。");
 };
 
 // 战斗结束后：阵亡武将进入4轮休整，从阵型中移除并播报
@@ -1941,19 +1867,10 @@ const areAllOwnedGeneralsResting = () => {
 };
 
 // 招募配置数组：id为武将在数据库中的ID，probability为招募概率（所有概率之和应等于1）
-// 自动生成：在 skills/index.ts 的 RECRUIT_CONFIG 中添加新武将即可
-const probability = 1 / RECRUIT_CONFIG.length;
-const RECRUIT_CONFIG_BASE = RECRUIT_CONFIG.map(item => ({
-  id: item.id,
-  probability: Math.round(probability * 1000) / 1000,
-}));
-
 // 获取武将的fetch函数映射（使用 skills/index.ts 中定义的配置）
 const getFetchFunction = (id: number) => {
   return getFetchFunctionBase(id, API_BASE_URL);
 };
-
-const designedGeneralIds = () => RECRUIT_CONFIG_BASE.map((c) => c.id);
 
 // 深拷贝敌方武将（保留技能和台词的独立副本）
 const cloneGeneralForEnemy = (g: General): General => ({
@@ -1965,57 +1882,133 @@ const cloneGeneralForEnemy = (g: General): General => ({
     : undefined,
 });
 
-// Fisher-Yates 洗牌：返回所有预设武将ID的随机排列顺序
-const shuffleDesignedGeneralIds = (): number[] => {
-  const ids = [...designedGeneralIds()];
-  for (let i = ids.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-  }
-  return ids;
-};
-
 // 生成敌方队伍：从预设武将池中洗牌抽取3名（敌方镜像布阵：从左到右为 大营、中军、前锋）
 const generateEnemyTeam = async () => {
-  // 敌方镜像：从左到右显示为大营、中军、前锋（与我方镜像对称）
-  // 武将顺序从左到右存储，所以第1个武将→大营(左)，第2个→中军，第3个→前锋(右)
-  const placementOrder: (keyof typeof enemyFormation.value)[] = [
-    "大营",  // 第1个武将放在大营(左)
-    "中军",  // 第2个武将放在中军(中)
-    "前锋",  // 第3个武将放在前锋(右)
-  ];
-  const idPool = shuffleDesignedGeneralIds();
-  let poolIndex = 0;
+  const battleType = pendingBattleNodeType.value ?? "battle";
 
-  for (const position of placementOrder) {
-    let placed: General | null = null;
-    while (poolIndex < idPool.length && !placed) {
-      const id = idPool[poolIndex++];
-      const fetchFn = getFetchFunction(id);
-      let general: General | null = null;
-      if (fetchFn) {
+  // 位置定位偏好
+  const rolePrefs: Record<string, string[]> = {
+    前锋: ["肉盾"],
+    中军: ["输出", "肉盾", "辅助"],
+    大营: ["输出"],
+  };
+
+  // 根据战斗类型确定稀有度分布（稀有=紫色，传奇=金色）
+  const getRarityPool = (): GeneralRarity[] => {
+    const roll = Math.random();
+    if (battleType === "boss") {
+      // Boss：必出紫色，金色10%
+      if (roll < 0.10) return ["legendary", "rare", "common"];
+      return ["rare", "uncommon", "common"];
+    } else if (battleType === "elite") {
+      // 精英：紫色30%，金色3%
+      if (roll < 0.03) return ["legendary", "rare", "common"];
+      if (roll < 0.33) return ["rare", "uncommon", "common"];
+      return ["uncommon", "common"];
+    } else {
+      // 普通：紫色10%，金色1%
+      if (roll < 0.01) return ["legendary", "rare", "common"];
+      if (roll < 0.11) return ["rare", "uncommon", "common"];
+      return ["uncommon", "common"];
+    }
+  };
+
+  // 按稀有度抽取一个武将（优先从池中选符合定位的）
+  const pickByRarity = async (rarityPool: GeneralRarity[], usedIds: Set<number>, position: string): Promise<General | null> => {
+    for (const rarity of rarityPool) {
+      const config = RECRUIT_CONFIG.filter(
+        (c) => c.rarity === rarity && !usedIds.has(c.id)
+      );
+      if (config.length === 0) continue;
+
+      // 从符合定位的里面选
+      const shuffled = config.sort(() => Math.random() - 0.5);
+      for (const item of shuffled) {
+        const fetchFn = getFetchFunction(item.id);
+        if (!fetchFn) continue;
         try {
-          general = await fetchFn();
-        } catch {
-          general = null;
-        }
-      }
-      if (general) {
-        const copy = cloneGeneralForEnemy(general);
-        copy.isDead = false;
-        setSynthStar(copy, 0);
-        placed = copy;
+          const general = await fetchFn();
+          if (!general) continue;
+          const roles = getGeneralRole(general);
+          const pref = rolePrefs[position] ?? [];
+          const match = pref.length === 0 || pref.some((r) => roles.includes(r as any));
+          if (!match) continue;
+          const copy = cloneGeneralForEnemy(general);
+          copy.isDead = false;
+          copy.troops = copy.maxTroops;
+          setSynthStar(copy, 0);
+          return copy;
+        } catch { /* skip */ }
       }
     }
+    return null;
+  };
 
+  // Boss 羁绊队伍
+  const tryBuildBondTeam = async (): Promise<General[]> => {
+    const validBonds = BONDS.filter((b) => {
+      const ids = b.memberIds.filter((id) => id > 0);
+      return ids.length >= 2 && ids.length <= 3;
+    });
+    if (validBonds.length === 0) return [];
+
+    const bond = validBonds[Math.floor(Math.random() * validBonds.length)];
+    const bondIds = bond.memberIds.filter((id) => id > 0);
+    const team: General[] = [];
+
+    for (const id of bondIds) {
+      const config = RECRUIT_CONFIG.find((c) => c.id === id);
+      if (!config) continue;
+      const fetchFn = getFetchFunction(id);
+      if (!fetchFn) continue;
+      try {
+        const g = await fetchFn();
+        if (g) {
+          const copy = cloneGeneralForEnemy(g);
+          copy.isDead = false;
+          copy.troops = copy.maxTroops;
+          setSynthStar(copy, 0);
+          team.push(copy);
+        }
+      } catch { /* skip */ }
+    }
+
+    if (team.length < 2) return [];
+    addReport(`敌方队列存在羁绊：【${bond.name}】已激活！`);
+    return team;
+  };
+
+  // 确定各位置武将
+  const placementOrder: (keyof typeof enemyFormation.value)[] = ["大营", "中军", "前锋"];
+  const team: General[] = [];
+  const usedIds = new Set<number>();
+
+  if (battleType === "boss") {
+    const bondTeam = await tryBuildBondTeam();
+    team.push(...bondTeam);
+    bondTeam.forEach((g) => usedIds.add(g.id));
+  }
+
+  // 填充剩余位置
+  for (const position of placementOrder) {
+    if (team.length >= 3) break;
+    const rarityPool = getRarityPool();
+    const placed = await pickByRarity(rarityPool, usedIds, position);
     if (placed) {
-      enemyFormation.value[position] = placed;
-      addReport(`敌方${position}：【${placed.name}】`);
-    } else {
-      addReport(`敌方${position}：未能从已设计武将中生成，请检查网络或配置。`);
-      enemyFormation.value[position] = null;
+      team.push(placed);
+      usedIds.add(placed.id);
     }
   }
+
+  // 分配到阵位
+  const posMap: Record<number, keyof typeof enemyFormation.value> = { 0: "大营", 1: "中军", 2: "前锋" };
+  team.forEach((g, idx) => {
+    const pos = posMap[idx];
+    if (pos) {
+      enemyFormation.value[pos] = g;
+      addReport(`敌方${pos}：【${g.name}】`);
+    }
+  });
 
   const enemyRelic = getEnemyWaveRelic(currentWave.value);
   enemyRelics.value = enemyRelic ? [enemyRelic] : [];
@@ -2118,7 +2111,7 @@ const buildVictoryRewardOptions = (): VictoryRewardOption[] => {
       type: "conscript",
       icon: "🪖",
       name: "征召补员",
-      description: `恢复固定征召兵 +${conscriptValue}`,
+      description: `恢复征召兵 +${conscriptValue}`,
       value: conscriptValue,
     },
     {
@@ -2174,71 +2167,9 @@ const applyVictoryReward = (reward: VictoryRewardOption) => {
     return;
   }
   if (reward.type === "conscript") {
-    const beforeAvailable = availableConscripts.value;
-    const before = totalConscripts.value;
-    totalConscripts.value = Math.min(maxConscripts, totalConscripts.value + reward.value);
-    const actualRecovered = totalConscripts.value - before;
-    if (actualRecovered > 0) {
-      const afterAvailable = availableConscripts.value;
-      addReport(
-        `崔珏补发兵员：征召兵 +${actualRecovered}（上限 ${maxConscripts}），可分配由 ${beforeAvailable} 提升至 ${afterAvailable}。`,
-      );
-      return;
-    }
-    const getPlayerBattleStartTroops = (general: General) => {
-      const positions = Object.keys(playerFormation.value) as FormationPosition[];
-      for (const position of positions) {
-        if (playerFormation.value[position]?.id !== general.id) continue;
-        const snapshot = battleStartSnapshot.value.player[position];
-        if (!snapshot) return general.troops;
-        return Math.max(0, Math.min(snapshot.troops, general.maxTroops));
-      }
-      return general.troops;
-    };
-    const healTargets = (Object.keys(playerFormation.value) as FormationPosition[])
-      .map((position) => playerFormation.value[position])
-      .filter((general): general is General => !!general && !general.isDead && general.troops < general.maxTroops)
-      .map((general) => {
-        const currentTroops = Math.max(0, general.troops);
-        // 回血上限：不超过本场开战时的当前兵力值
-        const battleStartTroopsCap = getPlayerBattleStartTroops(general);
-        const healCap = Math.max(0, battleStartTroopsCap - currentTroops);
-        return {
-          general,
-          healCap,
-          healed: 0,
-        };
-      })
-      .filter((item) => item.healCap > 0);
-    let healRemaining = reward.value;
-    let healedTotal = 0;
-    while (healRemaining > 0 && healTargets.length > 0) {
-      let progressed = false;
-      for (const item of healTargets) {
-        if (healRemaining <= 0) break;
-        if (item.healed >= item.healCap) continue;
-        item.general.troops += 1;
-        item.healed += 1;
-        healRemaining -= 1;
-        healedTotal += 1;
-        progressed = true;
-      }
-      if (!progressed) break;
-    }
-    if (healedTotal > 0) {
-      addReport(`征召兵已达上限，崔珏改为直接回血：我方上阵武将兵力恢复 ${healedTotal}。`);
-      return;
-    }
-    const reclaimed = Math.min(reward.value, committedConscripts.value);
-    if (reclaimed > 0) {
-      committedConscripts.value = Math.max(0, committedConscripts.value - reclaimed);
-      const afterAvailable = availableConscripts.value;
-      addReport(
-        `征召兵已达上限且无可恢复目标，崔珏改为回补可分配额度 +${reclaimed}，当前可分配 ${afterAvailable}。`,
-      );
-      return;
-    }
-    addReport(`崔珏补发兵员：征召兵 +0（上限 ${maxConscripts}），且当前无可回补额度。`);
+    const added = Math.min(reward.value, maxConscripts.value - totalConscripts.value);
+    totalConscripts.value += added;
+    addReport(`崔珏嘉奖：征召兵 +${added}。`);
     return;
   }
   if (reward.type === "promote") {
@@ -2298,10 +2229,15 @@ const selectLayerReward = async (reward: VictoryRewardOption) => {
     runMap.value.nodes.push(...newNodes);
     runMap.value.currentNodeId = "start";
     currentAct.value += 1;
+    // 轮次+1，并触发新一轮遗物选择
+    currentRound.value += 1;
 
     addReport(`第 ${currentAct.value - 1} 层崔珏裁赏完毕！第 ${currentAct.value} 层已开启。`);
+    addReport(`=== 第 ${currentRound.value} 轮开始，请选择遗物 ===`);
     gamePhase.value = "map_select";
     showEventMap.value = true;
+    // 触发新一轮遗物选择
+    startRelicSelection();
   } finally {
     isResolvingVictoryReward.value = false;
   }
@@ -2318,7 +2254,6 @@ const enterNextBattleAfterReward = async () => {
 
 // 打开战斗胜利奖励界面（崔珏现身裁赏）
 const openVictorySettlement = () => {
-  unlockBattleConscriptSnapshot();
   const currentNode = pendingNodeId.value ? getNodeById(pendingNodeId.value) : null;
   if (currentNode?.type === "boss") {
     openLayerRewardSelector();
@@ -3355,7 +3290,6 @@ const resetGame = () => {
   currentWave.value = initialGameData.currentWave;
   currentTurn.value = 0;
   currentCommand.value = 0;
-  totalConscripts.value = maxConscripts;
   generals.value = [];
   playerFormation.value = {
     大营: null,
@@ -3379,7 +3313,8 @@ const resetGame = () => {
   hasShownNewRunQuote.value = false;
   battleReports.value = [];
   playerRecoveryRounds.value = {};
-  committedConscripts.value = 0;
+  currentAct.value = 1;
+  currentRound.value = 1;
   gamePhase.value = "map_select";
   showEventMap.value = true;
   pendingNodeId.value = null;
@@ -3470,23 +3405,17 @@ const startBattle = async () => {
     addReport("请至少在大营上阵一名武将！");
     return;
   }
-  const hasZeroTroops = Object.values(playerFormation.value).some(
-    (slot) => slot !== null && slot.troops <= 0,
-  );
-  if (hasZeroTroops) {
-    addReport("请先为上阵武将分配兵力后再开始战斗。");
+  // 如果是从征召兵分配返回，则跳过分配直接进入战斗
+  if (!pendingBattleAfterAllocation.value) {
+    // 每次战斗前都弹出征召兵分配界面
+    pendingBattleAfterAllocation.value = true;
+    openPreBattleAllocation();
     return;
   }
+  // 重置标志
+  pendingBattleAfterAllocation.value = false;
 
-  if (playerRelics.value.length === 0) {
-    startRelicSelection();
-    addReport("请先选择我方遗物，再开始战斗。");
-    return;
-  }
-  addCuiJueQuote("battle");
-  showEventMap.value = true;
   isBattlePaused.value = false;
-  lockBattleConscriptSnapshot();
   // 重置战斗统计
   battleStats.value = {
     dealt: {
@@ -5604,5 +5533,169 @@ const startBattle = async () => {
   .progress-footer {
     padding: 15px 30px 30px;
   }
+}
+
+/* 战前征召兵分配弹窗样式 */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.pre-battle-allocation-modal {
+  background: linear-gradient(135deg, #1a0a0a 0%, #2d1a1a 50%, #1a0a0a 100%);
+  border: 2px solid #8b5cf6;
+  border-radius: 16px;
+  padding: 24px 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 0 60px rgba(139, 92, 246, 0.3);
+}
+
+.pre-battle-allocation-modal h3 {
+  color: #fbbf24;
+  font-size: 22px;
+  margin: 0 0 16px;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+}
+
+.allocation-info {
+  text-align: center;
+  color: #e8e8d8;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.conscript-highlight {
+  color: #4ade80;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.allocation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.allocation-item {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.allocation-general-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.general-name {
+  color: #fbbf24;
+  font-weight: bold;
+}
+
+.general-position {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.allocation-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.allocation-slider input[type="range"] {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.allocation-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #4ade80;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.allocation-value {
+  color: #4ade80;
+  font-weight: bold;
+  min-width: 50px;
+  text-align: right;
+}
+
+.allocation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.allocation-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid;
+}
+
+.allocation-btn.cancel {
+  background: rgba(107, 114, 128, 0.3);
+  border-color: rgba(107, 114, 128, 0.5);
+  color: #9ca3af;
+}
+
+.allocation-btn.cancel:hover {
+  background: rgba(107, 114, 128, 0.5);
+}
+
+.allocation-btn.confirm {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.allocation-btn.confirm:hover {
+  background: rgba(74, 222, 128, 0.3);
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .pre-battle-allocation-modal,
+.modal-leave-active .pre-battle-allocation-modal {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .pre-battle-allocation-modal,
+.modal-leave-to .pre-battle-allocation-modal {
+  transform: scale(0.92) translateY(20px);
+  opacity: 0;
 }
 </style>
